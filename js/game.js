@@ -30,6 +30,8 @@ const GameState = {
   },
   lastSave: Date.now(),
   gameTime: { day: 1, hour: 6 },
+  _lastHPRegenTick: 0,
+  _lastBuffDecayTick: 0,
 };
 
 // ============================================================
@@ -70,13 +72,44 @@ function startGameLoops() {
 
 // Called every 100ms
 function gameTick() {
-  // Mana regeneration
+  const now = Date.now();
+
+  // Mana regeneration (always — in and out of combat)
   if (GameState.party.length > 0) {
     if (typeof tickManaRegen === 'function') tickManaRegen(GameState.party);
   }
-  
-  // Update bars periodically (throttled by checking if anything changed)
-  // This is done via UI update in combatTick, so we only do light updates here
+
+  // Out-of-combat only ticks
+  if (!GameState.combatActive && GameState.party.length > 0) {
+
+    // HP regen every 3 seconds
+    if (!GameState._lastHPRegenTick) GameState._lastHPRegenTick = now;
+    if (now - GameState._lastHPRegenTick >= 3000) {
+      GameState._lastHPRegenTick = now;
+      let regenHappened = false;
+      for (const member of GameState.party) {
+        if (!member.isAlive || member.hp >= member.maxHP) continue;
+        const regenAmt = Math.max(1, Math.floor(member.level + (member.STA || 0) / 10));
+        member.hp = Math.min(member.maxHP, member.hp + regenAmt);
+        regenHappened = true;
+      }
+      if (regenHappened && typeof updatePartyUI === 'function') updatePartyUI();
+    }
+
+    // Buff/status decay every 1 second
+    if (!GameState._lastBuffDecayTick) GameState._lastBuffDecayTick = now;
+    if (now - GameState._lastBuffDecayTick >= 1000) {
+      GameState._lastBuffDecayTick = now;
+      let decayHappened = false;
+      for (const member of GameState.party) {
+        if (!member.statusEffects || member.statusEffects.length === 0) continue;
+        const before = member.statusEffects.length;
+        if (typeof tickStatusEffects === 'function') tickStatusEffects(member);
+        if (member.statusEffects.length !== before) decayHappened = true;
+      }
+      if (decayHappened && typeof updatePartyUI === 'function') updatePartyUI();
+    }
+  }
 }
 
 function updateSaveIndicator() {
