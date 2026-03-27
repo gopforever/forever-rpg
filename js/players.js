@@ -5,6 +5,8 @@
 
 const GHOST_SAVE_KEY     = 'foreverRPG_ghosts';
 const GHOST_TICK_KEY     = 'foreverRPG_ghostTick';
+const GHOST_VERSION_KEY  = 'foreverRPG_ghostsVersion';
+const GHOST_PLAYERS_VERSION = 2;
 const MARKET_SAVE_KEY    = 'foreverRPG_market';
 const TICK_SECONDS       = 30;           // 30 real seconds = 1 tick
 const MAX_OFFLINE_TICKS  = 8640;         // 8640 ticks (72 hours at 30-second intervals)
@@ -58,7 +60,7 @@ const CLASS_COLORS = {
   berserker:   '#c79c6e',
 };
 
-// Ghost player name pool — EverQuest-style fantasy names
+// Ghost player name pool — EverQuest-style fantasy names (account/leader names)
 const GHOST_NAMES = [
   'Thalindra','Drakkon','Seraphina','Gorthak','Mireille','Vaelith','Bryndor','Cressida',
   'Zoltan','Fenwick','Alyxandre','Brimthorn','Caelindra','Darkveil','Elyndra','Frostwick',
@@ -67,11 +69,28 @@ const GHOST_NAMES = [
   'Wulfric','Xylandris','Ysolde','Zephyrath','Aelindra','Bolthorn','Corvinath','Duskwind',
 ];
 
+// Separate name pool for party members (distinct from leader names)
+const PARTY_MEMBER_NAMES = [
+  'Arithar','Baelindra','Cyranoth','Delvara','Evindrel','Faerith','Gaelindra',
+  'Heloria','Indreth','Jarindra','Kelavar','Larimoth','Mindrath','Naelindra',
+  'Orvindra','Praelith','Quarinoth','Raelith','Sindrath','Tavinor','Uldrava',
+  'Vindrath','Wendorath','Xarindra','Yavindra','Zelindra','Ardivath','Brindoch',
+  'Carinoth','Devrath','Elorath','Fendrath','Gorindra','Helvath','Irindra',
+  'Jeldrath','Karindra','Lendrath','Morvindra','Nalvath','Orindra','Palvindra',
+  'Quelindra','Rendrath','Selvindra','Teldrath','Uvindra','Valdrath','Windora',
+  'Xelindra','Yvindra','Zandrath','Bolvindra','Celdrath','Drivindra',
+  'Eorath','Faldrath','Garivoth','Halindra','Iveldra','Jarvindra','Kyrindra',
+];
+
 // All playable class IDs
 const GHOST_CLASSES = [
   'warrior','paladin','shadowknight','ranger','rogue','bard','monk',
   'wizard','magician','enchanter','necromancer','cleric','druid','shaman','beastlord','berserker',
 ];
+
+// Class role buckets for MMO-authentic party composition
+const HEALER_CLASSES = ['cleric','druid','shaman'];
+const TANK_CLASSES   = ['warrior','paladin','shadowknight'];
 
 // All zone IDs (must match zones.js)
 const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos'];
@@ -156,26 +175,75 @@ function weightedLevel() {
   return Math.floor(Math.random() * 10) + 51;                       // 51–60
 }
 
+// ─── Ghost Party Builder ─────────────────────────────────────────────────────────
+
+function createGhostParty(leaderName, leaderClassId) {
+  const size = 1 + Math.floor(Math.random() * 5);   // 1 to 5 members total
+  const usedClasses = new Set([leaderClassId]);
+  const usedNames   = new Set([leaderName]);
+
+  const members = [{ name: leaderName, classId: leaderClassId, level: 1, xp: 0 }];
+
+  const toAdd = size - 1;
+  if (toAdd === 0) return members;
+
+  // Build required-role list based on party size
+  const required = [];
+  const leaderIsHealer = HEALER_CLASSES.includes(leaderClassId);
+  const leaderIsTank   = TANK_CLASSES.includes(leaderClassId);
+
+  if (size >= 3 && !leaderIsHealer) {
+    const healerOptions = HEALER_CLASSES.filter(c => !usedClasses.has(c));
+    if (healerOptions.length) required.push(healerOptions[Math.floor(Math.random() * healerOptions.length)]);
+  }
+  if (size >= 4 && !leaderIsTank) {
+    const tankOptions = TANK_CLASSES.filter(c => !usedClasses.has(c) && !required.includes(c));
+    if (tankOptions.length) required.push(tankOptions[Math.floor(Math.random() * tankOptions.length)]);
+  }
+
+  for (let i = 0; i < toAdd; i++) {
+    let classId;
+    if (i < required.length) {
+      classId = required[i];
+    } else {
+      const available = GHOST_CLASSES.filter(c => !usedClasses.has(c));
+      if (!available.length) break;
+      classId = available[Math.floor(Math.random() * available.length)];
+    }
+    usedClasses.add(classId);
+
+    const namePool = PARTY_MEMBER_NAMES.filter(n => !usedNames.has(n));
+    if (!namePool.length) break;
+    const name = namePool[Math.floor(Math.random() * namePool.length)];
+    usedNames.add(name);
+
+    members.push({ name, classId, level: 1, xp: 0 });
+  }
+
+  return members;
+}
+
 // ─── Ghost Player Definitions ───────────────────────────────────────────────────
 
 function createGhostPlayers() {
   const ghosts = [];
   for (let i = 0; i < GHOST_NAMES.length; i++) {
-    const level = weightedLevel();
     const classId = GHOST_CLASSES[Math.floor(Math.random() * GHOST_CLASSES.length)];
-    const zone = COMBAT_ZONES[Math.floor(Math.random() * COMBAT_ZONES.length)];
-    const baseXp = typeof xpForLevel === 'function' ? xpForLevel(level) : level * 1000;
+    const zone    = COMBAT_ZONES[Math.floor(Math.random() * COMBAT_ZONES.length)];
+    const xpRate  = 0.8 + Math.random() * 0.7;   // 0.8–1.5× (exclusive) — determines eventual rank
 
     ghosts.push({
-      id: i,
-      name: GHOST_NAMES[i],
+      id:         i,
+      name:       GHOST_NAMES[i],
       classId,
-      level,
+      level:      1,
       zone,
-      kills: Math.floor(Math.random() * 500 * level),
-      totalXP: baseXp + Math.floor(Math.random() * (typeof xpToNextLevel === 'function' ? xpToNextLevel(level) : 1000)),
-      gold: Math.floor(Math.random() * 200 * level),
+      kills:      0,
+      totalXP:    0,
+      gold:       0,
+      xpRate,
       lastActive: Date.now(),
+      party:      createGhostParty(GHOST_NAMES[i], classId),
     });
   }
   return ghosts;
@@ -185,6 +253,14 @@ function createGhostPlayers() {
 
 function loadGhosts() {
   try {
+    const version = parseInt(localStorage.getItem(GHOST_VERSION_KEY) || '0', 10);
+    if (version !== GHOST_PLAYERS_VERSION) {
+      // Version mismatch — wipe stale data and start fresh
+      localStorage.removeItem(GHOST_SAVE_KEY);
+      localStorage.removeItem(GHOST_TICK_KEY);
+      localStorage.setItem(GHOST_VERSION_KEY, String(GHOST_PLAYERS_VERSION));
+      return null;
+    }
     const raw = localStorage.getItem(GHOST_SAVE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (_) {}
@@ -194,6 +270,7 @@ function loadGhosts() {
 function saveGhosts(ghosts) {
   try {
     localStorage.setItem(GHOST_SAVE_KEY, JSON.stringify(ghosts));
+    localStorage.setItem(GHOST_VERSION_KEY, String(GHOST_PLAYERS_VERSION));
   } catch (_) {}
 }
 
@@ -214,8 +291,9 @@ function saveMarket(listings) {
 // ─── Offline Ghost Progression ──────────────────────────────────────────────────
 
 function simulateGhostTick(ghost) {
-  // XP per tick scales with level
-  const xpPerTick = Math.floor(50 * ghost.level * (1 + ghost.level / 20));
+  // XP per tick scales with level and ghost's individual XP rate
+  const rate = ghost.xpRate || 1;
+  const xpPerTick = Math.floor(50 * ghost.level * (1 + ghost.level / 20) * rate);
   const killsPerTick = Math.max(1, Math.floor(Math.random() * (1 + ghost.level / 10)));
   const goldPerTick = Math.floor(Math.random() * (1 + ghost.level / 5));
 
@@ -223,10 +301,16 @@ function simulateGhostTick(ghost) {
   ghost.kills   += killsPerTick;
   ghost.gold    += goldPerTick;
 
-  // Level up check
+  // Level up check — all party members level together
   if (typeof xpForLevel === 'function' && ghost.level < 60) {
     while (ghost.level < 60 && ghost.totalXP >= xpForLevel(ghost.level + 1)) {
       ghost.level++;
+      // Sync every party member to the new level
+      if (ghost.party) {
+        for (const member of ghost.party) {
+          member.level = ghost.level;
+        }
+      }
       // Occasionally change zone on level up
       if (Math.random() < 0.2) {
         ghost.zone = COMBAT_ZONES[Math.floor(Math.random() * COMBAT_ZONES.length)];
@@ -466,21 +550,154 @@ function renderWhoOnlinePanel() {
 
   el.innerHTML = list.map(g => {
     const color = CLASS_COLORS[g.classId] || '#e8d5a0';
-    const icon  = CLASS_ICONS[g.classId] || '⚔';
+    const partyIconsHtml = g.party
+      ? g.party.map(m => {
+          const ic  = CLASS_ICONS[m.classId] || '⚔';
+          const col = CLASS_COLORS[m.classId] || '#e8d5a0';
+          return `<span style="color:${col}" title="${m.name} (${m.classId})">${ic}</span>`;
+        }).join('')
+      : `<span style="color:${color}">${CLASS_ICONS[g.classId] || '⚔'}</span>`;
     const status = getGhostStatus(g);
-    return `<div class="who-online-row">
-      <span class="who-icon" style="color:${color}">${icon}</span>
+    return `<div class="who-online-row" data-ghost-id="${g.id}" style="cursor:pointer" title="Left-click to inspect · Right-click for options">
       <span class="who-name" style="color:${color}">${g.name}</span>
+      <span class="party-icons">${partyIconsHtml}</span>
       <span class="who-level">Lv.${g.level}</span>
       <div class="who-status">${status}</div>
     </div>`;
   }).join('');
+
+  // Attach click / right-click handlers via event delegation on the list
+  el.querySelectorAll('.who-online-row').forEach(row => {
+    const ghostId = parseInt(row.dataset.ghostId, 10);
+    // Prefer full ghost from _ghosts (has all data); fall back to zone copy
+    const ghost = _ghosts.find(g => g.id === ghostId) || list.find(g => g.id === ghostId);
+    if (!ghost) return;
+
+    row.addEventListener('click', () => showGhostInspectModal(ghost));
+    row.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      showGhostContextMenu(ghost, e.clientX, e.clientY);
+    });
+  });
 }
 
 function refreshZonePlayers() {
   const zoneId = typeof GameState !== 'undefined' ? GameState.zone : 'qeynos_hills';
   pickZoneGhosts(zoneId);
   renderWhoOnlinePanel();
+}
+
+// ─── Ghost Inspect Modal ─────────────────────────────────────────────────────────
+
+function showGhostInspectModal(ghost) {
+  const modal = document.getElementById('ghost-inspect-modal');
+  if (!modal) return;
+
+  const zone  = typeof ZONES !== 'undefined' && ZONES[ghost.zone] ? ZONES[ghost.zone].name : ghost.zone;
+  const party = ghost.party || [{ name: ghost.name, classId: ghost.classId, level: ghost.level, xp: 0 }];
+
+  const partyRows = party.map(member => {
+    const icon      = CLASS_ICONS[member.classId] || '⚔';
+    const color     = CLASS_COLORS[member.classId] || '#e8d5a0';
+    const className = member.classId.charAt(0).toUpperCase() + member.classId.slice(1);
+    return `<div class="ghost-party-row">
+      <span class="ghost-party-icon" style="color:${color}">${icon}</span>
+      <span class="ghost-party-name">${member.name}</span>
+      <span class="ghost-party-class" style="color:${color}">${className}</span>
+      <span class="ghost-party-level">Lv.${member.level}</span>
+    </div>`;
+  }).join('');
+
+  const totalKills = (ghost.kills || 0).toLocaleString();
+  const totalGold  = (ghost.gold  || 0).toLocaleString();
+
+  const content = modal.querySelector('.modal-content');
+  if (!content) return;
+
+  content.innerHTML = `
+    <button class="modal-close" id="ghost-inspect-close">✕</button>
+    <h2>👥 ${ghost.name}'s Party</h2>
+    <div class="ghost-inspect-zone">Zone: ${zone}</div>
+    <div class="ghost-party-list">${partyRows}</div>
+    <div class="ghost-inspect-stats">
+      <div>💀 Total Kills: ${totalKills}</div>
+      <div>💰 Gold Earned: ${totalGold}c</div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+
+  content.querySelector('#ghost-inspect-close').addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+}
+
+// One-time setup for the ghost inspect modal (escape + click-outside)
+function _setupGhostInspectModal() {
+  const modal = document.getElementById('ghost-inspect-modal');
+  if (!modal) return;
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+    }
+  });
+}
+
+// ─── Ghost Context Menu ──────────────────────────────────────────────────────────
+
+let _contextMenu = null;
+
+const TELL_RESPONSES = [
+  'Hey! Busy grinding but maybe later.',
+  'Hail! In the middle of a fight, PST me in a bit.',
+  'Sup! Grinding hard out here, catch you later.',
+  'Hey there! Party is slammed right now — /tell me later!',
+  'Can\'t chat, about to pull. Hit me up after.',
+];
+
+function showGhostContextMenu(ghost, x, y) {
+  if (_contextMenu) { _contextMenu.remove(); _contextMenu = null; }
+
+  const menu = document.createElement('div');
+  menu.className = 'ghost-context-menu';
+  menu.style.left = `${x}px`;
+  menu.style.top  = `${y}px`;
+
+  menu.innerHTML = `
+    <div class="ghost-context-item" data-action="inspect">👁 Inspect Party</div>
+    <div class="ghost-context-item" data-action="tell">💬 Send Tell</div>
+    <div class="ghost-context-item" data-action="invite">🤝 Invite to Group</div>
+  `;
+
+  document.body.appendChild(menu);
+  _contextMenu = menu;
+
+  menu.querySelectorAll('.ghost-context-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.stopPropagation();
+      const action = item.dataset.action;
+      if (action === 'inspect') {
+        showGhostInspectModal(ghost);
+      } else if (action === 'tell') {
+        const msg = TELL_RESPONSES[Math.floor(Math.random() * TELL_RESPONSES.length)];
+        addChatMessage(ghost, `[Tell from ${ghost.name}]: ${msg}`);
+      } else if (action === 'invite') {
+        addChatMessage(ghost, `[Tell from ${ghost.name}]: Thanks for the invite! Party is full though, sorry.`);
+      }
+      menu.remove();
+      _contextMenu = null;
+    });
+  });
+
+  // Click anywhere else to close
+  const closeMenu = () => {
+    if (_contextMenu) { _contextMenu.remove(); _contextMenu = null; }
+    document.removeEventListener('click', closeMenu);
+  };
+  setTimeout(() => document.addEventListener('click', closeMenu), 0);
 }
 
 // ─── Market Listings ────────────────────────────────────────────────────────────
@@ -556,12 +773,13 @@ function trickleMarketListing() {
 
 function getLeaderboardData() {
   const entries = _ghosts.map(g => ({
-    id:      g.id,
-    name:    g.name,
-    classId: g.classId,
-    level:   g.level,
-    kills:   g.kills,
-    zone:    g.zone,
+    id:       g.id,
+    name:     g.name,
+    classId:  g.classId,
+    level:    g.level,
+    kills:    g.kills,
+    zone:     g.zone,
+    party:    g.party || null,
     isPlayer: false,
   }));
 
@@ -576,6 +794,7 @@ function getLeaderboardData() {
       level:    leader.level,
       kills,
       zone:     GameState.zone,
+      party:    GameState.party.map(m => ({ name: m.name, classId: m.classId, level: m.level })),
       isPlayer: true,
     });
   }
@@ -587,7 +806,7 @@ function getLeaderboardData() {
 // ─── Initialization ─────────────────────────────────────────────────────────────
 
 function initGhostPlayers() {
-  // Load or create ghost players
+  // Load or create ghost players (version check is inside loadGhosts)
   let ghosts = loadGhosts();
   if (!ghosts || !ghosts.length) {
     ghosts = createGhostPlayers();
@@ -624,6 +843,9 @@ function initGhostPlayers() {
   setInterval(() => {
     renderWhoOnlinePanel();
   }, 15000);
+
+  // Set up ghost inspect modal (escape / click-outside to close)
+  _setupGhostInspectModal();
 
   // Load or generate market
   let market = loadMarket();
@@ -662,6 +884,8 @@ if (typeof module !== 'undefined') module.exports = {
   getMarketListings,
   setMarketListings,
   generateMarketListings,
+  showGhostInspectModal,
+  showGhostContextMenu,
   CLASS_ICONS,
   CLASS_COLORS,
 };
