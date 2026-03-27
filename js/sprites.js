@@ -583,7 +583,6 @@ const PORTRAITS = {
   beastlord: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
     <rect width="48" height="48" rx="6" fill="#1a0e04"/>
     <rect x="17" y="22" width="14" height="20" rx="2" fill="#8a5020"/>
-    <circle cx="24" cy="15" r="9" fill="#c8906050"/>
     <circle cx="24" cy="15" r="9" fill="#c89060"/>
     <rect x="17" y="8" width="14" height="8" rx="3" fill="#6a3810"/>
     <rect x="15" y="24" width="4" height="12" rx="2" fill="#7a4018"/>
