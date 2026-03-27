@@ -45,6 +45,7 @@ const ZONES = {
       'brown_bear',
       'bandit',
     ],
+    // king_snake appears twice to give it double the spawn weight among rares
     rareEnemies: [
       'king_snake',
       'king_snake',
