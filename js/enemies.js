@@ -240,6 +240,7 @@ const ENEMIES = {
       { itemId: 'silver_coin', chance: 0.17, quantity: [1, 3] },
     ],
     statusEffects: [],
+    callsForHelp: { chance: 0.35, addIds: ['gnoll_pup', 'gnoll'] },
     description: 'Stationed at the perimeter of the gnoll camp, the watcher calls out with a piercing howl when intruders approach.',
   },
 
@@ -444,6 +445,7 @@ const ENEMIES = {
       { itemId: 'rusty_short_sword', chance: 0.15, quantity: [1, 1] },
     ],
     statusEffects: [],
+    callsForHelp: { chance: 0.20, addIds: ['bandit'] },
     description: 'A desperate cutthroat who preys on travelers along the roads outside Qeynos.',
   },
 
@@ -543,6 +545,7 @@ const ENEMIES = {
       { itemId: 'silver_coin', chance: 0.09, quantity: [1, 1] },
     ],
     statusEffects: [],
+    callsForHelp: { chance: 0.25, addIds: ['a_scrawny_gnoll'] },
     description: 'A lean, mangy gnoll barely past puphood. Dangerous in numbers.',
   },
 
@@ -606,6 +609,8 @@ const ENEMIES = {
       { itemId: 'tarnished_axe', chance: 0.08, quantity: [1, 1] },
     ],
     statusEffects: [],
+    // burly_gnoll and a_burly_gnoll are two distinct difficulty variants of the same species
+    callsForHelp: { chance: 0.30, addIds: ['burly_gnoll', 'a_burly_gnoll'] },
     description: 'Built like a wall of fur and muscle, the burly gnoll is no mere sentry.',
   },
 

@@ -9,18 +9,23 @@
    trySkillGain, hasSkill, SKILL_DISPLAY_NAMES,
    addThreat, getCurrentTarget, tickAbilityCasts, interruptCast,
    dispatchAbilityEffect, selectAbilityForMember,
-   tickPets, summonPet, commandPetAttack, buffPet */
+   tickPets, summonPet, commandPetAttack, buffPet,
+   startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup */
 
 const MAX_CARRY_SLOTS = 30;
 
-function startCombat(enemyId) {
-  const template = ENEMIES[enemyId];
-  if (!template) {
-    console.error(`startCombat: unknown enemyId "${enemyId}"`);
-    return;
-  }
+// Maximum number of enemies allowed in a single encounter
+const MAX_ENCOUNTER_ENEMIES = 3;
 
-  GameState.currentEnemy = {
+/**
+ * Creates a live enemy object from a template ID.
+ * @param {string} enemyId
+ * @returns {object|null}
+ */
+function makeLiveEnemy(enemyId) {
+  const template = ENEMIES[enemyId];
+  if (!template) return null;
+  return {
     id: enemyId,
     name: template.name,
     level: template.level,
@@ -41,8 +46,50 @@ function startCombat(enemyId) {
     stunUntil: 0,
     mezzedUntil: 0,
     fearedUntil: 0,
+    hasCalledForHelp: false,
   };
+}
 
+/**
+ * Selects a group from a weighted groups array.
+ * @param {Array<{members: string[], weight: number}>} groups
+ * @returns {object|null}
+ */
+function rollWeightedGroup(groups) {
+  const totalWeight = groups.reduce((sum, g) => sum + (g.weight || 1), 0);
+  let roll = Math.random() * totalWeight;
+  for (const group of groups) {
+    roll -= (group.weight || 1);
+    if (roll <= 0) return group;
+  }
+  return groups[groups.length - 1];
+}
+
+function startCombat(enemyId) {
+  const template = ENEMIES[enemyId];
+  if (!template) {
+    console.error(`startCombat: unknown enemyId "${enemyId}"`);
+    return;
+  }
+
+  // Check for group spawn based on zone data
+  const zoneData = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+  if (
+    zoneData &&
+    zoneData.groups &&
+    zoneData.groupSpawnChance &&
+    Math.random() < zoneData.groupSpawnChance
+  ) {
+    const group = rollWeightedGroup(zoneData.groups);
+    if (group && group.members && group.members.length > 0) {
+      startGroupCombat(group.members);
+      return;
+    }
+  }
+
+  const liveEnemy = makeLiveEnemy(enemyId);
+  GameState.enemies = [liveEnemy];
+  GameState.currentEnemy = liveEnemy;
   GameState.combatActive = true;
   GameState.inCombat = true;
   GameState.threatTable = {};
@@ -54,6 +101,69 @@ function startCombat(enemyId) {
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
+/**
+ * Starts combat with multiple enemies simultaneously (group spawn).
+ * @param {string[]} enemyIds - Array of enemy IDs to enter combat together
+ */
+function startGroupCombat(enemyIds) {
+  const liveEnemies = enemyIds
+    .slice(0, MAX_ENCOUNTER_ENEMIES)
+    .map(id => makeLiveEnemy(id))
+    .filter(Boolean);
+  if (liveEnemies.length === 0) return;
+
+  GameState.enemies = liveEnemies;
+  GameState.currentEnemy = liveEnemies[0];
+  GameState.combatActive = true;
+  GameState.inCombat = true;
+  GameState.threatTable = {};
+  GameState._lastHPRegenTick = Date.now();
+  GameState._lastBuffDecayTick = Date.now();
+
+  const names = liveEnemies.map(e => e.name).join(', ');
+  addCombatLog(`You are ambushed by a group: ${names}!`, 'system');
+
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+/**
+ * Attempts to trigger a call-for-help on an enemy that was just attacked.
+ * Only fires once per enemy (guarded by hasCalledForHelp flag).
+ * @param {object} enemy - Live enemy object
+ */
+function tryCallForHelp(enemy) {
+  if (enemy.hasCalledForHelp) return;
+  const template = ENEMIES[enemy.id];
+  if (!template || !template.callsForHelp) return;
+
+  const { chance, addIds } = template.callsForHelp;
+  if (!addIds || addIds.length === 0) return;
+  if (Math.random() >= chance) return;
+
+  // Cap total active enemies
+  if ((GameState.enemies || []).length >= MAX_ENCOUNTER_ENEMIES) {
+    enemy.hasCalledForHelp = true;
+    return;
+  }
+
+  // Pick a valid add (must exist in ENEMIES)
+  const validAdds = addIds.filter(id => ENEMIES[id]);
+  if (validAdds.length === 0) return;
+
+  const addId = validAdds[Math.floor(Math.random() * validAdds.length)];
+  const add = makeLiveEnemy(addId);
+  if (!add) return;
+
+  enemy.hasCalledForHelp = true;
+  GameState.enemies = GameState.enemies || [];
+  GameState.enemies.push(add);
+
+  const msg = enemy.id === 'gnoll_watcher'
+    ? `A gnoll watcher lets out a piercing howl! Reinforcements arrive!`
+    : `${enemy.name} calls for help! ${add.name} joins the fight!`;
+  addCombatLog(msg, 'system');
+}
+
 function selectEnemy(enemyId) {
   GameState.selectedEnemyId = enemyId;
   startCombat(enemyId);
@@ -62,6 +172,7 @@ function selectEnemy(enemyId) {
 function stopCombat() {
   GameState.combatActive = false;
   GameState.inCombat = false;
+  GameState.enemies = [];
   GameState.currentEnemy = null;
   GameState.selectedEnemyId = null;
   addCombatLog('Combat stopped.', 'system');
@@ -69,9 +180,9 @@ function stopCombat() {
 }
 
 function combatTick() {
-  if (!GameState.combatActive || !GameState.currentEnemy) return;
+  if (!GameState.combatActive) return;
+  if (!GameState.enemies || GameState.enemies.length === 0) return;
 
-  const enemy = GameState.currentEnemy;
   const party = GameState.party;
 
   // Threat decay: reduce all threats by 1% per tick
@@ -87,59 +198,84 @@ function combatTick() {
     return;
   }
 
-  // Resolve in-flight ability casts
-  tickAbilityCasts(livingMembers, enemy);
+  // Resolve in-flight ability casts (target primary enemy)
+  const primaryEnemy = GameState.enemies[0];
+  tickAbilityCasts(livingMembers, primaryEnemy);
 
   // Tick enemy DoTs
-  if (enemy.dots && enemy.dots.length > 0) {
-    const now = Date.now();
-    enemy.dots = enemy.dots.filter(dot => dot.endTime > now);
-    for (const dot of enemy.dots) {
-      if (now >= dot.nextTick) {
-        enemy.hp = Math.max(0, enemy.hp - dot.damage);
-        addCombatLog(`${enemy.name} takes ${dot.damage} damage from a spell effect.`, 'poison');
-        dot.nextTick = now + dot.tickInterval;
+  const now = Date.now();
+  for (const enemy of GameState.enemies.slice()) {
+    if (enemy.dots && enemy.dots.length > 0) {
+      enemy.dots = enemy.dots.filter(dot => dot.endTime > now);
+      for (const dot of enemy.dots) {
+        if (now >= dot.nextTick) {
+          enemy.hp = Math.max(0, enemy.hp - dot.damage);
+          addCombatLog(`${enemy.name} takes ${dot.damage} damage from a spell effect.`, 'poison');
+          dot.nextTick = now + dot.tickInterval;
+        }
       }
     }
   }
 
-  if (enemy.hp <= 0) {
-    handleEnemyDeath(enemy);
-    return;
+  // Handle any deaths from DoTs
+  for (const dead of GameState.enemies.filter(e => e.hp <= 0)) {
+    handleEnemyDeath(dead);
+    if (!GameState.combatActive) return;
+  }
+  if (!GameState.enemies || GameState.enemies.length === 0) return;
+
+  // Party member attacks: each member targets the lowest-HP living enemy
+  for (const member of livingMembers) {
+    if (!GameState.combatActive) return;
+    const liveEnemies = (GameState.enemies || []).filter(e => e.hp > 0);
+    if (liveEnemies.length === 0) break;
+
+    if (!isStunned(member) && !isMezzed(member)) {
+      const target = liveEnemies.reduce((a, b) => a.hp <= b.hp ? a : b);
+      memberAttack(member, target);
+      // Pass the same target to ability selection so damage abilities hit the same enemy
+      selectAbilityForMember(member, target, party);
+      // Trigger call-for-help on the attacked enemy (if still alive)
+      if (target.hp > 0) tryCallForHelp(target);
+    }
   }
 
-  for (const member of livingMembers) {
-    if (!isStunned(member) && !isMezzed(member)) {
-      memberAttack(member, enemy);
-      selectAbilityForMember(member, enemy, party);
-    }
-    if (enemy.hp <= 0) break;
+  // Handle any deaths from party attacks
+  for (const dead of (GameState.enemies || []).filter(e => e.hp <= 0)) {
+    handleEnemyDeath(dead);
+    if (!GameState.combatActive) return;
   }
+  if (!GameState.enemies || GameState.enemies.length === 0) return;
 
   const healer = getHealerInParty(party);
   if (healer && healer.isAlive && healer.mana > 0) {
     performHeal(healer, party);
   }
 
-  if (typeof tickPets === 'function') tickPets(enemy);
+  if (typeof tickPets === 'function') tickPets(GameState.enemies[0]);
 
-  if (enemy.hp <= 0) {
-    handleEnemyDeath(enemy);
-    return;
+  // Handle any deaths from ability effects / pets
+  for (const dead of (GameState.enemies || []).filter(e => e.hp <= 0)) {
+    handleEnemyDeath(dead);
+    if (!GameState.combatActive) return;
   }
+  if (!GameState.enemies || GameState.enemies.length === 0) return;
 
-  // Check stun/mez/fear before enemy attacks
-  const now = Date.now();
-  if (enemy.stunUntil && now < enemy.stunUntil) {
-    addCombatLog(`${enemy.name} is stunned and cannot attack!`, 'system');
-  } else if (enemy.mezzedUntil && now < enemy.mezzedUntil) {
-    addCombatLog(`${enemy.name} is mesmerized!`, 'system');
-  } else if (enemy.fearedUntil && now < enemy.fearedUntil) {
-    addCombatLog(`${enemy.name} flees in terror!`, 'system');
-  } else {
-    const target = getCurrentTarget(party);
-    if (target && target.isAlive) {
-      enemyAttack(enemy, target, party);
+  // Each living enemy attacks the highest-threat party member
+  const nowAtk = Date.now();
+  for (const enemy of GameState.enemies.slice()) {
+    if (enemy.hp <= 0) continue;
+    if (enemy.stunUntil && nowAtk < enemy.stunUntil) {
+      addCombatLog(`${enemy.name} is stunned and cannot attack!`, 'system');
+    } else if (enemy.mezzedUntil && nowAtk < enemy.mezzedUntil) {
+      addCombatLog(`${enemy.name} is mesmerized!`, 'system');
+    } else if (enemy.fearedUntil && nowAtk < enemy.fearedUntil) {
+      addCombatLog(`${enemy.name} flees in terror!`, 'system');
+    } else {
+      const target = getCurrentTarget(party);
+      if (target && target.isAlive) {
+        enemyAttack(enemy, target, party);
+      }
     }
   }
 
@@ -385,7 +521,19 @@ function ensureMonsterLogEntry(enemyId) {
 }
 
 function handleEnemyDeath(enemy) {
-  addCombatLog(`${enemy.name} has been slain!`, 'death');
+  // Remove from active enemies array first
+  GameState.enemies = (GameState.enemies || []).filter(e => e !== enemy);
+  GameState.currentEnemy = GameState.enemies[0] || null;
+
+  const remaining = GameState.enemies.length;
+  if (remaining > 0) {
+    addCombatLog(
+      `${enemy.name} has been slain! ${remaining} ${remaining === 1 ? 'enemy' : 'enemies'} remain.`,
+      'death'
+    );
+  } else {
+    addCombatLog(`${enemy.name} has been slain!`, 'death');
+  }
 
   const zoneData = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
   const zoneXpModifier = zoneData && zoneData.xpModifier ? zoneData.xpModifier : 1;
@@ -433,8 +581,17 @@ function handleEnemyDeath(enemy) {
     }
   }
 
+  if (remaining > 0) {
+    // More enemies remain — keep combat active, just update UI
+    if (typeof updateCombatUI === 'function') updateCombatUI();
+    if (typeof updatePartyUI === 'function') updatePartyUI();
+    if (typeof updateInventoryUI === 'function') updateInventoryUI();
+    if (typeof updateKillCountUI === 'function') updateKillCountUI();
+    return;
+  }
+
+  // All enemies are dead — end the encounter
   GameState.combatActive = false;
-  GameState.currentEnemy = null;
 
   if (GameState.selectedEnemyId) {
     const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : 3000;
@@ -455,6 +612,8 @@ function handleEnemyDeath(enemy) {
 function handlePartyWipe() {
   addCombatLog('--- PARTY HAS BEEN DEFEATED ---', 'death');
   GameState.combatActive = false;
+  GameState.inCombat = false;
+  GameState.enemies = [];
   GameState.currentEnemy = null;
 
   setTimeout(() => {
@@ -948,4 +1107,4 @@ function tickManaRegen(party) {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember };
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember };

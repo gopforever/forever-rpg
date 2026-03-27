@@ -53,6 +53,14 @@ const ZONES = {
       'varsoon_the_undying',
     ],
     rareSpawnChance: 0.08,
+    groups: [
+      { members: ['gnoll_pup', 'gnoll_pup'], weight: 4 },
+      { members: ['gnoll', 'gnoll_pup'], weight: 3 },
+      { members: ['gnoll_watcher', 'gnoll'], weight: 2 },
+      { members: ['gray_wolf', 'gray_wolf'], weight: 3 },
+      { members: ['bandit', 'bandit'], weight: 2 },
+    ],
+    groupSpawnChance: 0.30,
     ambientColor: '#2d4a1e',
     minimapSVG: `<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;">
   <!-- Background sky gradient -->
@@ -427,6 +435,13 @@ const ZONES = {
       'master_brewer',
     ],
     rareSpawnChance: 0.12,
+    groups: [
+      { members: ['a_scrawny_gnoll', 'a_gnoll_guard'], weight: 4 },
+      { members: ['a_gnoll_guard', 'a_burly_gnoll'], weight: 3 },
+      { members: ['a_gnoll_guard', 'a_gnoll_shaman'], weight: 2 },
+      { members: ['a_burly_gnoll', 'a_gnoll_guard_elite'], weight: 1 },
+    ],
+    groupSpawnChance: 0.40,
     ambientColor: '#1a1008',
     connections: ['qeynos_hills', 'everfrost_peaks'],
     respawnTime: 22000,
