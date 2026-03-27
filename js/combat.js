@@ -6,7 +6,9 @@
    rollLoot, addCombatLog, addLoot, showDamageNumber, getSprite,
    updateCombatUI, updatePartyUI, updateInventoryUI, updateKillCountUI,
    showLevelUpEffect,
-   trySkillGain, hasSkill, SKILL_DISPLAY_NAMES */
+   trySkillGain, hasSkill, SKILL_DISPLAY_NAMES,
+   addThreat, getCurrentTarget, tickAbilityCasts, interruptCast,
+   dispatchAbilityEffect, selectAbilityForMember */
 
 const MAX_CARRY_SLOTS = 30;
 
@@ -33,10 +35,16 @@ function startCombat(enemyId) {
     sprite: template.sprite || null,
     loot: template.loot || [],
     statusProcs: template.statusProcs || [],
+    dots: [],
+    debuffs: {},
+    stunUntil: 0,
+    mezzedUntil: 0,
+    fearedUntil: 0,
   };
 
   GameState.combatActive = true;
   GameState.inCombat = true;
+  GameState.threatTable = {};
 
   addCombatLog(`--- ${template.name} engages! ---`, 'system');
 
@@ -63,15 +71,44 @@ function combatTick() {
   const enemy = GameState.currentEnemy;
   const party = GameState.party;
 
+  // Threat decay: reduce all threats by 1% per tick
+  if (GameState.threatTable) {
+    for (const id in GameState.threatTable) {
+      GameState.threatTable[id] = Math.max(0, GameState.threatTable[id] * 0.99);
+    }
+  }
+
   const livingMembers = party.filter(m => m.isAlive);
   if (livingMembers.length === 0) {
     handlePartyWipe();
     return;
   }
 
+  // Resolve in-flight ability casts
+  tickAbilityCasts(livingMembers, enemy);
+
+  // Tick enemy DoTs
+  if (enemy.dots && enemy.dots.length > 0) {
+    const now = Date.now();
+    enemy.dots = enemy.dots.filter(dot => dot.endTime > now);
+    for (const dot of enemy.dots) {
+      if (now >= dot.nextTick) {
+        enemy.hp = Math.max(0, enemy.hp - dot.damage);
+        addCombatLog(`${enemy.name} takes ${dot.damage} damage from a spell effect.`, 'poison');
+        dot.nextTick = now + dot.tickInterval;
+      }
+    }
+  }
+
+  if (enemy.hp <= 0) {
+    handleEnemyDeath(enemy);
+    return;
+  }
+
   for (const member of livingMembers) {
     if (!isStunned(member) && !isMezzed(member)) {
       memberAttack(member, enemy);
+      selectAbilityForMember(member, enemy, party);
     }
     if (enemy.hp <= 0) break;
   }
@@ -86,9 +123,19 @@ function combatTick() {
     return;
   }
 
-  const tank = getPartyTank(party);
-  if (tank && tank.isAlive) {
-    enemyAttack(enemy, tank, party);
+  // Check stun/mez/fear before enemy attacks
+  const now = Date.now();
+  if (enemy.stunUntil && now < enemy.stunUntil) {
+    addCombatLog(`${enemy.name} is stunned and cannot attack!`, 'system');
+  } else if (enemy.mezzedUntil && now < enemy.mezzedUntil) {
+    addCombatLog(`${enemy.name} is mesmerized!`, 'system');
+  } else if (enemy.fearedUntil && now < enemy.fearedUntil) {
+    addCombatLog(`${enemy.name} flees in terror!`, 'system');
+  } else {
+    const target = getCurrentTarget(party);
+    if (target && target.isAlive) {
+      enemyAttack(enemy, target, party);
+    }
   }
 
   const stillLiving = party.filter(m => m.isAlive);
@@ -160,6 +207,9 @@ function memberAttack(member, enemy) {
   addCombatLog(`${member.name} hits ${enemy.name} for ${damage} damage!${critText}`, logType);
   showDamageNumber(damage, null, isCrit);
 
+  // Generate threat from melee damage
+  if (typeof addThreat === 'function') addThreat(member, damage);
+
   // Skill gains on successful hit
   if (typeof trySkillGain === 'function') {
     trySkillGain(member, 'offense');
@@ -225,7 +275,8 @@ function enemyAttack(enemy, target, party) {
     return;
   }
 
-  let damage = Math.max(1, enemy.atk + Math.floor(Math.random() * (enemy.atk * 0.5)));
+  const effectiveAtk = Math.max(1, enemy.atk - (enemy.debuffs && enemy.debuffs.STR ? Math.floor(enemy.debuffs.STR / 5) : 0));
+  let damage = Math.max(1, effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5)));
   damage = applyACMitigation(damage, target);
   damage = Math.max(1, damage);
 
@@ -233,6 +284,15 @@ function enemyAttack(enemy, target, party) {
 
   addCombatLog(`${enemy.name} hits ${target.name} for ${damage} damage!`, 'enemy');
   showDamageNumber(damage, target, false);
+
+  // Interrupt casting if the target is a caster mid-cast
+  if (target.isCasting) {
+    const channelingSkill = target.skills ? (target.skills['channeling'] || 0) : 0;
+    const interruptResist = channelingSkill / 300; // max ~84% at 252 skill
+    if (Math.random() > interruptResist) {
+      interruptCast(target);
+    }
+  }
 
   // Defender gains defense skill on being hit
   if (typeof trySkillGain === 'function') trySkillGain(target, 'defense');
@@ -248,16 +308,20 @@ function enemyAttack(enemy, target, party) {
     }
   }
 
-  const procs = enemy.statusProcs || (enemy.statusEffects && enemy.statusEffects.length > 0 ? enemy.statusEffects : []);
-  for (const effect of procs) {
-    if (Math.random() < effect.chance) {
-      applyStatusEffect(target, {
-        type: effect.type,
-        endTime: Date.now() + effect.duration,
-        tickDamage: effect.damage || 0,
-        lastTick: Date.now(),
-      });
-      addCombatLog(`${target.name} is ${effect.type}ed!`, 'spell');
+  // Roll enemy status procs
+  if (enemy.statusProcs && enemy.statusProcs.length > 0) {
+    for (const proc of enemy.statusProcs) {
+      if (Math.random() < (proc.chance || 0)) {
+        applyStatusEffect(target, {
+          type: proc.type,
+          damage: proc.damage || 0,
+          duration: proc.duration || 10000,
+          endTime: Date.now() + (proc.duration || 10000),
+          tickInterval: proc.tickInterval || 3000,
+          nextTick: Date.now() + (proc.tickInterval || 3000),
+        });
+        addCombatLog(`${target.name} is afflicted with ${proc.type} from ${enemy.name}!`, 'poison');
+      }
     }
   }
 }
@@ -393,11 +457,297 @@ function handlePartyWipe() {
       member.mana = Math.max(0, Math.floor(member.maxMana * 0.1));
       member.statusEffects = [];
       if (member.statusEffectMap) member.statusEffectMap = {};
+      member.castingAbility = null;
+      member.isCasting = false;
     }
     addCombatLog('Party recovers... ready to fight again.', 'system');
     if (typeof updateCombatUI === 'function') updateCombatUI();
     if (typeof updatePartyUI === 'function') updatePartyUI();
   }, 5000);
+}
+
+// ── System 3: Threat Table ────────────────────────────────────────────────────
+
+function addThreat(member, amount) {
+  if (!GameState.threatTable) GameState.threatTable = {};
+  GameState.threatTable[member.id] = (GameState.threatTable[member.id] || 0) + amount;
+}
+
+function getCurrentTarget(party) {
+  const living = party.filter(m => m.isAlive);
+  if (living.length === 0) return null;
+  if (!GameState.threatTable || Object.keys(GameState.threatTable).length === 0) {
+    return getPartyTank(party) || living[0];
+  }
+  let best = null;
+  let bestThreat = -1;
+  for (const member of living) {
+    const threat = GameState.threatTable[member.id] || 0;
+    if (threat > bestThreat) {
+      bestThreat = threat;
+      best = member;
+    }
+  }
+  return best || getPartyTank(party) || living[0];
+}
+
+// ── System 1: Ability Cast Pipeline ──────────────────────────────────────────
+
+function tickAbilityCasts(party, enemy) {
+  const now = Date.now();
+  for (const member of party) {
+    if (!member.isAlive || !member.isCasting || !member.castingAbility) continue;
+    if (now >= member.castingAbility.castEndTime) {
+      // Cast completed — dispatch effect
+      dispatchAbilityEffect(member, member.castingAbility.ability, enemy, GameState.party);
+      member.abilityCooldowns[member.castingAbility.ability.name] =
+        now + (member.castingAbility.ability.recastTime || 0);
+      member.castingAbility = null;
+      member.isCasting = false;
+    }
+    // If still casting, do nothing else for this member this tick
+  }
+}
+
+function interruptCast(member) {
+  if (!member.isCasting) return;
+  addCombatLog(`${member.name}'s cast is interrupted!`, 'system');
+  member.castingAbility = null;
+  member.isCasting = false;
+}
+
+function dispatchAbilityEffect(caster, ability, enemy, party) {
+  const effect = ability.effect;
+  if (!effect) return;
+
+  switch (effect.type) {
+    // ── Damage ──────────────────────────────────
+    case 'damage': {
+      if (!enemy) break;
+      let dmg = effect.value || 0;
+      const resistPct = (enemy.magicResist || 0) / 100;
+      dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
+      if (caster.skills) {
+        const spellSkill = caster.skills['evocation'] || caster.skills['conjuration'] || 0;
+        dmg = Math.floor(dmg * (1 + spellSkill / 1000));
+      }
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      addCombatLog(`${caster.name} hits ${enemy.name} for ${dmg} magic damage!`, 'spell');
+      if (typeof addThreat === 'function') addThreat(caster, dmg * 1.5);
+      if (typeof trySkillGain === 'function') {
+        trySkillGain(caster, 'evocation');
+        trySkillGain(caster, 'channeling');
+      }
+      break;
+    }
+
+    case 'damage_aoe': {
+      if (!enemy) break;
+      let dmg = effect.value || 0;
+      const resistPct = (enemy.magicResist || 0) / 100;
+      dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      addCombatLog(`${caster.name} detonates an AoE for ${dmg} damage on ${enemy.name}!`, 'spell');
+      if (typeof addThreat === 'function') addThreat(caster, dmg);
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'evocation');
+      break;
+    }
+
+    case 'damage_undead': {
+      if (!enemy) break;
+      if (!enemy.isUndead) {
+        addCombatLog(`${caster.name}'s holy strike has no effect on the living.`, 'system');
+        break;
+      }
+      const dmg = Math.max(1, effect.value || 0);
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      addCombatLog(`${caster.name} smites ${enemy.name} with holy light for ${dmg}!`, 'spell');
+      if (typeof addThreat === 'function') addThreat(caster, dmg);
+      break;
+    }
+
+    // ── Healing ──────────────────────────────────
+    case 'heal':
+    case 'heal_pet': {
+      const healTarget = getLowestHPMember(party) || caster;
+      if (!healTarget || !healTarget.isAlive) break;
+      const healAmt = Math.min(effect.value || 0, Math.max(0, healTarget.maxHP - healTarget.hp));
+      healTarget.hp = Math.min(healTarget.maxHP, healTarget.hp + healAmt);
+      addCombatLog(`${caster.name} heals ${healTarget.name} for ${healAmt} HP.`, 'heal');
+      // Healing generates aggro
+      if (typeof addThreat === 'function') addThreat(caster, healAmt * 0.5);
+      if (typeof trySkillGain === 'function') {
+        trySkillGain(caster, 'alteration');
+        trySkillGain(caster, 'channeling');
+      }
+      break;
+    }
+
+    // ── Lifetap ──────────────────────────────────
+    case 'lifetap': {
+      if (!enemy) break;
+      const resistPct = (enemy.magicResist || 0) / 100;
+      let dmg = Math.max(1, Math.floor((effect.value || 0) * (1 - resistPct)));
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      caster.hp = Math.min(caster.maxHP, caster.hp + dmg);
+      addCombatLog(`${caster.name} lifetaps ${enemy.name} for ${dmg}!`, 'spell');
+      if (typeof addThreat === 'function') addThreat(caster, dmg);
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
+      break;
+    }
+
+    // ── Buff ─────────────────────────────────────
+    case 'buff': {
+      const stat = effect.stat;
+      const value = effect.value || 0;
+      const dur = effect.duration || 60000;
+      const buffTarget = (stat === 'damage' || stat === 'ac' || stat === 'attack' || stat === 'attack_speed')
+        ? caster
+        : (getLowestHPMember(party) || caster);
+      applyStatusEffect(buffTarget, { type: 'buff_' + stat, value, endTime: Date.now() + dur });
+      addCombatLog(`${caster.name} gains ${ability.name}!`, 'buff');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'abjuration');
+      break;
+    }
+
+    // ── Debuff ───────────────────────────────────
+    case 'debuff': {
+      if (!enemy) break;
+      const stat = effect.stat;
+      const value = effect.value || 0;
+      enemy.debuffs = enemy.debuffs || {};
+      enemy.debuffs[stat] = (enemy.debuffs[stat] || 0) + value;
+      addCombatLog(`${caster.name} weakens ${enemy.name} (${stat} -${value})!`, 'debuff');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
+      break;
+    }
+
+    // ── Stun ─────────────────────────────────────
+    case 'stun': {
+      if (!enemy) break;
+      const dur = effect.duration || 3000;
+      enemy.stunUntil = Date.now() + dur;
+      addCombatLog(`${caster.name} stuns ${enemy.name}!`, 'spell');
+      break;
+    }
+
+    // ── Fear ─────────────────────────────────────
+    case 'fear':
+    case 'aoe_fear': {
+      if (!enemy) break;
+      const dur = effect.duration || 10000;
+      enemy.fearedUntil = Date.now() + dur;
+      addCombatLog(`${enemy.name} flees in terror from ${caster.name}!`, 'spell');
+      break;
+    }
+
+    // ── Taunt ────────────────────────────────────
+    case 'taunt': {
+      if (!enemy || typeof addThreat !== 'function') break;
+      const maxThreat = Math.max(...Object.values(GameState.threatTable || {}), 0);
+      GameState.threatTable = GameState.threatTable || {};
+      GameState.threatTable[caster.id] = maxThreat + 500;
+      addCombatLog(`${caster.name} taunts ${enemy.name}!`, 'system');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'taunt');
+      break;
+    }
+
+    // ── Mez ──────────────────────────────────────
+    case 'mez': {
+      if (!enemy) break;
+      const dur = effect.duration || 20000;
+      enemy.mezzedUntil = Date.now() + dur;
+      addCombatLog(`${caster.name} mesmerizes ${enemy.name}!`, 'spell');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
+      break;
+    }
+
+    // ── DoT ───────────────────────────────────────
+    case 'dot': {
+      if (!enemy) break;
+      enemy.dots = enemy.dots || [];
+      enemy.dots.push({
+        damage: effect.dot || effect.value || 5,
+        endTime: Date.now() + 30000,
+        tickInterval: 3000,
+        nextTick: Date.now() + 3000,
+      });
+      addCombatLog(`${caster.name} afflicts ${enemy.name} with a damage-over-time effect!`, 'poison');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
+      break;
+    }
+
+    // ── Pet commands (stub) ───────────────────────
+    case 'summon_pet':
+    case 'pet_attack':
+    case 'pet_buff':
+      addCombatLog(`${caster.name} commands their pet!`, 'spell');
+      break;
+
+    // ── Utility ───────────────────────────────────
+    default:
+      addCombatLog(`${caster.name} uses ${ability.name}.`, 'spell');
+      break;
+  }
+}
+
+function selectAbilityForMember(member, enemy, party) {
+  if (member.isCasting) return; // already casting
+  const cls = CLASSES[member.classId];
+  if (!cls || !cls.abilities) return;
+  const now = Date.now();
+
+  // Gather candidate abilities: usable, off cooldown, mana available
+  const candidates = cls.abilities.filter(ab => {
+    if (member.abilityCooldowns[ab.name] && now < member.abilityCooldowns[ab.name]) return false;
+    if ((ab.manaCost || 0) > (member.mana || 0)) return false;
+    if (!enemy && ab.effect && ['damage', 'damage_aoe', 'damage_undead', 'stun', 'fear', 'aoe_fear', 'mez', 'dot', 'lifetap', 'taunt'].includes(ab.effect.type)) return false;
+    return true;
+  });
+
+  if (candidates.length === 0) return;
+
+  // Priority: heal if party is hurting, then damage/debuff, then buffs/utility
+  let chosen = null;
+  const lowestHP = getLowestHPMember(party);
+  const partyHurt = lowestHP && (lowestHP.hp / lowestHP.maxHP) < 0.6;
+
+  // Healers prioritize healing
+  if (partyHurt && ['cleric', 'druid', 'shaman', 'paladin', 'beastlord'].includes(member.classId)) {
+    chosen = candidates.find(ab => ab.effect && (ab.effect.type === 'heal' || ab.effect.type === 'heal_pet'));
+  }
+
+  // Casters prioritize damage
+  if (!chosen && enemy && ['wizard', 'magician', 'necromancer', 'enchanter'].includes(member.classId)) {
+    chosen = candidates.find(ab => ab.effect && ['damage', 'damage_aoe', 'lifetap', 'dot'].includes(ab.effect.type));
+  }
+
+  // Hybrids: use damage if enemy alive, heal if party hurt
+  if (!chosen && enemy) {
+    chosen = candidates.find(ab => ab.effect && ['damage', 'damage_undead', 'lifetap', 'stun', 'fear', 'aoe_fear', 'taunt'].includes(ab.effect.type));
+  }
+
+  // Fallback: any usable ability
+  if (!chosen) chosen = candidates[0];
+  if (!chosen) return;
+
+  // Deduct mana immediately
+  member.mana = Math.max(0, (member.mana || 0) - (chosen.manaCost || 0));
+
+  if ((chosen.castTime || 0) <= 0) {
+    // Instant cast
+    dispatchAbilityEffect(member, chosen, enemy, party);
+    member.abilityCooldowns[chosen.name] = now + (chosen.recastTime || 0);
+  } else {
+    // Begin cast
+    member.isCasting = true;
+    member.castingAbility = {
+      ability: chosen,
+      castEndTime: now + chosen.castTime,
+      targetType: chosen.effect ? chosen.effect.type : 'none',
+    };
+    addCombatLog(`${member.name} begins casting ${chosen.name}...`, 'spell');
+  }
 }
 
 function procClassAbility(member, enemy, damage) {
@@ -585,4 +935,4 @@ function tickManaRegen(party) {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe };
+if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember };

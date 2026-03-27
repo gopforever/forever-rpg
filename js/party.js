@@ -43,6 +43,9 @@ function createCharacter(name, classId, level = 1) {
     statusEffects: [],
     isAlive: true,
     role: cls.role || 'DPS',
+    abilityCooldowns: {},
+    castingAbility: null,
+    isCasting: false,
   };
 
   // Equip starting gear
@@ -156,42 +159,26 @@ function getHealerInParty(party) {
 }
 
 function applyStatusEffect(char, effect) {
-  const existing = char.statusEffects.find(e => e.type === effect.type);
-  if (existing) {
-    // Always refresh duration; only override tickDamage if the new effect is stronger
-    existing.endTime = effect.endTime || (Date.now() + (effect.duration || 0));
-    if (effect.tickDamage !== undefined && effect.tickDamage > existing.tickDamage) {
-      existing.tickDamage = effect.tickDamage;
-    }
-    return;
-  }
-  const applied = {
-    type: effect.type,
-    duration: effect.duration || 0,
-    tickDamage: effect.tickDamage || 0,
-    startTime: effect.startTime || Date.now(),
-    endTime: effect.endTime || (Date.now() + (effect.duration || 0)),
-  };
-  char.statusEffects.push(applied);
+  // Remove existing effect of same type first (no stacking, refresh duration)
+  char.statusEffects = (char.statusEffects || []).filter(e => e.type !== effect.type);
+  char.statusEffects.push(effect);
 }
 
 function tickStatusEffects(char) {
+  if (!char.statusEffects || char.statusEffects.length === 0) return 0;
   const now = Date.now();
+  // Remove expired effects
+  char.statusEffects = char.statusEffects.filter(e => e.endTime > now);
   let totalDamage = 0;
-
-  char.statusEffects = char.statusEffects.filter(effect => {
-    if (now >= effect.endTime) return false;
-    if (effect.tickDamage && effect.tickDamage > 0) {
-      totalDamage += effect.tickDamage;
+  for (const effect of char.statusEffects) {
+    const dmg = effect.damage || effect.tickDamage || 0;
+    if (dmg > 0) {
+      if (!effect.nextTick || now >= effect.nextTick) {
+        totalDamage += dmg;
+        effect.nextTick = now + (effect.tickInterval || 3000);
+      }
     }
-    return true;
-  });
-
-  if (totalDamage > 0) {
-    char.hp = Math.max(0, char.hp - totalDamage);
-    if (char.hp === 0) char.isAlive = false;
   }
-
   return totalDamage;
 }
 

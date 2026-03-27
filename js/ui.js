@@ -270,11 +270,23 @@ function renderPartyPanel() {
         : 0;
       const portrait = PORTRAITS ? (PORTRAITS[member.classId] || '') : '';
 
+      const myThreat = (GameState.threatTable || {})[member.id] || 0;
+      const maxThreat = Math.max(...Object.values(GameState.threatTable || {}).concat([0]));
+      const isTarget = myThreat > 0 && myThreat >= maxThreat;
+      const threatIcon = isTarget ? ' 🎯' : '';
+
+      const statusIcons = (member.statusEffects || [])
+        .filter(e => Date.now() < e.endTime)
+        .map(e => {
+          const icons = { poison: '☠', disease: '🤢', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡' };
+          return `<span class="status-icon" title="${e.type}">${icons[e.type] || '✦'}</span>`;
+        }).join('');
+
       slot.innerHTML = `
         <div class="party-member" data-char-id="${member.id}" data-index="${i}">
           <div class="member-portrait">${portrait}</div>
           <div class="member-info">
-            <div class="member-name ${member.isAlive ? '' : 'dead'}">${member.name}</div>
+            <div class="member-name ${member.isAlive ? '' : 'dead'}">${member.name}${threatIcon}</div>
             <div class="member-class">${cls ? cls.icon + ' ' + cls.name : ''} Lv.${member.level}</div>
             <div class="member-bars">
               <div class="bar-container">
@@ -287,6 +299,7 @@ function renderPartyPanel() {
                 <span class="bar-text">${member.mana}/${member.maxMana}</span>
               </div>` : ''}
             </div>
+            <div class="status-icons">${statusIcons}</div>
           </div>
         </div>
       `;

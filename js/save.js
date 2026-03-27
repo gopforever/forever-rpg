@@ -83,6 +83,10 @@ function applyLoadedSave(data) {
         : {};
     }
     if (typeof unlockSkillsForLevel === 'function') unlockSkillsForLevel(charData);
+    // Restore ability tracking fields — cast state always resets on load
+    charData.abilityCooldowns = charData.abilityCooldowns || {};
+    charData.castingAbility = null;
+    charData.isCasting = false;
     return charData;
   });
   GameState.inventory = data.inventory || [];

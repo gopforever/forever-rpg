@@ -417,6 +417,12 @@ body {
 .log-levelup { color: var(--gold-bright); font-weight: bold; }
 .log-system { color: var(--text-dim); font-style: italic; }
 .log-poison { color: #44cc44; }
+.log-buff   { color: #88ccff; }
+.log-debuff { color: #ff8844; }
+
+/* Status effect icons on party frames */
+.status-icons { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px; min-height: 14px; }
+.status-icon  { font-size: 11px; cursor: default; }
 
 /* Loot Display */
 #loot-display {
