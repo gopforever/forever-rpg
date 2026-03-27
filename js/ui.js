@@ -223,6 +223,29 @@ function renderZonePanel() {
   }
 }
 
+function changeZone(zoneId) {
+  const zone = ZONES[zoneId];
+  if (!zone) {
+    addCombatLog(`That region is not yet accessible.`, 'system');
+    return;
+  }
+
+  stopCombat();
+  GameState.zone = zoneId;
+  GameState.selectedEnemyId = null;
+
+  if (zone.flavorLines && zone.flavorLines.length > 0) {
+    const line = zone.flavorLines[Math.floor(Math.random() * zone.flavorLines.length)];
+    addCombatLog(line, 'system');
+  }
+
+  addCombatLog(`You have entered ${zone.name}.`, 'system');
+
+  renderTopBar();
+  renderZonePanel();
+  renderEnemySelector();
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
 
 function renderPartyPanel() {
   const rosterEl = document.getElementById('party-roster');

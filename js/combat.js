@@ -95,7 +95,8 @@ function combatTick() {
     const statusDamage = tickStatusEffects(member);
     if (statusDamage > 0) {
       member.hp = Math.max(0, member.hp - statusDamage);
-      addCombatLog(`${member.name} takes ${statusDamage} poison damage!`, 'poison');
+      const effectType = member.statusEffects.length > 0 ? member.statusEffects[0].type : 'status';
+      addCombatLog(`${member.name} takes ${statusDamage} ${effectType} damage!`, 'poison');
       if (member.hp <= 0) {
         member.isAlive = false;
         addCombatLog(`${member.name} has DIED!`, 'death');
