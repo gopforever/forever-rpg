@@ -2051,3 +2051,41 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   text-align: right;
   flex-shrink: 0;
 }
+
+/* ── Pet Row ─────────────────────────────────────── */
+.pet-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.pet-name {
+  color: #a0c0a0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pet-row .bar-container {
+  flex: 1;
+}
+
+.bar.pet-hp-bar {
+  background: #3a7a3a;
+}
+
+.btn-dismiss-pet {
+  font-size: 10px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  background: #5a1a1a;
+  color: #f4c97a;
+  border: 1px solid #8b3a3a;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-dismiss-pet:hover {
+  background: #8b3a3a;
+}
