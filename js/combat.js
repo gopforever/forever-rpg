@@ -19,6 +19,7 @@ function startCombat(enemyId) {
   GameState.currentEnemy = {
     id: enemyId,
     name: template.name,
+    level: template.level,
     hp: template.hp,
     maxHP: template.hp,
     atk: template.atk,
