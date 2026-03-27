@@ -1311,10 +1311,17 @@ function renderCityTabContent(tab) {
       const zone  = (typeof ZONES !== 'undefined' && ZONES[entry.zone]) ? ZONES[entry.zone].name : entry.zone;
       const name  = entry.isPlayer ? `[YOU] ${entry.name}` : entry.name;
       const rowClass = entry.isPlayer ? 'leaderboard-you' : '';
+      const partyIconsHtml = (entry.party && entry.party.length)
+        ? entry.party.map(m => {
+            const ic  = (typeof CLASS_ICONS  !== 'undefined' && CLASS_ICONS[m.classId])  || '⚔';
+            const col = (typeof CLASS_COLORS !== 'undefined' && CLASS_COLORS[m.classId]) || '#e8d5a0';
+            return `<span style="color:${col}" title="${m.classId}">${ic}</span>`;
+          }).join('')
+        : `<span style="color:${color}">${icon}</span>`;
       return `<tr class="${rowClass}">
         <td>${i + 1}</td>
         <td style="color:${color}">${name}</td>
-        <td>${icon} ${entry.classId.charAt(0).toUpperCase() + entry.classId.slice(1)}</td>
+        <td><span class="party-icons">${partyIconsHtml}</span></td>
         <td>${entry.level}</td>
         <td>${entry.kills.toLocaleString()}</td>
         <td>${zone}</td>
@@ -1325,7 +1332,7 @@ function renderCityTabContent(tab) {
       <div class="city-section-title">🏆 World Rankings — Top 20</div>
       <table class="leaderboard-table">
         <thead>
-          <tr><th>#</th><th>Name</th><th>Class</th><th>Level</th><th>Kills</th><th>Zone</th></tr>
+          <tr><th>#</th><th>Name</th><th>Party</th><th>Level</th><th>Kills</th><th>Zone</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
