@@ -35,7 +35,8 @@ function getAC(char) {
   agi = Math.max(0, agi + penalty.agi);
   let agiBonus = Math.floor((agi - 75) * 0.5);
   if (agi < 75) agiBonus = -((75 - agi) * 2);
-  return Math.max(0, baseAC + agiBonus);
+  const defenseSkill = char.skills ? (char.skills['defense'] || 0) : 0;
+  return Math.max(0, baseAC + agiBonus + Math.floor(defenseSkill / 10));
 }
 
 function getMeleeDamage(attacker, weapon) {
@@ -43,7 +44,14 @@ function getMeleeDamage(attacker, weapon) {
   const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(attacker) : { str: 0, agi: 0 };
   str = Math.max(0, str + penalty.str);
   const weaponDmg = weapon ? weapon.dmg : 2;
-  return Math.max(1, Math.floor(((str - 15) / 10) + weaponDmg + (attacker.level * 0.5) + Math.random() * weaponDmg));
+  const offenseSkill = attacker.skills ? (attacker.skills['offense'] || 0) : 0;
+  return Math.max(1, Math.floor(
+    ((str - 15) / 10) +
+    weaponDmg +
+    (attacker.level * 0.5) +
+    (offenseSkill / 20) +
+    Math.random() * weaponDmg
+  ));
 }
 
 function getCritChance(char) {
@@ -54,7 +62,9 @@ function getCritChance(char) {
 function getMissChance(attacker, defender) {
   const atkDex = attacker.DEX + (attacker.statBonuses ? attacker.statBonuses.DEX || 0 : 0);
   const defAgi = defender.AGI + (defender.statBonuses ? defender.statBonuses.AGI || 0 : 0);
-  return Math.max(0, Math.min(0.5, (defAgi - atkDex) / 400));
+  const dodgeSkill = defender.skills ? (defender.skills['dodge'] || 0) : 0;
+  const base = Math.max(0, (defAgi - atkDex) / 400);
+  return Math.min(0.5, base + dodgeSkill / 1000);
 }
 
 function applyACMitigation(damage, defender) {

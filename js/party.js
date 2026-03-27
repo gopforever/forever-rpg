@@ -59,6 +59,7 @@ function createCharacter(name, classId, level = 1) {
   computeDerivedStats(char);
   char.hp = char.maxHP;
   char.mana = char.maxMana;
+  char.skills = (typeof initSkills === 'function') ? initSkills(classId, level) : {};
 
   return char;
 }
@@ -132,6 +133,7 @@ function levelUp(char) {
   computeDerivedStats(char);
   char.hp = char.maxHP;
   char.mana = char.maxMana;
+  if (typeof unlockSkillsForLevel === 'function') unlockSkillsForLevel(char);
 }
 
 function getPartyTank(party) {

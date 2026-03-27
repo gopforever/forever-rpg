@@ -5,7 +5,8 @@
    applyStatusEffect, tickStatusEffects, isStunned, isMezzed, isSlowed,
    rollLoot, addCombatLog, addLoot, showDamageNumber, getSprite,
    updateCombatUI, updatePartyUI, updateInventoryUI, updateKillCountUI,
-   showLevelUpEffect */
+   showLevelUpEffect,
+   trySkillGain, hasSkill, SKILL_DISPLAY_NAMES */
 
 const MAX_CARRY_SLOTS = 30;
 
@@ -102,9 +103,33 @@ function combatTick() {
         addCombatLog(`${member.name} has DIED!`, 'death');
       }
     }
+
+    // Monk mend: passive regen via skill
+    if (
+      member.classId === 'monk' &&
+      typeof hasSkill === 'function' && hasSkill(member, 'mend') &&
+      member.hp < member.maxHP * 0.8 &&
+      Math.random() < 0.1
+    ) {
+      const mendSkill = (member.skills && member.skills['mend']) || 0;
+      const mendHeal = Math.max(1, Math.floor(mendSkill / 2));
+      member.hp = Math.min(member.maxHP, member.hp + mendHeal);
+      if (typeof trySkillGain === 'function') trySkillGain(member, 'mend');
+    }
   }
 
   if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+function getWeaponSkillName(weapon) {
+  if (!weapon) return 'oneHandBlunt';
+  const t = weapon.weaponType || weapon.slot || '';
+  if (t === 'piercing' || t === 'dagger') return 'piercing';
+  if (t === 'twoHandSlash' || t === '2hslash') return 'twoHandSlash';
+  if (t === 'twoHandBlunt' || t === '2hblunt') return 'twoHandBlunt';
+  if (t === 'twoHandPierce') return 'piercing';
+  if (t.includes('blunt') || t.includes('mace') || t.includes('staff')) return 'oneHandBlunt';
+  return 'oneHandSlash';
 }
 
 function memberAttack(member, enemy) {
@@ -135,10 +160,61 @@ function memberAttack(member, enemy) {
   addCombatLog(`${member.name} hits ${enemy.name} for ${damage} damage!${critText}`, logType);
   showDamageNumber(damage, null, isCrit);
 
+  // Skill gains on successful hit
+  if (typeof trySkillGain === 'function') {
+    trySkillGain(member, 'offense');
+    const weaponSkill = getWeaponSkillName(weaponId ? weapon : null);
+    trySkillGain(member, weaponSkill);
+
+    // Double attack proc
+    if (typeof hasSkill === 'function' && hasSkill(member, 'doubleAttack')) {
+      const doubleChance = (member.skills['doubleAttack'] || 0) / 500;
+      if (Math.random() < doubleChance) {
+        let dmg2 = getMeleeDamage(member, weapon);
+        dmg2 = applyACMitigation(dmg2, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
+        dmg2 = Math.max(1, dmg2);
+        enemy.hp = Math.max(0, enemy.hp - dmg2);
+        addCombatLog(`${member.name} hits ${enemy.name} again for ${dmg2} (Double Attack)!`, 'hit');
+        trySkillGain(member, 'doubleAttack');
+      }
+    }
+  }
+
   procClassAbility(member, enemy, damage);
 }
 
 function enemyAttack(enemy, target, party) {
+  // Dodge check
+  if (typeof hasSkill === 'function' && hasSkill(target, 'dodge')) {
+    const dodgeChance = (target.skills['dodge'] || 0) / 600;
+    if (Math.random() < dodgeChance) {
+      addCombatLog(`${target.name} dodges ${enemy.name}'s attack!`, 'miss');
+      if (typeof trySkillGain === 'function') trySkillGain(target, 'dodge');
+      return;
+    }
+  }
+
+  // Parry check
+  if (typeof hasSkill === 'function' && hasSkill(target, 'parry')) {
+    const parryChance = (target.skills['parry'] || 0) / 700;
+    if (Math.random() < parryChance) {
+      addCombatLog(`${target.name} parries ${enemy.name}'s attack!`, 'miss');
+      if (typeof trySkillGain === 'function') trySkillGain(target, 'parry');
+
+      // Riposte check (only triggers after successful parry)
+      if (typeof hasSkill === 'function' && hasSkill(target, 'riposte')) {
+        const riposteChance = (target.skills['riposte'] || 0) / 800;
+        if (Math.random() < riposteChance) {
+          const riposteDmg = Math.max(1, Math.floor(getMeleeDamage(target, null) * 0.7));
+          enemy.hp = Math.max(0, enemy.hp - riposteDmg);
+          addCombatLog(`${target.name} ripostes for ${riposteDmg} damage!`, 'hit');
+          if (typeof trySkillGain === 'function') trySkillGain(target, 'riposte');
+        }
+      }
+      return;
+    }
+  }
+
   const missChance = getMissChance(
     { DEX: 75, statBonuses: {} },
     target
@@ -157,6 +233,9 @@ function enemyAttack(enemy, target, party) {
 
   addCombatLog(`${enemy.name} hits ${target.name} for ${damage} damage!`, 'enemy');
   showDamageNumber(damage, target, false);
+
+  // Defender gains defense skill on being hit
+  if (typeof trySkillGain === 'function') trySkillGain(target, 'defense');
 
   if (target.hp <= 0) {
     target.isAlive = false;
@@ -199,6 +278,12 @@ function performHeal(healer, party) {
   target.hp = Math.min(target.maxHP, target.hp + healAmount);
 
   addCombatLog(`${healer.name} heals ${target.name} for ${healAmount}!`, 'heal');
+
+  // Skill gains on successful heal
+  if (typeof trySkillGain === 'function') {
+    trySkillGain(healer, 'channeling');
+    trySkillGain(healer, 'alteration');
+  }
 }
 
 /**
