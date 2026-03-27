@@ -300,6 +300,18 @@ function renderPartyPanel() {
               </div>` : ''}
             </div>
             <div class="status-icons">${statusIcons}</div>
+            ${(typeof getPetForOwner === 'function' && getPetForOwner(member.id)) ? (() => {
+              const pet = getPetForOwner(member.id);
+              const petHpPct = Math.max(0, Math.min(100, (pet.hp / pet.maxHP) * 100));
+              return `<div class="pet-row">
+                <span class="pet-name">${pet.name}</span>
+                <div class="bar-container">
+                  <div class="bar pet-hp-bar" style="width:${petHpPct}%"></div>
+                  <span class="bar-text">${pet.hp}/${pet.maxHP}</span>
+                </div>
+                <button class="btn-dismiss-pet" onclick="dismissPet('${member.id}')">Dismiss</button>
+              </div>`;
+            })() : ''}
           </div>
         </div>
       `;
