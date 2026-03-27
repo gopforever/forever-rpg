@@ -495,6 +495,18 @@ const ENEMIES = {
     hp: 50,
     atk: 7,
     ac: 5,
+    xp: 1500,
+    type: 'humanoid',
+    isRare: false,
+    isUndead: false,
+    lootTable: [
+      { itemId: 'gnoll_tooth', chance: 0.4, quantity: [1, 2] },
+      { itemId: 'copper_coin', chance: 0.6, quantity: [2, 6] },
+    ],
+    statusEffects: [],
+    description: 'A runty, underfed gnoll barely able to hold its weapon steady.',
+  },
+
   scrawny_gnoll: {
     id: 'scrawny_gnoll',
     name: 'Scrawny Gnoll',
@@ -523,6 +535,10 @@ const ENEMIES = {
     atk: 11,
     ac: 8,
     xp: 3000,
+    type: 'humanoid',
+    isRare: false,
+    isUndead: false,
+    lootTable: [
       { itemId: 'copper_coin', chance: 0.7, quantity: [1, 8] },
       { itemId: 'silver_coin', chance: 0.09, quantity: [1, 1] },
     ],
@@ -560,6 +576,10 @@ const ENEMIES = {
     atk: 15,
     ac: 11,
     xp: 5000,
+    type: 'humanoid',
+    isRare: false,
+    isUndead: false,
+    lootTable: [
       { itemId: 'gnoll_fang', chance: 0.55, quantity: [1, 2] },
       { itemId: 'copper_coin', chance: 0.8, quantity: [3, 12] },
       { itemId: 'silver_coin', chance: 0.14, quantity: [1, 2] },
@@ -680,13 +700,6 @@ const ENEMIES = {
     ],
     statusEffects: [],
     description: "Massive constrictors that lurk in Blackburrow's flooded lower passages.",
-      { itemId: 'gnoll_fang', chance: 0.65, quantity: [1, 3] },
-      { itemId: 'gnoll_hide_lariat', chance: 0.05, quantity: [1, 1] },
-      { itemId: 'copper_coin', chance: 0.82, quantity: [4, 16] },
-      { itemId: 'silver_coin', chance: 0.22, quantity: [1, 4] },
-    ],
-    statusEffects: [],
-    description: 'Stationed at key tunnels deep in Blackburrow. Disciplined and aggressive.',
   },
 
   gnoll_shaman: {
@@ -804,11 +817,6 @@ const ENEMIES = {
   lord_elgnub: {
     id: 'lord_elgnub',
     name: 'Lord Elgnub',
-    level: 13,
-    hp: 280,
-    atk: 28,
-    ac: 20,
-    xp: 18000,
     level: 15,
     hp: 320,
     atk: 32,
@@ -829,8 +837,8 @@ const ENEMIES = {
     description: 'Lord Elgnub rules the deepest warrens of Blackburrow with absolute authority. His very name causes lesser gnolls to tremble.',
   },
 
-  gnoll_high_shaman: {
-    id: 'gnoll_high_shaman',
+  gnoll_high_shaman_bb: {
+    id: 'gnoll_high_shaman_bb',
     name: 'Gnoll High Shaman',
     level: 12,
     hp: 220,
@@ -875,14 +883,18 @@ const ENEMIES = {
     description: 'The gnoll responsible for Blackburrow Stout, a brew famous (or infamous) across Norrath.',
   },
 
-  gnoll_commander: {
-    id: 'gnoll_commander',
+  gnoll_commander_bb: {
+    id: 'gnoll_commander_bb',
     name: 'Gnoll Commander',
     level: 10,
     hp: 170,
     atk: 19,
     ac: 14,
     xp: 9000,
+    type: 'humanoid',
+    isRare: true,
+    isUndead: false,
+    lootTable: [
       { itemId: 'spiked_collar', chance: 1.0, quantity: [1, 1] },
       { itemId: 'gnoll_fang', chance: 1.0, quantity: [3, 6] },
       { itemId: 'silver_coin', chance: 1.0, quantity: [5, 15] },
@@ -904,14 +916,6 @@ const ENEMIES = {
     isRare: true,
     isUndead: false,
     lootTable: [
-      { itemId: 'gnoll_fang', chance: 0.7, quantity: [1, 3] },
-      { itemId: 'commanders_sword', chance: 0.2, quantity: [1, 1] },
-      { itemId: 'copper_coin', chance: 1.0, quantity: [6, 20] },
-      { itemId: 'silver_coin', chance: 0.4, quantity: [2, 8] },
-      { itemId: 'gold_coin', chance: 0.1, quantity: [1, 2] },
-    ],
-    statusEffects: [],
-    description: 'Commands the gnoll war parties with tactical precision. A dangerous foe who never fights alone.',
       { itemId: 'blackburrow_stout', chance: 1.0, quantity: [1, 1] },
       { itemId: 'copper_coin', chance: 0.9, quantity: [5, 15] },
       { itemId: 'silver_coin', chance: 0.25, quantity: [1, 4] },
