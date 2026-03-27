@@ -861,3 +861,292 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   #game-container { grid-template-columns: 1fr; grid-template-rows: auto; }
   #left-sidebar, #right-sidebar { border: none; }
 }
+
+/* ─── Stop Fighting Button ────────────────────────────────────────────────── */
+
+.btn-stop-combat {
+  background: linear-gradient(180deg, #5a1a1a 0%, #3a0a0a 100%);
+  border: 2px solid #8b2222;
+  color: #ff8888;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 8px;
+}
+.btn-stop-combat:hover {
+  background: linear-gradient(180deg, #7a2a2a 0%, #5a1a1a 100%);
+  border-color: #cc4444;
+  color: #ffaaaa;
+  box-shadow: 0 0 10px rgba(200, 50, 50, 0.4);
+}
+.btn-stop-combat:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-stop-combat.combat-active {
+  animation: combatPulse 2s ease-in-out infinite;
+}
+@keyframes combatPulse {
+  0%, 100% { border-color: #8b2222; }
+  50% { border-color: #ff4444; box-shadow: 0 0 12px rgba(255, 68, 68, 0.5); }
+}
+
+/* ─── Inventory Panel ─────────────────────────────────────────────────────── */
+
+.inv-weight-bar-area {
+  padding: 6px 0 10px 0;
+}
+
+.inv-weight-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inv-weight-label.encumbered {
+  color: #ff6644;
+}
+
+.encumbered-warn {
+  color: #ff4422;
+  font-weight: bold;
+  animation: encumbrancePulse 1s ease-in-out infinite;
+}
+
+@keyframes encumbrancePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.inv-weight-track {
+  height: 6px;
+  background: #1a1208;
+  border: 1px solid #4a3820;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.inv-weight-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2a7a2a, #44cc44);
+  transition: width 0.4s ease;
+}
+
+.inv-weight-fill.enc-fill {
+  background: linear-gradient(90deg, #aa4422, #ff6644);
+}
+
+.inv-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.inv-tab {
+  flex: 1;
+  background: #1a1208;
+  border: 1px solid #4a3820;
+  color: var(--text-secondary);
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  padding: 5px 4px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.inv-tab:hover {
+  background: #2d1f0e;
+  color: var(--text-primary);
+}
+
+.inv-tab.active {
+  background: linear-gradient(180deg, #2d1f0e, #1a1208);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ─── Inventory Grid ──────────────────────────────────────────────────────── */
+
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+}
+
+.bank-grid {
+  grid-template-columns: repeat(10, 1fr);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.inv-slot {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #2a1e0e;
+  border-radius: 2px;
+  background: #0d0a05;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+  min-width: 0;
+}
+
+.inv-slot:hover {
+  border-color: #c8a84b;
+  background: #1a1208;
+}
+
+.inv-slot.empty {
+  background: #080602;
+}
+
+.inv-slot.filled {
+  border-color: #3a2a10;
+}
+
+.inv-slot.rarity-magic { border-color: #224488; }
+.inv-slot.rarity-rare  { border-color: #886600; }
+.inv-slot.rarity-named { border-color: #884400; }
+
+.inv-slot:hover.rarity-magic { border-color: #5588ff; }
+.inv-slot:hover.rarity-rare  { border-color: #ffcc00; }
+.inv-slot:hover.rarity-named { border-color: #ff8800; }
+
+.inv-slot-icon {
+  width: 80%;
+  height: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+}
+
+.inv-slot-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inv-slot-count {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 0.55rem;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* ─── Bag Slots ───────────────────────────────────────────────────────────── */
+
+.bag-slots-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bag-main-slot {
+  border: 2px solid #4a3820;
+  border-radius: 4px;
+  padding: 8px;
+  background: #12100d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.bag-main-slot:hover {
+  border-color: var(--gold);
+}
+
+.bag-main-slot.filled {
+  border-color: #5a3a18;
+}
+
+.bag-main-slot.empty {
+  border-color: #2a1e0e;
+  color: var(--text-dim);
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.bag-icon {
+  font-size: 1.5rem;
+}
+
+.bag-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.bag-capacity {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.bag-reduction {
+  font-size: 0.65rem;
+  color: #44cc88;
+  background: #0a1a0e;
+  border: 1px solid #1a4a2a;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.bag-contents-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  margin-top: 4px;
+  padding: 4px;
+  background: #0a0805;
+  border: 1px solid #2a1e0e;
+  border-radius: 2px;
+}
+
+/* ─── Bank ────────────────────────────────────────────────────────────────── */
+
+.bank-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.btn-deposit-all {
+  background: #1a2a1a;
+  border: 1px solid #2a5a2a;
+  color: #44cc44;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-deposit-all:hover {
+  background: #2a3a2a;
+  border-color: #44cc44;
+}
+
+.bank-slot {
+  background: #050403;
+}

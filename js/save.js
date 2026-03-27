@@ -7,6 +7,9 @@ function saveGame() {
     timestamp: Date.now(),
     party: GameState.party,
     inventory: GameState.inventory,
+    bags: GameState.bags,
+    bagContents: GameState.bagContents,
+    bank: GameState.bank,
     gold: GameState.gold,
     silver: GameState.silver,
     copper: GameState.copper,
@@ -75,6 +78,9 @@ function applyLoadedSave(data) {
     return charData;
   });
   GameState.inventory = data.inventory || [];
+  if (data.bags !== undefined) GameState.bags = data.bags;
+  if (data.bagContents !== undefined) GameState.bagContents = data.bagContents;
+  if (data.bank !== undefined) GameState.bank = data.bank;
   GameState.gold = data.gold || 0;
   GameState.silver = data.silver || 0;
   GameState.copper = data.copper || 0;

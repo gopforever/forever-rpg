@@ -30,14 +30,18 @@ function getAC(char) {
       }
     }
   }
-  const agi = char.AGI + (char.statBonuses ? char.statBonuses.AGI || 0 : 0);
+  let agi = char.AGI + (char.statBonuses ? char.statBonuses.AGI || 0 : 0);
+  const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(char) : { str: 0, agi: 0 };
+  agi = Math.max(0, agi + penalty.agi);
   let agiBonus = Math.floor((agi - 75) * 0.5);
   if (agi < 75) agiBonus = -((75 - agi) * 2);
   return Math.max(0, baseAC + agiBonus);
 }
 
 function getMeleeDamage(attacker, weapon) {
-  const str = attacker.STR + (attacker.statBonuses ? attacker.statBonuses.STR || 0 : 0);
+  let str = attacker.STR + (attacker.statBonuses ? attacker.statBonuses.STR || 0 : 0);
+  const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(attacker) : { str: 0, agi: 0 };
+  str = Math.max(0, str + penalty.str);
   const weaponDmg = weapon ? weapon.dmg : 2;
   return Math.max(1, Math.floor(((str - 15) / 10) + weaponDmg + (attacker.level * 0.5) + Math.random() * weaponDmg));
 }
@@ -125,4 +129,60 @@ function getSaveVsMagic(char) {
   return Math.min(85, Math.floor(wis / 5) + bonus);
 }
 
-if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic };
+// ─── Weight & Encumbrance System ──────────────────────────────────────────────
+
+function getWeightLimit(character) {
+  return Math.max(10, (character.STR || 0) + 30);
+}
+
+function getCurrentCarryWeight(character) {
+  let total = 0;
+  const equipment = character.equipment || {};
+  for (const itemId of Object.values(equipment)) {
+    if (itemId && ITEMS[itemId]) {
+      total += ITEMS[itemId].weight || 0;
+    }
+  }
+  return total;
+}
+
+function getInventoryWeight() {
+  let total = 0;
+  for (const stack of (GameState.inventory || [])) {
+    if (!stack) continue;
+    const item = ITEMS[stack.itemId];
+    if (item) total += (item.weight || 0) * stack.quantity;
+  }
+  for (let i = 0; i < 4; i++) {
+    const bagId = GameState.bags ? GameState.bags[i] : null;
+    const bag = bagId ? ITEMS[bagId] : null;
+    const reduction = bag ? (bag.weightReduction || 0) / 100 : 0;
+    const contents = GameState.bagContents ? GameState.bagContents[i] : {};
+    for (const stack of Object.values(contents || {})) {
+      if (stack && stack.itemId) {
+        const item = ITEMS[stack.itemId];
+        if (item) total += ((item.weight || 0) * stack.quantity) * (1 - reduction);
+      }
+    }
+  }
+  return parseFloat(total.toFixed(1));
+}
+
+function isEncumbered(character) {
+  const carried = getCurrentCarryWeight(character) + getInventoryWeight();
+  const limit = getWeightLimit(character);
+  return carried > limit;
+}
+
+function getEncumbrancePenalty(character) {
+  if (!isEncumbered(character)) return { str: 0, agi: 0 };
+  const carried = getCurrentCarryWeight(character) + getInventoryWeight();
+  const limit = getWeightLimit(character);
+  const overPct = Math.min(1, (carried - limit) / limit);
+  return {
+    str: -Math.floor(overPct * 30),
+    agi: -Math.floor(overPct * 20),
+  };
+}
+
+if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };

@@ -111,6 +111,9 @@ function handleBeginAdventure() {
 
   GameState.party = createParty(chars);
   GameState.copper = 10;
+  GameState.bags = ['small_pouch', null, null, null];
+  GameState.bagContents = [{}, {}, {}, {}];
+  GameState.bank = [];
 
   hideCharacterCreation();
   initMainUI();
@@ -133,6 +136,7 @@ function initMainUI() {
   renderStatsPanel();
   renderEquipmentPanel();
   renderSpellsPanel();
+  renderInventoryPanel();
 
   initTooltips();
   restorePanelPositions();
@@ -706,6 +710,7 @@ function updateCombatUI() {
   updateEnemyDisplay();
   updatePartyUI();
   renderTopBar();
+  if (typeof updateStopButtonState === 'function') updateStopButtonState();
 }
 
 function updatePartyUI() {
@@ -717,6 +722,8 @@ function updatePartyUI() {
 }
 
 function updateInventoryUI() {
+  renderInventoryPanel();
+
   const invEl = document.getElementById('inventory-list');
   if (!invEl) return;
 
@@ -787,6 +794,182 @@ function handleImportSave() {
   if (modal) modal.style.display = 'flex';
 }
 
+// ─── Inventory Panel ──────────────────────────────────────────────────────────
+
+function getItemIcon(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return '?';
+  if (item.slot === 'primary' || item.slot === 'secondary') return '⚔';
+  if (item.slot === 'head') return '🪖';
+  if (item.slot === 'chest') return '🛡';
+  if (item.slot === 'ring1' || item.slot === 'ring2') return '💍';
+  if (item.slot === 'ear1' || item.slot === 'ear2') return '💎';
+  if (item.slot === 'neck') return '📿';
+  if (item.type === 'bag') return '👝';
+  return '📦';
+}
+
+function renderInventoryPanel() {
+  const panel = document.getElementById('inventory-panel');
+  if (!panel) return;
+
+  const carriedWeight = typeof getInventoryWeight === 'function' ? getInventoryWeight() : 0;
+  const inspectedChar = GameState.party[GameState.inspectedCharIndex || 0];
+  const weightLimit = inspectedChar && typeof getWeightLimit === 'function' ? getWeightLimit(inspectedChar) : 100;
+  const encumbered = inspectedChar && typeof isEncumbered === 'function' ? isEncumbered(inspectedChar) : false;
+
+  panel.innerHTML = `
+    <div class="inv-weight-bar-area">
+      <div class="inv-weight-label ${encumbered ? 'encumbered' : ''}">
+        ⚖ Weight: ${carriedWeight} / ${weightLimit} stone
+        ${encumbered ? '<span class="encumbered-warn">ENCUMBERED!</span>' : ''}
+      </div>
+      <div class="inv-weight-track">
+        <div class="inv-weight-fill ${encumbered ? 'enc-fill' : ''}"
+             style="width:${Math.min(100, weightLimit > 0 ? (carriedWeight / weightLimit) * 100 : 0)}%"></div>
+      </div>
+    </div>
+    <div class="inv-tabs">
+      <button class="inv-tab active" data-tab="carry">🎒 Carry</button>
+      <button class="inv-tab" data-tab="bags">👝 Bags</button>
+      <button class="inv-tab" data-tab="bank">🏦 Bank</button>
+    </div>
+    <div class="inv-tab-content" id="inv-tab-carry">
+      ${renderCarrySlots()}
+    </div>
+    <div class="inv-tab-content" id="inv-tab-bags" style="display:none">
+      ${renderBagSlots()}
+    </div>
+    <div class="inv-tab-content" id="inv-tab-bank" style="display:none">
+      ${renderBankSlots()}
+    </div>
+  `;
+
+  panel.querySelectorAll('.inv-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      panel.querySelectorAll('.inv-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      panel.querySelectorAll('.inv-tab-content').forEach(c => c.style.display = 'none');
+      const target = panel.querySelector(`#inv-tab-${tab.dataset.tab}`);
+      if (target) target.style.display = '';
+    });
+  });
+
+  panel.querySelectorAll('[data-item]').forEach(el => {
+    if (el.dataset.item) {
+      attachTooltip(el, () => getItemTooltipHTML(el.dataset.item));
+    }
+  });
+
+  const depositBtn = panel.querySelector('#deposit-all-btn');
+  if (depositBtn) {
+    depositBtn.addEventListener('click', () => {
+      if (typeof depositAllToBank === 'function') depositAllToBank();
+    });
+  }
+}
+
+function renderCarrySlots() {
+  const inventory = GameState.inventory || [];
+  const MAX_SLOTS = typeof MAX_CARRY_SLOTS !== 'undefined' ? MAX_CARRY_SLOTS : 30;
+  const slots = [];
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const stack = inventory[i];
+    if (stack) {
+      const item = ITEMS[stack.itemId];
+      const rarityClass = item ? `rarity-${item.rarity}` : '';
+      slots.push(`
+        <div class="inv-slot filled ${rarityClass}" data-item="${stack.itemId}" data-slot-index="${i}">
+          <div class="inv-slot-icon">${getItemIcon(stack.itemId)}</div>
+          <div class="inv-slot-count">${stack.quantity > 1 ? stack.quantity : ''}</div>
+        </div>
+      `);
+    } else {
+      slots.push(`<div class="inv-slot empty" data-slot-index="${i}"></div>`);
+    }
+  }
+  return `<div class="inv-grid">${slots.join('')}</div>`;
+}
+
+function renderBagSlots() {
+  const bags = GameState.bags || [null, null, null, null];
+  const bagContents = GameState.bagContents || [{}, {}, {}, {}];
+  let html = '<div class="bag-slots-row">';
+  for (let i = 0; i < 4; i++) {
+    const bagId = bags[i];
+    const bag = bagId ? ITEMS[bagId] : null;
+    const usedSlots = bag ? Object.keys(bagContents[i] || {}).filter(k => bagContents[i][k]).length : 0;
+    html += `
+      <div class="bag-slot-container">
+        <div class="bag-main-slot ${bag ? 'filled' : 'empty'}" data-bag-index="${i}" ${bag ? `data-item="${bagId}"` : ''}>
+          ${bag ? `
+            <div class="bag-icon">${getItemIcon(bagId)}</div>
+            <div class="bag-name">${bag.name}</div>
+            <div class="bag-capacity">${usedSlots}/${bag.capacity}</div>
+            ${bag.weightReduction > 0 ? `<div class="bag-reduction">${bag.weightReduction}% WR</div>` : ''}
+          ` : '<div class="empty-bag-label">Empty Bag Slot</div>'}
+        </div>
+        ${bag ? `
+          <div class="bag-contents-grid">
+            ${renderBagContents(i, bag.capacity)}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderBagContents(bagIndex, capacity) {
+  const contents = (GameState.bagContents || [{}, {}, {}, {}])[bagIndex] || {};
+  let html = '';
+  for (let slot = 0; slot < capacity; slot++) {
+    const stack = contents[slot];
+    if (stack && stack.itemId) {
+      const item = ITEMS[stack.itemId];
+      const rarityClass = item ? `rarity-${item.rarity}` : '';
+      html += `
+        <div class="inv-slot filled ${rarityClass}" data-item="${stack.itemId}" data-bag-index="${bagIndex}" data-bag-slot="${slot}">
+          <div class="inv-slot-icon">${getItemIcon(stack.itemId)}</div>
+          <div class="inv-slot-count">${stack.quantity > 1 ? stack.quantity : ''}</div>
+        </div>
+      `;
+    } else {
+      html += `<div class="inv-slot empty" data-bag-index="${bagIndex}" data-bag-slot="${slot}"></div>`;
+    }
+  }
+  return html;
+}
+
+function renderBankSlots() {
+  const bank = GameState.bank || [];
+  const BANK_SLOTS = 100;
+  const slots = [];
+  for (let i = 0; i < BANK_SLOTS; i++) {
+    const stack = bank[i];
+    if (stack) {
+      const item = ITEMS[stack.itemId];
+      const rarityClass = item ? `rarity-${item.rarity}` : '';
+      slots.push(`
+        <div class="inv-slot filled ${rarityClass}" data-item="${stack.itemId}" data-bank-slot="${i}">
+          <div class="inv-slot-icon">${getItemIcon(stack.itemId)}</div>
+          <div class="inv-slot-count">${stack.quantity > 1 ? stack.quantity : ''}</div>
+        </div>
+      `);
+    } else {
+      slots.push(`<div class="inv-slot empty bank-slot" data-bank-slot="${i}"></div>`);
+    }
+  }
+  return `
+    <div class="bank-header">
+      <span>🏦 Bank of Qeynos — ${bank.filter(Boolean).length}/${BANK_SLOTS} slots used</span>
+      <button class="btn-deposit-all" id="deposit-all-btn">Deposit All</button>
+    </div>
+    <div class="inv-grid bank-grid">${slots.join('')}</div>
+  `;
+}
+
 // ─── Module Export ────────────────────────────────────────────────────────────
 
 if (typeof module !== 'undefined') module.exports = {
@@ -803,5 +986,11 @@ if (typeof module !== 'undefined') module.exports = {
   showLevelUpEffect,
   renderEnemySelector,
   updateGameTime,
-  showOfflineProgressModal
+  showOfflineProgressModal,
+  renderInventoryPanel,
+  renderCarrySlots,
+  renderBagSlots,
+  renderBagContents,
+  renderBankSlots,
+  getItemIcon,
 };

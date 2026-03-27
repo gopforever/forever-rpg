@@ -7,6 +7,8 @@
    updateCombatUI, updatePartyUI, updateInventoryUI, updateKillCountUI,
    showLevelUpEffect */
 
+const MAX_CARRY_SLOTS = 30;
+
 function startCombat(enemyId) {
   const template = ENEMIES[enemyId];
   if (!template) {
@@ -353,12 +355,86 @@ function procClassAbility(member, enemy, damage) {
 
 function addToInventory(itemId, quantity) {
   if (!GameState.inventory) GameState.inventory = [];
-  const existing = GameState.inventory.find(stack => stack.itemId === itemId);
+
+  const item = ITEMS[itemId];
+
+  // Try to stack in existing slot
+  const existing = GameState.inventory.find(stack => stack && stack.itemId === itemId);
   if (existing) {
     existing.quantity += quantity;
-  } else {
-    GameState.inventory.push({ itemId, quantity, item: ITEMS[itemId] });
+    return true;
   }
+
+  // Check if we have a free slot (max 30 base carry slots)
+  if (GameState.inventory.filter(Boolean).length >= MAX_CARRY_SLOTS) {
+    // Try to fit in a bag
+    if (GameState.bags) {
+      for (let i = 0; i < 4; i++) {
+        if (GameState.bags[i] && addToBag(i, itemId, quantity)) {
+          return true;
+        }
+      }
+    }
+    addCombatLog(`Inventory full! ${item ? item.name : itemId} lost!`, 'system');
+    return false;
+  }
+
+  GameState.inventory.push({ itemId, quantity, item: ITEMS[itemId] });
+  return true;
+}
+
+function addToBag(bagIndex, itemId, quantity) {
+  if (!GameState.bags || !GameState.bags[bagIndex]) return false;
+  const bag = ITEMS[GameState.bags[bagIndex]];
+  if (!bag) return false;
+  if (!GameState.bagContents) GameState.bagContents = [{}, {}, {}, {}];
+  const contents = GameState.bagContents[bagIndex];
+
+  // Find existing stack
+  for (const slot of Object.keys(contents)) {
+    if (contents[slot] && contents[slot].itemId === itemId) {
+      contents[slot].quantity += quantity;
+      return true;
+    }
+  }
+  // Find empty slot
+  for (let slotIndex = 0; slotIndex < bag.capacity; slotIndex++) {
+    if (!contents[slotIndex]) {
+      contents[slotIndex] = { itemId, quantity };
+      return true;
+    }
+  }
+  return false; // Bag full
+}
+
+function addToBank(itemId, quantity) {
+  if (!GameState.bank) GameState.bank = [];
+  const existing = GameState.bank.find(s => s && s.itemId === itemId);
+  if (existing) {
+    existing.quantity += quantity;
+    return true;
+  }
+  if (GameState.bank.filter(Boolean).length >= 100) return false;
+  GameState.bank.push({ itemId, quantity });
+  return true;
+}
+
+function depositAllToBank() {
+  if (!GameState.inventory) return;
+  const keep = [];
+  for (const stack of GameState.inventory) {
+    if (!stack) continue;
+    const item = ITEMS[stack.itemId];
+    if (item && item.nodrop) {
+      keep.push(stack);
+    } else {
+      const success = addToBank(stack.itemId, stack.quantity);
+      if (!success) keep.push(stack);
+    }
+  }
+  GameState.inventory = keep;
+  if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+  if (typeof updateInventoryUI === 'function') updateInventoryUI();
 }
 
 function tickManaRegen(party) {
@@ -369,4 +445,4 @@ function tickManaRegen(party) {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, tickManaRegen, handlePartyWipe };
+if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe };

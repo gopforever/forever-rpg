@@ -8,6 +8,9 @@ const GameState = {
   selectedEnemyId: null,
   zone: 'qeynos_hills',
   inventory: [],
+  bags: [null, null, null, null],
+  bagContents: [{}, {}, {}, {}],
+  bank: [],
   gold: 0,
   silver: 0,
   copper: 0,
@@ -209,6 +212,16 @@ function wireUpButtons() {
     });
   }
   
+  // Stop Fighting button
+  const stopBtn = document.getElementById('stop-combat-btn');
+  if (stopBtn) {
+    stopBtn.addEventListener('click', () => {
+      if (typeof stopCombat === 'function') stopCombat();
+      document.querySelectorAll('.enemy-btn').forEach(b => b.classList.remove('selected'));
+      updateStopButtonState();
+    });
+  }
+
   // Auto-loot toggle
   const autoLootToggle = document.getElementById('autoloot-toggle');
   if (autoLootToggle) {
@@ -238,6 +251,18 @@ function toggleSettingsPanel() {
   if (panel) {
     const visible = panel.style.display !== 'none' && panel.style.display !== '';
     panel.style.display = visible ? 'none' : 'block';
+  }
+}
+
+function updateStopButtonState() {
+  const stopBtn = document.getElementById('stop-combat-btn');
+  if (!stopBtn) return;
+  if (GameState.combatActive || GameState.selectedEnemyId) {
+    stopBtn.disabled = false;
+    stopBtn.classList.add('combat-active');
+  } else {
+    stopBtn.disabled = true;
+    stopBtn.classList.remove('combat-active');
   }
 }
 
