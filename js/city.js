@@ -1,0 +1,246 @@
+// city.js — Qeynos city data and logic for Forever RPG
+
+// ─── Guild Data ───────────────────────────────────────────────────────────────
+
+const GUILDS = {
+  warrior:      { name: 'Warriors of the Shield',   npc: 'Sergeant Darius Gandros', location: 'North Qeynos' },
+  paladin:      { name: 'The Protectors of Pine',   npc: 'High Priest Nondank',     location: 'North Qeynos' },
+  ranger:       { name: 'Rangers of the Farfield',  npc: 'Warden Nindric Laset',    location: 'North Qeynos' },
+  rogue:        { name: 'The Qeynos Rogues',        npc: 'Hanlore Escaval',         location: 'South Qeynos' },
+  bard:         { name: 'The Qeynos Bards',         npc: 'Lyris Moonwhisper',       location: 'North Qeynos' },
+  monk:         { name: 'The Ashen Order',           npc: 'Master Tarn',             location: 'South Qeynos' },
+  wizard:       { name: 'The Concordance',           npc: 'Mage Weith',              location: 'The Mage Tower' },
+  magician:     { name: 'The Concordance',           npc: 'Vahlara the Summoner',    location: 'The Mage Tower' },
+  enchanter:    { name: 'The Concordance',           npc: 'Jilea Windspell',         location: 'The Mage Tower' },
+  necromancer:  { name: 'The Bloodsabers',           npc: 'Renux Herkanor',          location: 'Qeynos Sewers' },
+  shadowknight: { name: 'The Bloodsabers',           npc: 'Renux Herkanor',          location: 'Qeynos Sewers' },
+  cleric:       { name: 'Temple of Life',            npc: 'High Priestess Arynna',   location: 'North Qeynos' },
+  druid:        { name: 'The Jaggedpine Treefolk',   npc: 'Sylvan Mosswick',         location: 'South Qeynos' },
+  shaman:       { name: 'None (visit Halas)',         npc: null,                      location: null },
+  beastlord:    { name: 'None (visit Shar Vahl)',    npc: null,                      location: null },
+  berserker:    { name: 'None (visit Halas)',         npc: null,                      location: null },
+};
+
+// ─── City Vendor Inventory ────────────────────────────────────────────────────
+
+const CITY_VENDORS = [
+  { itemId: 'cloth_cap',     buyPrice: 10  },
+  { itemId: 'cloth_tunic',   buyPrice: 18  },
+  { itemId: 'cloth_pants',   buyPrice: 15  },
+  { itemId: 'simple_boots',  buyPrice: 12  },
+  { itemId: 'short_sword',   buyPrice: 60  },
+  { itemId: 'dagger',        buyPrice: 40  },
+  { itemId: 'crude_mace',    buyPrice: 50  },
+  { itemId: 'gnarled_staff', buyPrice: 45  },
+  { itemId: 'crude_staff',   buyPrice: 35  },
+  { itemId: 'small_shield',  buyPrice: 55  },
+  { itemId: 'bread_loaf',    buyPrice: 3   },
+];
+
+// ─── Guild Spells ─────────────────────────────────────────────────────────────
+
+const GUILD_SPELLS = [
+  // Cleric
+  { id: 'spell_minor_healing',   name: 'Minor Healing',             classId: 'cleric',       level: 1,  manaCost: 10, effect: { healAmount: 30  }, buyPrice: 500  },
+  { id: 'spell_light_healing',   name: 'Light Healing',             classId: 'cleric',       level: 5,  manaCost: 20, effect: { healAmount: 80  }, buyPrice: 1500 },
+  { id: 'spell_healing',         name: 'Healing',                   classId: 'cleric',       level: 9,  manaCost: 40, effect: { healAmount: 150 }, buyPrice: 3500 },
+  // Druid
+  { id: 'spell_burst_of_flame',  name: 'Burst of Flame',            classId: 'druid',        level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+  { id: 'spell_skin_like_wood',  name: 'Skin like Wood',            classId: 'druid',        level: 5,  manaCost: 20, effect: { ac: 12          }, buyPrice: 1500 },
+  { id: 'spell_regeneration',    name: 'Regeneration',              classId: 'druid',        level: 9,  manaCost: 30, effect: { hpRegen: 5      }, buyPrice: 3500 },
+  // Shaman
+  { id: 'spell_burst_flame_sh',  name: 'Burst of Flame',            classId: 'shaman',       level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+  { id: 'spell_talisman_tnarg',  name: 'Talisman of Tnarg',         classId: 'shaman',       level: 5,  manaCost: 25, effect: { healAmount: 100 }, buyPrice: 1500 },
+  { id: 'spell_malo',            name: 'Malo',                      classId: 'shaman',       level: 9,  manaCost: 35, effect: { debuff: 'malo'  }, buyPrice: 3500 },
+  // Wizard
+  { id: 'spell_burst_flame_wz',  name: 'Burst of Flame',            classId: 'wizard',       level: 1,  manaCost: 10, effect: { dmg: 20         }, buyPrice: 500  },
+  { id: 'spell_shock_of_ice',    name: 'Shock of Ice',              classId: 'wizard',       level: 5,  manaCost: 25, effect: { dmg: 55         }, buyPrice: 1500 },
+  { id: 'spell_lava_bolt',       name: 'Lava Bolt',                 classId: 'wizard',       level: 9,  manaCost: 50, effect: { dmg: 110        }, buyPrice: 3500 },
+  // Magician
+  { id: 'spell_burst_flame_mg',  name: 'Burst of Flame',            classId: 'magician',     level: 1,  manaCost: 10, effect: { dmg: 20         }, buyPrice: 500  },
+  { id: 'spell_summon_food',     name: 'Summon Food',               classId: 'magician',     level: 1,  manaCost: 10, effect: { summon: 'food'  }, buyPrice: 500  },
+  { id: 'spell_monster_summon',  name: 'Monster Summoning I',       classId: 'magician',     level: 5,  manaCost: 40, effect: { summon: 'pet'   }, buyPrice: 2000 },
+  // Enchanter
+  { id: 'spell_mesmerize',       name: 'Mesmerize',                 classId: 'enchanter',    level: 1,  manaCost: 15, effect: { mez: true       }, buyPrice: 500  },
+  { id: 'spell_breeze',          name: 'Breeze',                    classId: 'enchanter',    level: 5,  manaCost: 20, effect: { manaRegen: 3    }, buyPrice: 1500 },
+  { id: 'spell_clarity',         name: 'Clarity',                   classId: 'enchanter',    level: 9,  manaCost: 30, effect: { manaRegen: 7    }, buyPrice: 3500 },
+  // Necromancer
+  { id: 'spell_lifetap',         name: 'Lifetap',                   classId: 'necromancer',  level: 1,  manaCost: 15, effect: { dmg: 18, heal: 18 }, buyPrice: 500  },
+  { id: 'spell_fear',            name: 'Fear',                      classId: 'necromancer',  level: 5,  manaCost: 25, effect: { fear: true      }, buyPrice: 1500 },
+  { id: 'spell_plague',          name: 'Plague',                    classId: 'necromancer',  level: 9,  manaCost: 40, effect: { dot: 15         }, buyPrice: 3500 },
+  // Paladin
+  { id: 'spell_minor_heal_pal',  name: 'Minor Healing',             classId: 'paladin',      level: 1,  manaCost: 10, effect: { healAmount: 25  }, buyPrice: 500  },
+  { id: 'spell_flash_of_light',  name: 'Flash of Light',            classId: 'paladin',      level: 5,  manaCost: 20, effect: { stun: true      }, buyPrice: 1500 },
+  // Shadow Knight
+  { id: 'spell_fear_sk',         name: 'Fear',                      classId: 'shadowknight', level: 5,  manaCost: 25, effect: { fear: true      }, buyPrice: 1500 },
+  { id: 'spell_lifetap_sk',      name: 'Lifetap',                   classId: 'shadowknight', level: 1,  manaCost: 15, effect: { dmg: 18, heal: 18 }, buyPrice: 500  },
+  // Bard
+  { id: 'spell_anthem_de_arms',  name: 'Anthem de Arms',            classId: 'bard',         level: 1,  manaCost: 0,  effect: { atkBuff: 5      }, buyPrice: 500  },
+  { id: 'spell_lyssa_solidarity',name: "Lyssa's Solidarity of Vision", classId: 'bard',      level: 5,  manaCost: 0,  effect: { acBuff: 8       }, buyPrice: 1500 },
+  // Ranger
+  { id: 'spell_burst_flame_rng', name: 'Burst of Flame',            classId: 'ranger',       level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+  { id: 'spell_snare',           name: 'Snare',                     classId: 'ranger',       level: 5,  manaCost: 20, effect: { snare: true     }, buyPrice: 1500 },
+  // Beastlord
+  { id: 'spell_minor_heal_bst',  name: 'Minor Healing',             classId: 'beastlord',    level: 1,  manaCost: 10, effect: { healAmount: 25  }, buyPrice: 500  },
+  { id: 'spell_burst_flame_bst', name: 'Burst of Flame',            classId: 'beastlord',    level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+];
+
+// ─── Coin Formatting ──────────────────────────────────────────────────────────
+
+function formatCoins(copper) {
+  if (!copper || copper <= 0) return '0c';
+  const gold   = Math.floor(copper / 1000);
+  const silver = Math.floor((copper % 1000) / 100);
+  const cop    = copper % 100;
+  const parts  = [];
+  if (gold   > 0) parts.push(`${gold}g`);
+  if (silver > 0) parts.push(`${silver}s`);
+  if (cop    > 0) parts.push(`${cop}c`);
+  return parts.join(' ') || '0c';
+}
+
+// ─── City Logic Functions ─────────────────────────────────────────────────────
+
+function getGuildForClass(classId) {
+  return GUILDS[classId] || null;
+}
+
+function getAvailableSpells(classId, level) {
+  return GUILD_SPELLS.filter(s => s.classId === classId && s.level <= level);
+}
+
+function getTotalCopper() {
+  return ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+}
+
+function deductCopper(amount) {
+  let total = getTotalCopper() - amount;
+  if (total < 0) return false;
+  GameState.gold   = Math.floor(total / 1000);
+  total %= 1000;
+  GameState.silver = Math.floor(total / 100);
+  GameState.copper = total % 100;
+  return true;
+}
+
+function buySpell(spellId) {
+  const spell = GUILD_SPELLS.find(s => s.id === spellId);
+  if (!spell) { addCombatLog('Unknown spell.', 'system'); return false; }
+
+  GameState.learnedSpells = GameState.learnedSpells || [];
+  if (GameState.learnedSpells.includes(spellId)) {
+    addCombatLog(`You already know ${spell.name}.`, 'system');
+    return false;
+  }
+
+  const char = GameState.party[GameState.inspectedCharIndex || 0];
+  if (!char || char.classId !== spell.classId) {
+    addCombatLog(`Your character cannot learn ${spell.name}.`, 'system');
+    return false;
+  }
+  if (char.level < spell.level) {
+    addCombatLog(`You need to be level ${spell.level} to learn ${spell.name}.`, 'system');
+    return false;
+  }
+
+  if (!deductCopper(spell.buyPrice)) {
+    addCombatLog(`Not enough coin to buy ${spell.name} (${formatCoins(spell.buyPrice)}).`, 'system');
+    return false;
+  }
+
+  GameState.learnedSpells.push(spellId);
+  addCombatLog(`You learned ${spell.name}!`, 'levelup');
+  if (typeof renderTopBar === 'function') renderTopBar();
+  return true;
+}
+
+function buyFromVendor(itemId) {
+  const entry = CITY_VENDORS.find(v => v.itemId === itemId);
+  if (!entry) { addCombatLog('Item not available.', 'system'); return false; }
+
+  const item = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
+  if (!item) { addCombatLog('Unknown item.', 'system'); return false; }
+
+  if (!deductCopper(entry.buyPrice)) {
+    addCombatLog(`Not enough coin to buy ${item.name} (${formatCoins(entry.buyPrice)}).`, 'system');
+    return false;
+  }
+
+  if (typeof addToInventory === 'function') {
+    addToInventory(itemId, 1);
+  }
+  addCombatLog(`You purchased ${item.name}.`, 'loot');
+  if (typeof renderTopBar === 'function') renderTopBar();
+  if (typeof updateInventoryUI === 'function') updateInventoryUI();
+  return true;
+}
+
+function sellToVendor(itemId, quantity) {
+  quantity = quantity || 1;
+
+  const vendorEntry = CITY_VENDORS.find(v => v.itemId === itemId);
+  const item = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
+
+  // Only allow selling items that have a buy price reference; unknown items get 1c each
+  const basePrice = vendorEntry ? vendorEntry.buyPrice : 2;
+  const sellPrice = Math.max(1, Math.floor(basePrice * 0.5)) * quantity;
+
+  if (!item) { addCombatLog('Unknown item.', 'system'); return false; }
+  if (item.nodrop) { addCombatLog(`${item.name} is no-drop and cannot be sold.`, 'system'); return false; }
+
+  // Remove from inventory
+  if (!GameState.inventory) { addCombatLog('Nothing to sell.', 'system'); return false; }
+  const stack = GameState.inventory.find(s => s && s.itemId === itemId);
+  if (!stack || stack.quantity < quantity) {
+    addCombatLog(`You don't have enough ${item.name} to sell.`, 'system');
+    return false;
+  }
+  stack.quantity -= quantity;
+  if (stack.quantity <= 0) {
+    const idx = GameState.inventory.indexOf(stack);
+    GameState.inventory.splice(idx, 1);
+  }
+
+  // Add coin
+  let total = getTotalCopper() + sellPrice;
+  GameState.gold   = Math.floor(total / 1000);
+  total %= 1000;
+  GameState.silver = Math.floor(total / 100);
+  GameState.copper = total % 100;
+
+  addCombatLog(`Sold ${item.name} x${quantity} for ${formatCoins(sellPrice)}.`, 'loot');
+  if (typeof renderTopBar === 'function') renderTopBar();
+  if (typeof updateInventoryUI === 'function') updateInventoryUI();
+  return true;
+}
+
+// ─── Zone Travel ──────────────────────────────────────────────────────────────
+
+function travelToZone(zoneId) {
+  const zone = typeof ZONES !== 'undefined' ? ZONES[zoneId] : null;
+  if (!zone) { addCombatLog('Unknown zone.', 'system'); return; }
+
+  // Stop combat when leaving any zone
+  if (typeof stopCombat === 'function') stopCombat();
+  GameState.combatActive = false;
+  GameState.currentEnemy = null;
+  GameState.selectedEnemyId = null;
+
+  GameState.zone = zoneId;
+
+  if (typeof renderZonePanel === 'function') renderZonePanel();
+  if (typeof renderEnemySelector === 'function') renderEnemySelector();
+  if (typeof renderCityPanel === 'function') renderCityPanel();
+  if (typeof updateEnemyDisplay === 'function') updateEnemyDisplay();
+  if (typeof renderTopBar === 'function') renderTopBar();
+
+  addCombatLog(`You have entered ${zone.name}.`, 'system');
+}
+
+// ─── Module Export ────────────────────────────────────────────────────────────
+
+if (typeof module !== 'undefined') module.exports = {
+  GUILDS, CITY_VENDORS, GUILD_SPELLS,
+  formatCoins, getGuildForClass, getAvailableSpells,
+  buySpell, buyFromVendor, sellToVendor, travelToZone,
+};

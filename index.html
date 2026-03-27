@@ -76,6 +76,19 @@
 
   <!-- CENTER PANEL -->
   <div id="center-panel">
+    <!-- City Panel (shown when in Qeynos) -->
+    <div id="city-panel" style="display:none">
+      <div class="city-panel-header">🏙 Qeynos — The City of Honor</div>
+      <div class="city-tabs">
+        <button class="city-tab-btn active" data-city-tab="bank">🏦 Bank</button>
+        <button class="city-tab-btn" data-city-tab="market">🛒 Market</button>
+        <button class="city-tab-btn" data-city-tab="guild">⚔ Guild</button>
+      </div>
+      <div id="city-tab-bank"   class="city-tab-content"></div>
+      <div id="city-tab-market" class="city-tab-content" style="display:none"></div>
+      <div id="city-tab-guild"  class="city-tab-content" style="display:none"></div>
+    </div>
+
     <div id="combat-area">
       <div id="enemy-sprite"><div class="no-enemy">Select an enemy below to begin combat</div></div>
       <div id="enemy-name"></div>
@@ -201,6 +214,7 @@
 <script src="js/stats.js"></script>
 <script src="js/party.js"></script>
 <script src="js/combat.js"></script>
+<script src="js/city.js"></script>
 <script src="js/save.js"></script>
 <script src="js/tooltips.js"></script>
 <script src="js/ui.js"></script>
