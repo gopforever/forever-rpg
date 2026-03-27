@@ -320,7 +320,13 @@ function updateEnemyDisplay() {
   }
 
   if (spriteEl) spriteEl.innerHTML = getLargeSprite(enemy.id);
-  if (nameEl) nameEl.innerHTML = `<span class="enemy-level">[Lv.${enemy.level}]</span> ${enemy.name}`;
+  if (nameEl) {
+    const highestLevel = GameState.party
+      ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
+      : 1;
+    const con = getConColor(highestLevel, enemy.level);
+    nameEl.innerHTML = `<span class="con-dot con-${con.color}" title="${con.label}">●</span> <span class="enemy-level">[Lv.${enemy.level}]</span> ${enemy.name}`;
+  }
 
   if (hpBarEl) {
     const pct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHP) * 100));
@@ -358,10 +364,15 @@ function renderEnemySelector() {
       (enemy.isRare ? ' rare-enemy' : '') +
       (GameState.selectedEnemyId === enemyId ? ' selected' : '');
     btn.title = enemy.name;
+    const highestLevel = GameState.party
+      ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
+      : 1;
+    const con = getConColor(highestLevel, enemy.level);
+
     btn.innerHTML = `
       <div class="enemy-btn-sprite">${getSprite(enemyId)}</div>
       <div class="enemy-btn-name">${enemy.name}</div>
-      <div class="enemy-btn-level">Lv.${enemy.level}</div>
+      <div class="enemy-btn-level"><span class="con-dot con-${con.color}">●</span> Lv.${enemy.level}</div>
     `;
 
     btn.addEventListener('click', () => {

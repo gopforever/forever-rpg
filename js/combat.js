@@ -197,17 +197,46 @@ function performHeal(healer, party) {
   addCombatLog(`${healer.name} heals ${target.name} for ${healAmount}!`, 'heal');
 }
 
+/**
+ * Returns the con color, XP multiplier, and label for a given level difference.
+ * @param {number} partyLevel - Highest level of living party members
+ * @param {number} enemyLevel - Level of the enemy
+ * @returns {{ color: string, label: string, multiplier: number }}
+ */
+function getConColor(partyLevel, enemyLevel) {
+  const diff = enemyLevel - partyLevel; // positive = enemy is higher level
+
+  if (diff >= 4)   return { color: 'red',       label: '⚔ Red',        multiplier: 1.25 };
+  if (diff >= 1)   return { color: 'yellow',    label: '◆ Yellow',     multiplier: 1.0  };
+  if (diff === 0)  return { color: 'white',     label: '● White',      multiplier: 1.0  };
+  if (diff === -1) return { color: 'blue',      label: '● Blue',       multiplier: 0.8  };
+  if (diff === -2) return { color: 'blue',      label: '● Blue',       multiplier: 0.65 };
+  if (diff === -3) return { color: 'blue',      label: '● Blue',       multiplier: 0.5  };
+  if (diff >= -6)  return { color: 'lightblue', label: '● Light Blue', multiplier: 0.25 };
+  return               { color: 'green',       label: '● Green',      multiplier: 0    };
+}
+
 function handleEnemyDeath(enemy) {
   addCombatLog(`${enemy.name} has been slain!`, 'death');
 
   const zoneData = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
-  const xpModifier = zoneData && zoneData.xpModifier ? zoneData.xpModifier : 1;
-  const xpGain = Math.floor(enemy.xp * xpModifier);
+  const zoneXpModifier = zoneData && zoneData.xpModifier ? zoneData.xpModifier : 1;
+
+  // Con-color XP scaling
+  const highestLevel = Math.max(...GameState.party.filter(m => m.isAlive).map(m => m.level), 1);
+  const { multiplier: conMultiplier, label: conLabel } = getConColor(highestLevel, enemy.level);
+
+  const xpGain = Math.floor(enemy.xp * zoneXpModifier * conMultiplier);
   const levelUps = gainXP(GameState.party, xpGain);
 
   const livingCount = GameState.party.filter(m => m.isAlive).length;
   const xpPerMember = Math.floor(xpGain / Math.max(1, livingCount));
-  addCombatLog(`Party gains ${xpGain} XP (${xpPerMember} each)!`, 'xp');
+
+  if (xpGain > 0) {
+    addCombatLog(`Party gains ${xpGain} XP (${xpPerMember} each) [${conLabel}]`, 'xp');
+  } else {
+    addCombatLog(`${enemy.name} was ${conLabel} — no experience gained.`, 'xp');
+  }
 
   for (const lu of levelUps) {
     if (lu.leveled) {
