@@ -206,6 +206,12 @@ body {
 .zone-name { font-size: 0.9rem; color: var(--gold); font-weight: 600; }
 .zone-levels { font-size: 0.75rem; color: var(--text-secondary); margin: 2px 0; }
 .zone-desc { font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; }
+.zone-dungeon-badge { display: inline-block; margin-left: 6px; font-size: 0.65rem; background: #3a0a0a; color: #e05030; border: 1px solid #7a2010; border-radius: 3px; padding: 1px 4px; vertical-align: middle; font-weight: 600; }
+.zone-connections { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.zone-travel-btn { background: #1e1408; border: 1px solid var(--gold); color: var(--gold); border-radius: 3px; padding: 2px 7px; font-size: 0.7rem; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.zone-travel-btn:hover { background: #2e2010; }
+.zone-travel-unavailable { border-color: #4a3a2a; color: #6a5a4a; cursor: not-allowed; }
+.zone-travel-unavailable:hover { background: #1e1408; }
 
 /* Party Roster */
 #party-roster { display: flex; flex-direction: column; gap: 4px; padding: 6px; }

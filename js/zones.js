@@ -186,8 +186,151 @@ const ZONES = {
   <!-- Zone border frame -->
   <rect width="280" height="200" fill="none" stroke="#5a7a3a" stroke-width="2" rx="3"/>
 </svg>`,
-    connections: ['west_karana', 'qeynos'],
+    connections: ['west_karana', 'qeynos', 'blackburrow'],
     respawnTime: 3000,
+  },
+  blackburrow: {
+    id: 'blackburrow',
+    name: 'Blackburrow',
+    shortName: 'BB',
+    levelRange: [4, 15],
+    xpModifier: 1.1,
+    isDungeon: true,
+    isSafeZone: false,
+    description: 'A vast underground gnoll warren carved beneath the Qeynos Hills. Multi-level tunnels crawl with gnoll defenders and their vermin allies. Famous for deadly trains and treacherous flooded passages.',
+    flavorLines: [
+      'The stench of wet fur and stale ale hits you as you descend into Blackburrow.',
+      'Somewhere deep below, a gnoll horn sounds. The tunnels are alive with movement.',
+      'The narrow passages press in around you. Firelight flickers from unseen torches ahead.',
+      'You hear the distant howl of gnolls echoing up the stone corridors.',
+      'The air grows damp and cold as you step into Blackburrow\'s darkness.',
+    ],
+    enemies: [
+      'gnoll_pup',
+      'a_scrawny_gnoll',
+      'a_gnoll_guard',
+      'a_burly_gnoll',
+      'a_gnoll_shaman',
+      'a_gnoll_guard_elite',
+      'a_giant_plague_rat',
+      'a_giant_snake_bb',
+      'lord_elgnub',
+      'gnoll_high_shaman',
+      'gnoll_brewer',
+      'gnoll_commander',
+    ],
+    commonEnemies: [
+      'gnoll_pup',
+      'a_scrawny_gnoll',
+      'a_gnoll_guard',
+      'a_burly_gnoll',
+      'a_gnoll_shaman',
+      'a_gnoll_guard_elite',
+      'a_giant_plague_rat',
+      'a_giant_snake_bb',
+    ],
+    rareEnemies: [
+      'gnoll_brewer',
+      'gnoll_commander',
+      'gnoll_high_shaman',
+      'lord_elgnub',
+    ],
+    rareSpawnChance: 0.08,
+    ambientColor: '#1a0f00',
+    respawnTime: 6000,
+    minimapSVG: `<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;">
+  <defs>
+    <linearGradient id="bbFloor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1a08"/>
+      <stop offset="100%" stop-color="#120900"/>
+    </linearGradient>
+    <linearGradient id="bbWater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3a5a"/>
+      <stop offset="100%" stop-color="#0a1a2a"/>
+    </linearGradient>
+    <linearGradient id="bbTorch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8c00" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ff4500" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark dungeon background -->
+  <rect width="280" height="200" fill="#0d0700"/>
+
+  <!-- Main upper tunnel -->
+  <rect x="20" y="30" width="240" height="30" rx="4" fill="url(#bbFloor)" stroke="#3a2a10" stroke-width="1"/>
+  <!-- Left branch tunnel -->
+  <rect x="20" y="30" width="35" height="100" rx="4" fill="url(#bbFloor)" stroke="#3a2a10" stroke-width="1"/>
+  <!-- Center vertical corridor -->
+  <rect x="120" y="30" width="40" height="90" rx="4" fill="url(#bbFloor)" stroke="#3a2a10" stroke-width="1"/>
+  <!-- Lower main tunnel -->
+  <rect x="20" y="110" width="240" height="30" rx="4" fill="url(#bbFloor)" stroke="#3a2a10" stroke-width="1"/>
+  <!-- Right descending passage -->
+  <rect x="225" y="55" width="35" height="90" rx="4" fill="url(#bbFloor)" stroke="#3a2a10" stroke-width="1"/>
+  <!-- Deep chamber -->
+  <rect x="150" y="140" width="110" height="45" rx="6" fill="#1e0f04" stroke="#4a3010" stroke-width="1.5"/>
+
+  <!-- Flooded lower passage -->
+  <rect x="20" y="150" width="120" height="18" rx="3" fill="url(#bbWater)" stroke="#2a5a8a" stroke-width="1" opacity="0.85"/>
+  <line x1="30" y1="157" x2="55" y2="157" stroke="#4a8abf" stroke-width="1" opacity="0.5"/>
+  <line x1="65" y1="161" x2="100" y2="161" stroke="#4a8abf" stroke-width="1" opacity="0.5"/>
+  <text x="72" y="163" text-anchor="middle" font-family="serif" font-size="5.5" fill="#6ab0e0" opacity="0.8">~ flooded ~</text>
+
+  <!-- Entrance passage (top left) -->
+  <rect x="0" y="35" width="25" height="20" fill="#2a1a08" stroke="#3a2a10" stroke-width="1"/>
+  <text x="4" y="24" font-family="serif" font-size="6" fill="#c4962a" opacity="0.9">◄ QH</text>
+
+  <!-- Everfrost connection hint (far right, wired but unbuilt) -->
+  <rect x="255" y="35" width="25" height="20" fill="#1a1a2a" stroke="#2a2a4a" stroke-width="1"/>
+  <text x="258" y="24" font-family="serif" font-size="5.5" fill="#6080a0" opacity="0.7">EF ►</text>
+
+  <!-- Torch glow spots -->
+  <ellipse cx="55" cy="45" rx="10" ry="6" fill="url(#bbTorch)" opacity="0.6"/>
+  <ellipse cx="55" cy="125" rx="10" ry="6" fill="url(#bbTorch)" opacity="0.6"/>
+  <ellipse cx="190" cy="45" rx="10" ry="6" fill="url(#bbTorch)" opacity="0.6"/>
+  <ellipse cx="190" cy="125" rx="10" ry="6" fill="url(#bbTorch)" opacity="0.6"/>
+  <!-- Torch icons -->
+  <rect x="53" y="38" width="3" height="6" fill="#c06010" rx="1"/>
+  <circle cx="54.5" cy="37" r="2" fill="#ff8c00" opacity="0.9"/>
+  <rect x="188" y="38" width="3" height="6" fill="#c06010" rx="1"/>
+  <circle cx="189.5" cy="37" r="2" fill="#ff8c00" opacity="0.9"/>
+  <rect x="53" y="118" width="3" height="6" fill="#c06010" rx="1"/>
+  <circle cx="54.5" cy="117" r="2" fill="#ff8c00" opacity="0.9"/>
+  <rect x="188" y="118" width="3" height="6" fill="#c06010" rx="1"/>
+  <circle cx="189.5" cy="117" r="2" fill="#ff8c00" opacity="0.9"/>
+
+  <!-- Gnoll Camp marker (upper center) -->
+  <polygon points="140,34 134,48 146,48" fill="#7a3a0a" stroke="#c06020" stroke-width="1"/>
+  <polygon points="146,36 140,48 152,48" fill="#8b4a14" stroke="#c06020" stroke-width="1"/>
+
+  <!-- Brewer's Hall label -->
+  <rect x="82" y="58" width="58" height="11" rx="2" fill="#000000" opacity="0.55"/>
+  <text x="111" y="67" text-anchor="middle" font-family="serif" font-size="7" fill="#c89040">Brewer's Hall</text>
+
+  <!-- Deep Warren label -->
+  <rect x="155" y="153" width="56" height="11" rx="2" fill="#000000" opacity="0.55"/>
+  <text x="183" y="162" text-anchor="middle" font-family="serif" font-size="7" fill="#e05020">Deep Warren</text>
+
+  <!-- Upper Tunnels label -->
+  <rect x="60" y="31" width="52" height="10" rx="2" fill="#000000" opacity="0.45"/>
+  <text x="86" y="39" text-anchor="middle" font-family="serif" font-size="6.5" fill="#d4b060">Upper Tunnels</text>
+
+  <!-- Lord Elgnub marker in deep chamber -->
+  <circle cx="205" cy="162" r="5" fill="#3a0000" opacity="0.9"/>
+  <text x="205" y="166" text-anchor="middle" font-family="serif" font-size="8" fill="#ff3030">👑</text>
+
+  <!-- Skull markers for danger -->
+  <text x="235" y="105" text-anchor="middle" font-family="serif" font-size="9" fill="#8a6aaa" opacity="0.7">☠</text>
+
+  <!-- "You Are Here" marker -->
+  <circle cx="40" cy="45" r="7" fill="#000000" opacity="0.5"/>
+  <text x="40" y="49" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="40" cy="45" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+
+  <!-- Zone border frame -->
+  <rect width="280" height="200" fill="none" stroke="#4a2a08" stroke-width="2" rx="3"/>
+</svg>`,
+    connections: ['qeynos_hills', 'everfrost'],
   },
 };
 

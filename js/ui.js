@@ -181,13 +181,59 @@ function renderZonePanel() {
   if (zoneInfoEl) {
     const zone = ZONES[GameState.zone];
     if (zone) {
+      const dungeonBadge = zone.isDungeon
+        ? `<span class="zone-dungeon-badge">🕳 Dungeon</span>`
+        : '';
+      const levelLabel = zone.isDungeon
+        ? `Levels ${zone.levelRange[0]}–${zone.levelRange[1]} ⚠ Dungeon`
+        : `Levels ${zone.levelRange[0]}-${zone.levelRange[1]}`;
+
+      const connectionsHTML = (zone.connections && zone.connections.length > 0)
+        ? `<div class="zone-connections">${zone.connections.map(connId => {
+            const connZone = ZONES[connId];
+            const label = connZone ? connZone.name : connId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const isDungeon = connZone && connZone.isDungeon ? ' 🕳' : '';
+            const unavailable = !connZone ? ' class="zone-travel-btn zone-travel-unavailable"' : ' class="zone-travel-btn"';
+            return `<button${unavailable} data-zone="${connId}">→ ${label}${isDungeon}</button>`;
+          }).join('')}</div>`
+        : '';
+
       zoneInfoEl.innerHTML = `
-        <div class="zone-name">${zone.name}</div>
-        <div class="zone-levels">Levels ${zone.levelRange[0]}-${zone.levelRange[1]}</div>
+        <div class="zone-name">${zone.name}${dungeonBadge}</div>
+        <div class="zone-levels">${levelLabel}</div>
         <div class="zone-desc">${zone.description}</div>
+        ${connectionsHTML}
       `;
+
+      zoneInfoEl.querySelectorAll('.zone-travel-btn').forEach(btn => {
+        btn.addEventListener('click', () => changeZone(btn.dataset.zone));
+      });
     }
   }
+}
+
+function changeZone(zoneId) {
+  const zone = ZONES[zoneId];
+  if (!zone) {
+    addCombatLog(`That region is not yet accessible.`, 'system');
+    return;
+  }
+
+  stopCombat();
+  GameState.zone = zoneId;
+  GameState.selectedEnemyId = null;
+
+  if (zone.flavorLines && zone.flavorLines.length > 0) {
+    const line = zone.flavorLines[Math.floor(Math.random() * zone.flavorLines.length)];
+    addCombatLog(line, 'system');
+  }
+
+  addCombatLog(`You have entered ${zone.name}.`, 'system');
+
+  renderTopBar();
+  renderZonePanel();
+  renderEnemySelector();
+  if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
 function renderPartyPanel() {
