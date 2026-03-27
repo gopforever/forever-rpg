@@ -76,6 +76,13 @@ function importSave(encoded) {
 function applyLoadedSave(data) {
   GameState.party = data.party.map(charData => {
     computeDerivedStats(charData);
+    // Ensure skills object exists — migrate old saves gracefully
+    if (!charData.skills) {
+      charData.skills = (typeof initSkills === 'function')
+        ? initSkills(charData.classId, charData.level)
+        : {};
+    }
+    if (typeof unlockSkillsForLevel === 'function') unlockSkillsForLevel(charData);
     return charData;
   });
   GameState.inventory = data.inventory || [];

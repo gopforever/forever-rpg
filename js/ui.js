@@ -613,7 +613,7 @@ function renderStatsPanel() {
     STA: '#cc8844', WIS: '#8844cc', INT: '#4488cc', CHA: '#cc44cc'
   };
 
-  el.innerHTML = stats.map(stat => {
+  let html = stats.map(stat => {
     const base = member[stat] || 0;
     const bonus = member.statBonuses ? (member.statBonuses[stat] || 0) : 0;
     const effective = Math.min(255, base + bonus);
@@ -629,6 +629,57 @@ function renderStatsPanel() {
         : ''}</div>
     </div>`;
   }).join('');
+
+  // Skills section
+  const skills = member.skills;
+  if (skills && typeof getSkillCap === 'function' && typeof SKILL_DISPLAY_NAMES !== 'undefined') {
+    const skillGroups = [
+      {
+        label: 'Combat',
+        keys: ['offense', 'defense', 'dodge', 'parry', 'riposte', 'doubleAttack', 'dualWield'],
+      },
+      {
+        label: 'Weapon',
+        keys: ['oneHandSlash', 'oneHandBlunt', 'twoHandSlash', 'twoHandBlunt', 'piercing', 'archery'],
+      },
+      {
+        label: 'Class Skills',
+        keys: [
+          'backstab', 'frenzy', 'mend', 'kick', 'bash', 'taunt', 'roundKick', 'tigerClaw',
+          'flyingKick', 'feignDeath', 'safeFall', 'sneak', 'hide', 'disarm', 'intimidation',
+          'pickLock', 'pickPockets', 'applyPoison', 'disarmTrap', 'tracking', 'forage',
+          'bindWound', 'swimming', 'layOnHands', 'harmTouch', 'senseUndead', 'senseDead',
+        ],
+      },
+      {
+        label: 'Magic',
+        keys: [
+          'channeling', 'meditation', 'abjuration', 'alteration', 'conjuration',
+          'divination', 'evocation', 'singing', 'brass', 'percussion', 'stringed', 'wind',
+        ],
+      },
+    ];
+
+    for (const group of skillGroups) {
+      const visibleKeys = group.keys.filter(k => skills[k] !== undefined);
+      if (visibleKeys.length === 0) continue;
+
+      html += `<div class="skill-section-header">${group.label}</div>`;
+      for (const skillName of visibleKeys) {
+        const current = skills[skillName] || 0;
+        const cap = getSkillCap(member.classId, skillName, member.level);
+        const pct = cap > 0 ? Math.min(100, (current / cap) * 100) : 0;
+        const displayName = SKILL_DISPLAY_NAMES[skillName] || skillName;
+        html += `<div class="skill-row">
+          <div class="skill-label">${displayName}</div>
+          <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${pct}%"></div></div>
+          <div class="skill-value">${current} / ${cap}</div>
+        </div>`;
+      }
+    }
+  }
+
+  el.innerHTML = html;
 
   el.querySelectorAll('.stat-row').forEach(row => {
     const stat = row.dataset.stat;
