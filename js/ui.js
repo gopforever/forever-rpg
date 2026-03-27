@@ -1064,6 +1064,8 @@ function renderCityTabContent(tab) {
   const el = document.getElementById(`city-tab-${tab}`);
   if (!el) return;
 
+  const fmt = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
+
   if (tab === 'bank') {
     el.innerHTML = renderBankSlots();
     // Wire deposit-all button
@@ -1079,7 +1081,6 @@ function renderCityTabContent(tab) {
       if (itemEl.dataset.item) attachTooltip(itemEl, () => getItemTooltipHTML(itemEl.dataset.item));
     });
     // Coin exchange display
-    const fmt = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
     const totalCopper = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
     const exchangeDiv = document.createElement('div');
     exchangeDiv.className = 'city-coin-exchange';
@@ -1091,7 +1092,6 @@ function renderCityTabContent(tab) {
     el.insertAdjacentElement('afterbegin', exchangeDiv);
 
   } else if (tab === 'market') {
-    const fmt = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
     const vendors = typeof CITY_VENDORS !== 'undefined' ? CITY_VENDORS : [];
     const itemsForSale = vendors.map(entry => {
       const item = typeof ITEMS !== 'undefined' ? ITEMS[entry.itemId] : null;
@@ -1146,7 +1146,6 @@ function renderCityTabContent(tab) {
     });
 
   } else if (tab === 'guild') {
-    const fmt = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
     const char = GameState.party[GameState.inspectedCharIndex || 0];
     if (!char) {
       el.innerHTML = '<div class="city-empty">No character selected.</div>';
