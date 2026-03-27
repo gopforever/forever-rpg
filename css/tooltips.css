@@ -1,0 +1,154 @@
+/* ============================================================
+   FOREVER RPG — Tooltip Styles
+   ============================================================ */
+
+.tooltip {
+  position: fixed;
+  background: linear-gradient(180deg, #1a1208 0%, #0d0a05 100%);
+  border: 2px solid #c8a84b;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 10px rgba(200,168,75,0.2);
+  color: #e8d5a0;
+  font-family: 'Cinzel', serif, Georgia, 'Times New Roman';
+  padding: 12px;
+  max-width: 280px;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.tt-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.tt-flag {
+  display: inline-block;
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 700;
+}
+.tt-lore { background: rgba(100,50,200,0.3); border: 1px solid #8844ff; color: #aa88ff; }
+.tt-nodrop { background: rgba(200,50,50,0.3); border: 1px solid #cc4444; color: #ff8888; }
+
+.tt-row {
+  margin-bottom: 2px;
+  color: #c8a84b;
+}
+.tt-label {
+  color: #7a6530;
+  font-size: 0.72rem;
+}
+
+.tt-stat {
+  color: #44cc88;
+  font-size: 0.75rem;
+  margin-bottom: 1px;
+}
+
+.tt-effect {
+  color: #8844ff;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.tt-classes {
+  color: #a09060;
+  font-size: 0.68rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.tt-weight {
+  color: #6a6040;
+  font-size: 0.65rem;
+  margin-top: 4px;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.tt-flavor {
+  color: #6a6040;
+  font-size: 0.68rem;
+  margin-top: 6px;
+  font-style: italic;
+  border-top: 1px solid rgba(74,56,32,0.5);
+  padding-top: 6px;
+  line-height: 1.4;
+}
+
+.tt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+.tt-tag {
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(74,56,32,0.4);
+  border: 1px solid #4a3820;
+  color: #a09060;
+  font-family: 'Share Tech Mono', monospace;
+  text-transform: capitalize;
+}
+
+.tt-section {
+  font-size: 0.7rem;
+  color: #7a6530;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
+  margin-bottom: 3px;
+  border-top: 1px solid rgba(74,56,32,0.5);
+  padding-top: 5px;
+}
+
+.tt-drop {
+  font-size: 0.72rem;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.tt-chance {
+  color: #6a6040;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+}
+
+.tt-stat-desc .tt-body {
+  color: #a09060;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.tt-ability .tt-body {
+  color: #a09060;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.tt-class .tt-body {
+  color: #a09060;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.tt-member .tt-row {
+  font-size: 0.72rem;
+}
+
+.tt-error {
+  color: #cc4444;
+  font-size: 0.75rem;
+}

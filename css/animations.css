@@ -1,0 +1,41 @@
+@keyframes floatDamage {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-60px); }
+}
+@keyframes levelUpPop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  20%  { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  80%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+}
+@keyframes enemyBob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes enemyDeath {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes attackFlash {
+  0%, 100% { filter: none; }
+  50%       { filter: brightness(3) saturate(0); }
+}
+@keyframes critFlash {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: inset 0 0 40px rgba(255,204,0,0.4); }
+}
+@keyframes levelUpBurst {
+  0%   { box-shadow: 0 0 0 rgba(255,215,0,0); }
+  50%  { box-shadow: 0 0 30px rgba(255,215,0,0.8); }
+  100% { box-shadow: 0 0 0 rgba(255,215,0,0); }
+}
+@keyframes savedFlash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+#enemy-sprite svg { animation: enemyBob 1.5s ease-in-out infinite; }
+#enemy-sprite svg.dying { animation: enemyDeath 0.5s ease-out forwards; }
+.attack-flash { animation: attackFlash 0.3s ease-out; }
+.crit-flash   { animation: critFlash 0.4s ease-out; }
+.level-up-burst { animation: levelUpBurst 2s ease-in-out; }
+.saved-flash  { animation: savedFlash 0.5s ease-in-out 2; }
