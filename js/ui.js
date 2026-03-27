@@ -468,41 +468,67 @@ function renderCombatLog() {
 }
 
 function updateEnemyDisplay() {
-  const enemy = GameState.currentEnemy;
-  const spriteEl = document.getElementById('enemy-sprite');
-  const nameEl = document.getElementById('enemy-name');
-  const hpBarEl = document.getElementById('enemy-hp-bar');
-  const hpTextEl = document.getElementById('enemy-hp-text');
-  const statusEl = document.getElementById('enemy-status');
+  const container = document.getElementById('active-enemies-display');
+  if (!container) return;
 
-  if (!enemy) {
-    if (spriteEl) spriteEl.innerHTML = '<div class="no-enemy">Select an enemy to fight</div>';
-    if (nameEl) nameEl.textContent = '';
-    if (hpBarEl) hpBarEl.style.width = '0%';
-    if (hpTextEl) hpTextEl.textContent = '';
+  const enemies = GameState.enemies && GameState.enemies.length > 0
+    ? GameState.enemies.filter(e => e && e.hp > 0)
+    : [];
+
+  if (enemies.length === 0) {
+    container.className = '';
+    container.innerHTML = '<div class="no-enemy">Select an enemy to fight</div>';
     return;
   }
 
-  if (spriteEl) spriteEl.innerHTML = getLargeSprite(enemy.id);
-  if (nameEl) {
-    const highestLevel = GameState.party
-      ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
-      : 1;
+  const highestLevel = GameState.party
+    ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
+    : 1;
+
+  container.className = enemies.length === 1 ? 'single-enemy' : '';
+
+  container.innerHTML = enemies.map((enemy, i) => {
+    const isFocused = enemy === GameState.currentEnemy;
     const con = getConColor(highestLevel, enemy.level);
-    nameEl.innerHTML = `<span class="con-dot con-${con.color}" title="${con.label}">●</span> <span class="enemy-level">[Lv.${enemy.level}]</span> ${enemy.name}`;
-  }
-
-  if (hpBarEl) {
     const pct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHP) * 100));
-    hpBarEl.style.width = pct + '%';
-  }
-  if (hpTextEl) hpTextEl.textContent = `${Math.max(0, enemy.hp)} / ${enemy.maxHP}`;
+    const sprite = enemies.length === 1 ? getLargeSprite(enemy.id) : getSprite(enemy.id);
 
-  if (statusEl && enemy.statusEffects) {
-    statusEl.innerHTML = enemy.statusEffects.map(e =>
-      `<span class="effect-tag">${e.type}</span>`
-    ).join('');
-  }
+    const now = Date.now();
+    const statusTags = [];
+    if (enemy.stunUntil && enemy.stunUntil > now) statusTags.push('<span class="effect-tag effect-stun">stun</span>');
+    if (enemy.mezzedUntil && enemy.mezzedUntil > now) statusTags.push('<span class="effect-tag effect-mez">mez</span>');
+    if (enemy.fearedUntil && enemy.fearedUntil > now) statusTags.push('<span class="effect-tag effect-fear">fear</span>');
+    if (enemy.statusEffects && enemy.statusEffects.length > 0) {
+      enemy.statusEffects.forEach(e => {
+        if (e.type === 'slow') statusTags.push('<span class="effect-tag effect-slow">slow</span>');
+        else statusTags.push(`<span class="effect-tag">${e.type}</span>`);
+      });
+    }
+    if (enemy.dots && enemy.dots.length > 0) {
+      statusTags.push(`<span class="effect-tag effect-poison">${enemy.dots.length} DoT</span>`);
+    }
+
+    return `<div class="enemy-card${isFocused ? ' focused' : ''}" data-enemy-index="${i}">
+      <div class="enemy-card-sprite">${sprite}</div>
+      <div class="enemy-card-name"><span class="con-dot con-${con.color}" title="${con.label}">●</span> <span class="enemy-level">[Lv.${enemy.level}]</span> ${enemy.name}</div>
+      <div class="enemy-card-hp-wrap">
+        <div class="enemy-card-hp-bar-bg"><div class="enemy-card-hp-bar" style="width:${pct}%"></div></div>
+        <div class="enemy-card-hp-text">${Math.max(0, enemy.hp)} / ${enemy.maxHP} HP</div>
+      </div>
+      <div class="enemy-card-status">${statusTags.join('')}</div>
+    </div>`;
+  }).join('');
+
+  // Single delegated listener on the container — replaced each render so no accumulation
+  container.onclick = (e) => {
+    const card = e.target.closest('.enemy-card');
+    if (!card) return;
+    const idx = parseInt(card.dataset.enemyIndex, 10);
+    if (!isNaN(idx) && enemies[idx]) {
+      GameState.currentEnemy = enemies[idx];
+      updateEnemyDisplay();
+    }
+  };
 }
 
 function renderEnemySelector() {
