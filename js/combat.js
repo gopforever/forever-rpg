@@ -8,7 +8,8 @@
    showLevelUpEffect,
    trySkillGain, hasSkill, SKILL_DISPLAY_NAMES,
    addThreat, getCurrentTarget, tickAbilityCasts, interruptCast,
-   dispatchAbilityEffect, selectAbilityForMember */
+   dispatchAbilityEffect, selectAbilityForMember,
+   tickPets, summonPet, commandPetAttack, buffPet */
 
 const MAX_CARRY_SLOTS = 30;
 
@@ -118,6 +119,8 @@ function combatTick() {
     performHeal(healer, party);
   }
 
+  if (typeof tickPets === 'function') tickPets(enemy);
+
   if (enemy.hp <= 0) {
     handleEnemyDeath(enemy);
     return;
@@ -164,6 +167,8 @@ function combatTick() {
       if (typeof trySkillGain === 'function') trySkillGain(member, 'mend');
     }
   }
+
+  tickManaRegen(party);
 
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
@@ -677,11 +682,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       break;
     }
 
-    // ── Pet commands (stub) ───────────────────────
+    // ── Pet commands ─────────────────────────────
     case 'summon_pet':
+      if (typeof summonPet === 'function') summonPet(caster);
+      break;
+
     case 'pet_attack':
+      if (typeof commandPetAttack === 'function') commandPetAttack(caster, enemy);
+      break;
+
     case 'pet_buff':
-      addCombatLog(`${caster.name} commands their pet!`, 'spell');
+      if (typeof buffPet === 'function') buffPet(caster, effect);
       break;
 
     // ── Utility ───────────────────────────────────
