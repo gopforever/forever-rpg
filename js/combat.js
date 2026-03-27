@@ -340,6 +340,12 @@ function memberAttack(member, enemy) {
   const isCrit = Math.random() < getCritChance(member);
   if (isCrit) damage = Math.floor(damage * 2);
 
+  // Check for active buff_damage on the member (e.g. Berserker's Berserk)
+  const damageBuff = member.statusEffectMap && member.statusEffectMap['buff_damage'];
+  if (damageBuff && Date.now() < damageBuff.endTime) {
+    damage = Math.floor(damage * (1 + (damageBuff.value || 0) / 100));
+  }
+
   damage = applyACMitigation(damage, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
   damage = Math.max(1, damage);
 
@@ -374,6 +380,30 @@ function memberAttack(member, enemy) {
   }
 
   procClassAbility(member, enemy, damage);
+
+  // Dual wield second swing
+  if (
+    typeof hasSkill === 'function' && hasSkill(member, 'dualWield') &&
+    member.equipment && member.equipment.secondary &&
+    ITEMS[member.equipment.secondary]
+  ) {
+    // ~63% proc rate at max skill (252/400)
+    const dualChance = (member.skills['dualWield'] || 0) / 400;
+    if (Math.random() < dualChance) {
+      const offhandWeapon = ITEMS[member.equipment.secondary];
+      let dmgOff = Math.floor(getMeleeDamage(member, offhandWeapon) * 0.5);
+      // Apply active damage buff to offhand as well
+      if (damageBuff && Date.now() < damageBuff.endTime) {
+        dmgOff = Math.floor(dmgOff * (1 + (damageBuff.value || 0) / 100));
+      }
+      dmgOff = applyACMitigation(dmgOff, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
+      dmgOff = Math.max(1, dmgOff);
+      enemy.hp = Math.max(0, enemy.hp - dmgOff);
+      addCombatLog(`${member.name} hits ${enemy.name} with offhand for ${dmgOff}!`, 'hit');
+      if (typeof addThreat === 'function') addThreat(member, dmgOff);
+      if (typeof trySkillGain === 'function') trySkillGain(member, 'dualWield');
+    }
+  }
 }
 
 function enemyAttack(enemy, target, party) {
@@ -421,7 +451,22 @@ function enemyAttack(enemy, target, party) {
   const effectiveAtk = Math.max(1, enemy.atk - (enemy.debuffs && enemy.debuffs.STR ? Math.floor(enemy.debuffs.STR / 5) : 0));
   let damage = Math.max(1, effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5)));
   damage = applyACMitigation(damage, target);
+
+  // Check for active buff_ac on the target (e.g. Warrior's Defense Discipline)
+  // A value of 20 AC buff → 10% damage reduction (value / 200)
+  const acBuff = target.statusEffectMap && target.statusEffectMap['buff_ac'];
+  if (acBuff && Date.now() < acBuff.endTime) {
+    damage = Math.max(1, Math.floor(damage * (1 - (acBuff.value || 0) / 200)));
+  }
+
   damage = Math.max(1, damage);
+
+  // Check if target is invulnerable
+  const invulnEffect = target.statusEffectMap && target.statusEffectMap['invulnerable'];
+  if (invulnEffect && Date.now() < invulnEffect.endTime) {
+    addCombatLog(`${target.name} is invulnerable!`, 'miss');
+    return;
+  }
 
   target.hp = Math.max(0, target.hp - damage);
 
@@ -455,6 +500,14 @@ function enemyAttack(enemy, target, party) {
   if (enemy.statusProcs && enemy.statusProcs.length > 0) {
     for (const proc of enemy.statusProcs) {
       if (Math.random() < (proc.chance || 0)) {
+        // Check target's resist for this proc type
+        const resistValue = target.statBonuses && target.statBonuses.resists
+          ? (target.statBonuses.resists[proc.type] || 0)
+          : 0;
+        if (resistValue > 0 && Math.random() * 100 < resistValue) {
+          addCombatLog(`${target.name} resists the ${proc.type}!`, 'miss');
+          continue;
+        }
         applyStatusEffect(target, {
           type: proc.type,
           damage: proc.damage || 0,
@@ -831,6 +884,12 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     // ── DoT ───────────────────────────────────────
     case 'dot': {
       if (!enemy) break;
+      // Check enemy magic resist
+      const magicResistPct = (enemy.magicResist || 0) / 100;
+      if (magicResistPct > 0 && Math.random() < magicResistPct) {
+        addCombatLog(`${enemy.name} resists the spell!`, 'miss');
+        break;
+      }
       enemy.dots = enemy.dots || [];
       enemy.dots.push({
         damage: effect.dot || effect.value || 5,
@@ -840,6 +899,32 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       });
       addCombatLog(`${caster.name} afflicts ${enemy.name} with a damage-over-time effect!`, 'poison');
       if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
+      break;
+    }
+
+    // ── Invulnerability ──────────────────────────
+    case 'invulnerability': {
+      applyStatusEffect(caster, { type: 'invulnerable', endTime: Date.now() + (effect.duration || 8000) });
+      addCombatLog(`${caster.name} becomes invulnerable!`, 'buff');
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'abjuration');
+      break;
+    }
+
+    // ── Turn Undead ──────────────────────────────
+    case 'turn_undead': {
+      if (!enemy) break;
+      if (!enemy.isUndead) {
+        addCombatLog(`${caster.name}'s holy power has no effect on the living.`, 'system');
+        break;
+      }
+      const dmg = effect.value || Math.floor(caster.level * 4);
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      addCombatLog(`${caster.name} turns ${enemy.name} with holy light for ${dmg} damage!`, 'spell');
+      if (typeof addThreat === 'function') addThreat(caster, dmg);
+      if (typeof trySkillGain === 'function') {
+        trySkillGain(caster, 'alteration');
+        trySkillGain(caster, 'abjuration');
+      }
       break;
     }
 
