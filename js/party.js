@@ -100,7 +100,7 @@ function gainXP(party, xpAmount) {
     char.xp += share;
 
     let leveled = false;
-    while (char.xp >= xpForLevel(char.level + 1) && char.level < 60) {
+    while (char.xp >= xpForLevel(char.level + 1) && char.level < MAX_LEVEL) {
       levelUp(char);
       leveled = true;
     }

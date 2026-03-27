@@ -420,7 +420,7 @@ function renderCharacterInspectPanel() {
       </div>
     </div>` : ''}
     <div class="bar-group">
-      <div class="bar-label">XP ${Math.floor(xpPct)}%</div>
+      <div class="bar-label">XP ${member.xp - levelXpBase} / ${levelXpNeeded}${member.level >= MAX_LEVEL ? ' (MAX)' : ''}</div>
       <div class="bar-track xp-track">
         <div class="bar xp-bar" style="width:${xpPct}%"></div>
       </div>
@@ -434,6 +434,21 @@ function renderCharacterInspectPanel() {
       ).join('')}
     </div>` : ''}
   `;
+
+  const xpBarEl = el.querySelector('.xp-track');
+  if (xpBarEl) {
+    const isHellLevel = HELL_LEVELS.includes(member.level);
+    attachTooltip(xpBarEl, () => `
+      <div class="tt-member">
+        <div class="tt-name" style="color:#c8a84b">Experience</div>
+        <div class="tt-row"><span class="tt-label">Level:</span> ${member.level}${isHellLevel ? ' <span style="color:#ff8844">⚠ Hell Level</span>' : ''}</div>
+        <div class="tt-row"><span class="tt-label">Progress:</span> ${(member.xp - levelXpBase).toLocaleString()} / ${levelXpNeeded.toLocaleString()} XP</div>
+        <div class="tt-row"><span class="tt-label">Total XP:</span> ${member.xp.toLocaleString()}</div>
+        <div class="tt-row"><span class="tt-label">To Next:</span> ${(levelXpNeeded - (member.xp - levelXpBase)).toLocaleString()} XP remaining</div>
+        ${member.level >= MAX_LEVEL ? '<div class="tt-row" style="color:#c8a84b">Maximum level reached!</div>' : ''}
+      </div>
+    `);
+  }
 }
 
 function renderStatsPanel() {

@@ -102,17 +102,97 @@ function getEffectiveStat(char, stat) {
   return Math.min(STAT_CAP, base + bonus);
 }
 
-// EQ-style XP curve — roughly triples every few levels
+// ─── True P99 / EverQuest Experience Table ────────────────────────────────────
+// XP_TABLE[N] = total cumulative XP required to have reached level N.
+// Source: https://wiki.project1999.com/Experience#Experience_Requirement_by_Level
+// Index 0 and 1 are both 0 (level 1 starts at 0 XP).
+// Index 61 is a sentinel equal to the XP needed to "complete" level 60.
+const XP_TABLE = [
+  /* 0  */        0,
+  /* 1  */        0,
+  /* 2  */        1_000,
+  /* 3  */        8_000,
+  /* 4  */       27_000,
+  /* 5  */       64_000,
+  /* 6  */      125_000,
+  /* 7  */      216_000,
+  /* 8  */      343_000,
+  /* 9  */      512_000,
+  /* 10 */      729_000,
+  /* 11 */    1_000_000,
+  /* 12 */    1_331_000,
+  /* 13 */    1_728_000,
+  /* 14 */    2_197_000,
+  /* 15 */    2_744_000,
+  /* 16 */    3_375_000,
+  /* 17 */    4_096_000,
+  /* 18 */    4_913_000,
+  /* 19 */    5_832_000,
+  /* 20 */    6_859_000,
+  /* 21 */    8_000_000,
+  /* 22 */    9_261_000,
+  /* 23 */   10_648_000,
+  /* 24 */   12_167_000,
+  /* 25 */   13_824_000,
+  /* 26 */   15_625_000,
+  /* 27 */   17_576_000,
+  /* 28 */   19_683_000,
+  /* 29 */   21_952_000,
+  /* 30 */   24_389_000,
+  /* 31 */   29_700_000,   // ← Hell level jump at 30→31
+  /* 32 */   32_770_100,
+  /* 33 */   36_044_800,
+  /* 34 */   39_530_700,
+  /* 35 */   43_234_400,
+  /* 36 */   51_450_000,   // ← Hell level jump at 35→36
+  /* 37 */   55_987_200,
+  /* 38 */   60_783_600,
+  /* 39 */   65_846_400,
+  /* 40 */   71_182_800,
+  /* 41 */   83_200_000,   // ← Hell level jump at 40→41
+  /* 42 */   89_597_300,
+  /* 43 */   96_314_400,
+  /* 44 */  103_359_100,
+  /* 45 */  110_739_200,
+  /* 46 */  127_575_000,   // ← Hell level jump at 45→46
+  /* 47 */  136_270_400,
+  /* 48 */  145_352_200,
+  /* 49 */  154_828_800,
+  /* 50 */  164_708_600,
+  /* 51 */  175_000_000,
+  /* 52 */  198_976_500,   // ← Hell level jump at 51→52
+  /* 53 */  224_972_800,
+  /* 54 */  253_090_900,
+  /* 55 */  299_181_600,   // ← Hell level jump at 54→55
+  /* 56 */  349_387_500,   // ← Hell level jump at 55→56
+  /* 57 */  403_916_800,   // ← Hell level jump at 56→57
+  /* 58 */  462_982_500,   // ← Hell level jump at 57→58
+  /* 59 */  526_802_400,   // ← Hell level jump at 58→59
+  /* 60 */  616_137_000,   // ← Hell level jump at 59→60
+  /* 61 */  669_600_000,   // sentinel — XP to complete level 60
+];
+
+const MAX_LEVEL = 60;
+
+// Levels with disproportionately large XP requirements (EQ "hell levels")
+const HELL_LEVELS = [30, 35, 40, 45, 51, 54, 55, 56, 57, 58, 59];
+
+/**
+ * Returns the total cumulative XP required to have reached `level`.
+ * xpForLevel(1) = 0, xpForLevel(2) = 1000, etc.
+ */
 function xpForLevel(level) {
   if (level <= 1) return 0;
-  const xpTable = [
-    0, 0, 80, 240, 720, 2000, 5400, 13500, 34000, 83000, 200000
-  ];
-  if (level < xpTable.length) return xpTable[level];
-  return Math.floor(xpTable[10] * Math.pow(3, level - 10));
+  if (level > MAX_LEVEL + 1) return XP_TABLE[MAX_LEVEL + 1];
+  return XP_TABLE[level] ?? XP_TABLE[MAX_LEVEL + 1];
 }
 
+/**
+ * Returns the XP needed to advance from `level` to `level + 1`.
+ * xpToNextLevel(1) = 1000, xpToNextLevel(30) = 5,311,000, etc.
+ */
 function xpToNextLevel(level) {
+  if (level >= MAX_LEVEL) return 0; // Already max level
   return xpForLevel(level + 1) - xpForLevel(level);
 }
 
@@ -185,4 +265,4 @@ function getEncumbrancePenalty(character) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };
+if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, XP_TABLE, MAX_LEVEL, HELL_LEVELS, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };
