@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔ Forever RPG ⚔</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/tooltips.css">
+<link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+<!-- CHARACTER CREATION OVERLAY -->
+<div id="creation-overlay">
+  <div class="creation-container">
+    <div class="creation-title">⚔ FOREVER RPG ⚔</div>
+    <div class="creation-subtitle">Assemble Your Party — Enter the lands of Norrath</div>
+    <div id="creation-slots"></div>
+    <div class="creation-footer">
+      <button id="begin-adventure-btn">Begin Adventure</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div id="logo">⚔ FOREVER RPG ⚔</div>
+  <div id="top-center">
+    <span id="current-zone-name">Qeynos Hills</span>
+    <span id="game-clock">Day 1, 6:00 AM</span>
+  </div>
+  <div id="top-right">
+    <div id="wallet"><span class="gold-amount">0g</span><span class="silver-amount">0s</span><span class="copper-amount">0c</span></div>
+    <button class="top-btn" id="settings-btn">⚙ Settings</button>
+    <button class="top-btn" id="save-btn">💾 Save</button>
+    <span id="save-indicator"></span>
+  </div>
+</div>
+
+<!-- MAIN GAME CONTAINER -->
+<div id="game-container" style="display:none">
+
+  <!-- LEFT SIDEBAR -->
+  <div id="left-sidebar">
+    <div class="panel" id="zone-panel">
+      <div class="panel-header">
+        <span class="panel-title">📍 Zone</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="zone-minimap"></div>
+        <div id="zone-info"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="party-panel">
+      <div class="panel-header">
+        <span class="panel-title">⚔ Party</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="party-roster"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="kills-panel">
+      <div class="panel-header">
+        <span class="panel-title">💀 Kill Count</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body">
+        <div id="kill-counts"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div id="center-panel">
+    <div id="combat-area">
+      <div id="enemy-sprite"><div class="no-enemy">Select an enemy below to begin combat</div></div>
+      <div id="enemy-name"></div>
+      <div id="enemy-hp-container"><div id="enemy-hp-bar" style="width:100%"></div></div>
+      <div id="enemy-hp-text"></div>
+      <div id="enemy-status"></div>
+    </div>
+
+    <div id="combat-log-container">
+      <div id="combat-log-header">⚔ Combat Log</div>
+      <div id="combat-log"></div>
+    </div>
+
+    <div id="loot-display"></div>
+
+    <div id="enemy-grid-container">
+      <div id="enemy-grid-header">⚔ Select Enemy</div>
+      <div id="enemy-grid"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div id="right-sidebar">
+    <div class="panel" id="inspect-panel">
+      <div class="panel-header">
+        <span class="panel-title">👤 Character</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="char-inspect"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="stats-panel-wrap">
+      <div class="panel-header">
+        <span class="panel-title">📊 Stats</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="stats-panel"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="equip-panel-wrap">
+      <div class="panel-header">
+        <span class="panel-title">🗡 Equipment</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="equipment-panel"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="spells-panel-wrap">
+      <div class="panel-header">
+        <span class="panel-title">✨ Abilities</span>
+        <button class="collapse-btn">▲</button>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div id="spells-panel"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel">
+  <div class="settings-title">⚙ Settings</div>
+  <div class="settings-row">
+    <span class="settings-label">Auto-Loot</span>
+    <input type="checkbox" id="autoloot-toggle" checked>
+  </div>
+  <div class="settings-row">
+    <span class="settings-label">Combat Speed (ms)</span>
+    <input type="range" id="combat-speed-slider" min="500" max="5000" step="500" value="2000">
+  </div>
+  <button class="settings-btn" id="export-save-btn">📤 Export Save</button>
+  <button class="settings-btn" id="import-save-btn">📥 Import Save</button>
+  <button class="settings-btn danger" id="delete-save-btn">🗑 Delete Save</button>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="offline-modal"></div>
+
+<div class="modal" id="export-modal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <h2>Export Save</h2>
+    <p>Copy this text to back up your save:</p>
+    <textarea class="modal-textarea" id="export-textarea" readonly></textarea>
+    <button class="btn-primary" id="export-copy-btn">Copy</button>
+  </div>
+</div>
+
+<div class="modal" id="import-modal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <h2>Import Save</h2>
+    <p>Paste your exported save data below:</p>
+    <textarea class="modal-textarea" id="import-textarea" placeholder="Paste save data here..."></textarea>
+    <button class="btn-primary" id="import-submit-btn">Import</button>
+  </div>
+</div>
+
+<!-- SCRIPTS — load order matters -->
+<script src="js/classes.js"></script>
+<script src="js/items.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/zones.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/party.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/save.js"></script>
+<script src="js/tooltips.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>

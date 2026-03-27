@@ -1,0 +1,372 @@
+/* globals GameState, CLASSES, ITEMS, ENEMIES, ZONES,
+   getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance,
+   applyACMitigation, computeDerivedStats, gainXP,
+   getPartyTank, getLowestHPMember, getHealerInParty,
+   applyStatusEffect, tickStatusEffects, isStunned, isMezzed, isSlowed,
+   rollLoot, addCombatLog, addLoot, showDamageNumber, getSprite,
+   updateCombatUI, updatePartyUI, updateInventoryUI, updateKillCountUI,
+   showLevelUpEffect */
+
+function startCombat(enemyId) {
+  const template = ENEMIES[enemyId];
+  if (!template) {
+    console.error(`startCombat: unknown enemyId "${enemyId}"`);
+    return;
+  }
+
+  GameState.currentEnemy = {
+    id: enemyId,
+    name: template.name,
+    hp: template.hp,
+    maxHP: template.hp,
+    atk: template.atk,
+    ac: template.ac,
+    xp: template.xp,
+    isUndead: template.isUndead || false,
+    magicResist: template.magicResist || 0,
+    statusEffects: [],
+    statusEffectMap: {},
+    sprite: template.sprite || null,
+    loot: template.loot || [],
+    statusProcs: template.statusProcs || [],
+  };
+
+  GameState.combatActive = true;
+  GameState.inCombat = true;
+
+  addCombatLog(`--- ${template.name} engages! ---`, 'system');
+
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+function selectEnemy(enemyId) {
+  GameState.selectedEnemyId = enemyId;
+  startCombat(enemyId);
+}
+
+function stopCombat() {
+  GameState.combatActive = false;
+  GameState.inCombat = false;
+  GameState.currentEnemy = null;
+  GameState.selectedEnemyId = null;
+  addCombatLog('Combat stopped.', 'system');
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+function combatTick() {
+  if (!GameState.combatActive || !GameState.currentEnemy) return;
+
+  const enemy = GameState.currentEnemy;
+  const party = GameState.party;
+
+  const livingMembers = party.filter(m => m.isAlive);
+  if (livingMembers.length === 0) {
+    handlePartyWipe();
+    return;
+  }
+
+  for (const member of livingMembers) {
+    if (!isStunned(member) && !isMezzed(member)) {
+      memberAttack(member, enemy);
+    }
+    if (enemy.hp <= 0) break;
+  }
+
+  const healer = getHealerInParty(party);
+  if (healer && healer.isAlive && healer.mana > 0) {
+    performHeal(healer, party);
+  }
+
+  if (enemy.hp <= 0) {
+    handleEnemyDeath(enemy);
+    return;
+  }
+
+  const tank = getPartyTank(party);
+  if (tank && tank.isAlive) {
+    enemyAttack(enemy, tank, party);
+  }
+
+  const stillLiving = party.filter(m => m.isAlive);
+  for (const member of stillLiving) {
+    const statusDamage = tickStatusEffects(member);
+    if (statusDamage > 0) {
+      member.hp = Math.max(0, member.hp - statusDamage);
+      addCombatLog(`${member.name} takes ${statusDamage} poison damage!`, 'poison');
+      if (member.hp <= 0) {
+        member.isAlive = false;
+        addCombatLog(`${member.name} has DIED!`, 'death');
+      }
+    }
+  }
+
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+function memberAttack(member, enemy) {
+  const weaponId = member.equipment ? member.equipment.primary : null;
+  const weapon = weaponId && ITEMS[weaponId] ? ITEMS[weaponId] : { dmg: 2, delay: 28, name: 'Fists' };
+
+  if (isSlowed(member) && Math.random() < 0.5) return;
+
+  const missChance = getMissChance(member, { AGI: enemy.ac * 3, statBonuses: {} });
+  if (Math.random() < missChance) {
+    addCombatLog(`${member.name} misses ${enemy.name}.`, 'miss');
+    showDamageNumber('Miss', member, false);
+    return;
+  }
+
+  let damage = getMeleeDamage(member, weapon);
+
+  const isCrit = Math.random() < getCritChance(member);
+  if (isCrit) damage = Math.floor(damage * 2);
+
+  damage = applyACMitigation(damage, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
+  damage = Math.max(1, damage);
+
+  enemy.hp = Math.max(0, enemy.hp - damage);
+
+  const logType = isCrit ? 'crit' : 'hit';
+  const critText = isCrit ? ' **CRITICAL HIT!**' : '';
+  addCombatLog(`${member.name} hits ${enemy.name} for ${damage} damage!${critText}`, logType);
+  showDamageNumber(damage, null, isCrit);
+
+  procClassAbility(member, enemy, damage);
+}
+
+function enemyAttack(enemy, target, party) {
+  const missChance = getMissChance(
+    { DEX: 75, statBonuses: {} },
+    target
+  );
+
+  if (Math.random() < missChance) {
+    addCombatLog(`${enemy.name} misses ${target.name}.`, 'miss');
+    return;
+  }
+
+  let damage = Math.max(1, enemy.atk + Math.floor(Math.random() * (enemy.atk * 0.5)));
+  damage = applyACMitigation(damage, target);
+  damage = Math.max(1, damage);
+
+  target.hp = Math.max(0, target.hp - damage);
+
+  addCombatLog(`${enemy.name} hits ${target.name} for ${damage} damage!`, 'enemy');
+  showDamageNumber(damage, target, false);
+
+  if (target.hp <= 0) {
+    target.isAlive = false;
+    addCombatLog(`${target.name} has DIED!`, 'death');
+
+    if (!party.some(m => m.isAlive)) {
+      setTimeout(handlePartyWipe, 500);
+    }
+  }
+
+  const procs = enemy.statusProcs || (enemy.statusEffects && enemy.statusEffects.length > 0 ? enemy.statusEffects : []);
+  for (const effect of procs) {
+    if (Math.random() < effect.chance) {
+      applyStatusEffect(target, {
+        type: effect.type,
+        endTime: Date.now() + effect.duration,
+        tickDamage: effect.damage || 0,
+        lastTick: Date.now(),
+      });
+      addCombatLog(`${target.name} is ${effect.type}ed!`, 'spell');
+    }
+  }
+}
+
+function performHeal(healer, party) {
+  const target = getLowestHPMember(party);
+  if (!target) return;
+
+  const hpPercent = target.hp / target.maxHP;
+  if (hpPercent >= 0.9) return;
+
+  const healAmount = Math.floor(20 + (healer.WIS * 0.3) + (healer.level * 5));
+  const manaCost = Math.floor(healAmount * 0.4);
+
+  if (healer.mana < manaCost) return;
+
+  healer.mana = Math.max(0, healer.mana - manaCost);
+  target.hp = Math.min(target.maxHP, target.hp + healAmount);
+
+  addCombatLog(`${healer.name} heals ${target.name} for ${healAmount}!`, 'heal');
+}
+
+function handleEnemyDeath(enemy) {
+  addCombatLog(`${enemy.name} has been slain!`, 'death');
+
+  const zoneData = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+  const xpModifier = zoneData && zoneData.xpModifier ? zoneData.xpModifier : 1;
+  const xpGain = Math.floor(enemy.xp * xpModifier);
+  const levelUps = gainXP(GameState.party, xpGain);
+
+  const livingCount = GameState.party.filter(m => m.isAlive).length;
+  const xpPerMember = Math.floor(xpGain / Math.max(1, livingCount));
+  addCombatLog(`Party gains ${xpGain} XP (${xpPerMember} each)!`, 'xp');
+
+  for (const lu of levelUps) {
+    if (lu.leveled) {
+      addCombatLog(`${lu.charName} reached level ${lu.newLevel}!`, 'levelup');
+      if (typeof showLevelUpEffect === 'function') showLevelUpEffect(lu.charId);
+    }
+  }
+
+  if (!GameState.killCounts) GameState.killCounts = {};
+  if (!GameState.killCounts[enemy.id]) GameState.killCounts[enemy.id] = 0;
+  GameState.killCounts[enemy.id]++;
+
+  const lootDrops = rollLoot(ENEMIES[enemy.id]);
+  for (const drop of lootDrops) {
+    if (GameState.settings && GameState.settings.autoLoot) {
+      addToInventory(drop.itemId, drop.quantity);
+      const item = ITEMS[drop.itemId];
+      if (item) {
+        addCombatLog(`You receive: ${item.name} x${drop.quantity}`, 'loot');
+        addLoot(drop.itemId, drop.quantity);
+      }
+    }
+  }
+
+  GameState.combatActive = false;
+  GameState.currentEnemy = null;
+
+  if (GameState.selectedEnemyId) {
+    const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : 3000;
+    setTimeout(() => {
+      if (GameState.selectedEnemyId) {
+        startCombat(GameState.selectedEnemyId);
+        if (typeof updateCombatUI === 'function') updateCombatUI();
+      }
+    }, respawnTime);
+  }
+
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+  if (typeof updatePartyUI === 'function') updatePartyUI();
+  if (typeof updateInventoryUI === 'function') updateInventoryUI();
+  if (typeof updateKillCountUI === 'function') updateKillCountUI();
+}
+
+function handlePartyWipe() {
+  addCombatLog('--- PARTY HAS BEEN DEFEATED ---', 'death');
+  GameState.combatActive = false;
+  GameState.currentEnemy = null;
+
+  setTimeout(() => {
+    for (const member of GameState.party) {
+      member.isAlive = true;
+      member.hp = Math.max(1, Math.floor(member.maxHP * 0.1));
+      member.mana = Math.max(0, Math.floor(member.maxMana * 0.1));
+      member.statusEffects = [];
+      if (member.statusEffectMap) member.statusEffectMap = {};
+    }
+    addCombatLog('Party recovers... ready to fight again.', 'system');
+    if (typeof updateCombatUI === 'function') updateCombatUI();
+    if (typeof updatePartyUI === 'function') updatePartyUI();
+  }, 5000);
+}
+
+function procClassAbility(member, enemy, damage) {
+  const classId = member.classId;
+  const procRoll = Math.random();
+
+  if (classId === 'rogue' && member.equipment && member.equipment.primary) {
+    if (procRoll < 0.15) {
+      const backstabDmg = Math.floor(damage * 1.5);
+      enemy.hp = Math.max(0, enemy.hp - backstabDmg);
+      addCombatLog(`${member.name} BACKSTABS for ${backstabDmg} extra damage!`, 'crit');
+    }
+  } else if (classId === 'monk') {
+    if (procRoll < 0.1) {
+      const kickDmg = Math.floor(member.level * 2 + (member.STR || 0) * 0.1);
+      enemy.hp = Math.max(0, enemy.hp - kickDmg);
+      addCombatLog(`${member.name} lands a FLYING KICK for ${kickDmg}!`, 'hit');
+    }
+  } else if (classId === 'berserker') {
+    if (member.hp < member.maxHP * 0.3 && procRoll < 0.2) {
+      const frenzyDmg = Math.floor(damage * 0.7);
+      enemy.hp = Math.max(0, enemy.hp - frenzyDmg);
+      addCombatLog(`${member.name} FRENZIES for ${frenzyDmg} extra!`, 'crit');
+    }
+  } else if (classId === 'paladin' || classId === 'cleric') {
+    if (enemy.isUndead && procRoll < 0.15) {
+      const holyDmg = Math.floor(member.level * 3);
+      enemy.hp = Math.max(0, enemy.hp - holyDmg);
+      addCombatLog(`${member.name} channels holy power for ${holyDmg} vs undead!`, 'spell');
+    }
+  } else if (classId === 'shadowknight' || classId === 'necromancer') {
+    if (procRoll < 0.08) {
+      const tapDmg = Math.floor(member.level * 2);
+      enemy.hp = Math.max(0, enemy.hp - tapDmg);
+      member.hp = Math.min(member.maxHP, member.hp + tapDmg);
+      addCombatLog(`${member.name} drains ${tapDmg} life!`, 'spell');
+    }
+  } else if (classId === 'wizard' || classId === 'magician') {
+    if (procRoll < 0.12 && member.mana >= 20) {
+      const spellDmg = Math.floor((member.INT || 0) * 0.3 + member.level * 4);
+      if (enemy.magicResist && Math.random() < enemy.magicResist / 100) {
+        addCombatLog(`${enemy.name} RESISTS the spell!`, 'miss');
+      } else {
+        enemy.hp = Math.max(0, enemy.hp - spellDmg);
+        addCombatLog(`${member.name} blasts ${enemy.name} for ${spellDmg}!`, 'spell');
+      }
+      member.mana = Math.max(0, member.mana - 20);
+    }
+  } else if (classId === 'enchanter') {
+    if (procRoll < 0.1 && member.mana >= 15) {
+      applyStatusEffect(enemy, { type: 'slow', endTime: Date.now() + 8000 });
+      member.mana = Math.max(0, member.mana - 15);
+      addCombatLog(`${member.name} slows ${enemy.name}!`, 'spell');
+    }
+  } else if (classId === 'shaman') {
+    if (procRoll < 0.1 && member.mana >= 15) {
+      applyStatusEffect(enemy, { type: 'slow', endTime: Date.now() + 10000 });
+      member.mana = Math.max(0, member.mana - 15);
+      addCombatLog(`${member.name} slows ${enemy.name} with malaise!`, 'spell');
+    }
+  } else if (classId === 'druid') {
+    if (procRoll < 0.08 && member.mana >= 12) {
+      applyStatusEffect(enemy, { type: 'slow', endTime: Date.now() + 12000 });
+      member.mana = Math.max(0, member.mana - 12);
+      addCombatLog(`${member.name} snares ${enemy.name}!`, 'spell');
+    }
+  } else if (classId === 'bard') {
+    if (procRoll < 0.05) {
+      addCombatLog(`${member.name} plays an inspiring melody!`, 'spell');
+    }
+  } else if (classId === 'ranger') {
+    if (procRoll < 0.12) {
+      const arrowDmg = Math.floor((member.DEX || 0) * 0.15 + member.level * 1.5);
+      enemy.hp = Math.max(0, enemy.hp - arrowDmg);
+      addCombatLog(`${member.name} fires an arrow for ${arrowDmg}!`, 'hit');
+    }
+  } else if (classId === 'beastlord') {
+    if (procRoll < 0.15) {
+      const warderDmg = Math.floor(member.level * 1.8 + (member.WIS || 0) * 0.1);
+      enemy.hp = Math.max(0, enemy.hp - warderDmg);
+      addCombatLog(`${member.name}'s warder attacks for ${warderDmg}!`, 'hit');
+    }
+  }
+}
+
+function addToInventory(itemId, quantity) {
+  if (!GameState.inventory) GameState.inventory = [];
+  const existing = GameState.inventory.find(stack => stack.itemId === itemId);
+  if (existing) {
+    existing.quantity += quantity;
+  } else {
+    GameState.inventory.push({ itemId, quantity, item: ITEMS[itemId] });
+  }
+}
+
+function tickManaRegen(party) {
+  for (const member of party) {
+    if (!member.isAlive || member.maxMana === 0) continue;
+    const regenRate = Math.floor(member.level * 0.5 + 1);
+    member.mana = Math.min(member.maxMana, member.mana + regenRate);
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { startCombat, combatTick, selectEnemy, stopCombat, addToInventory, tickManaRegen, handlePartyWipe };
