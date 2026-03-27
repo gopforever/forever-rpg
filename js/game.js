@@ -21,6 +21,7 @@ const GameState = {
   combatActive: false,
   inCombat: false,
   inspectedCharIndex: 0,
+  threatTable: {},
   settings: {
     autoLoot: true,
     combatSpeed: 2000,
