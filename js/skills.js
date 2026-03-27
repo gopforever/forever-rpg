@@ -1,5 +1,8 @@
 // skills.js - P99/EverQuest-authentic per-character skill system for Forever RPG
 
+const INITIAL_SKILL_RANGE = 10;    // new chars start with 1–10 points in each unlocked skill
+const SKILL_MILESTONE_INTERVAL = 25; // announce skill-ups at multiples of this value
+
 const SKILL_HARD_CAPS = {
   warrior: {
     offense: 252, defense: 252, oneHandSlash: 252, oneHandBlunt: 252,
@@ -274,7 +277,7 @@ function initSkills(classId, level) {
   for (const [skillName, unlockLevel] of Object.entries(unlocks)) {
     if (level >= unlockLevel) {
       const cap = getSkillCap(classId, skillName, level);
-      skills[skillName] = Math.min(cap, Math.floor(Math.random() * 10) + 1);
+      skills[skillName] = Math.min(cap, Math.floor(Math.random() * INITIAL_SKILL_RANGE) + 1);
     }
   }
   return skills;
@@ -299,7 +302,7 @@ function trySkillGain(member, skillName) {
   if (Math.random() < chance) {
     const newVal = current + 1;
     member.skills[skillName] = newVal;
-    if (newVal % 25 === 0 && typeof addCombatLog === 'function') {
+    if (newVal % SKILL_MILESTONE_INTERVAL === 0 && typeof addCombatLog === 'function') {
       const displayName = SKILL_DISPLAY_NAMES[skillName] || skillName;
       addCombatLog(`${member.name}'s ${displayName} has increased to ${newVal}!`, 'levelup');
     }
@@ -334,6 +337,6 @@ function unlockSkillsForLevel(member) {
 
 if (typeof module !== 'undefined') module.exports = {
   SKILL_HARD_CAPS, CLASS_TIER, TIER_MULTIPLIER, SKILL_UNLOCK_LEVELS,
-  SKILL_STAT, SKILL_DISPLAY_NAMES,
+  SKILL_STAT, SKILL_DISPLAY_NAMES, INITIAL_SKILL_RANGE, SKILL_MILESTONE_INTERVAL,
   getSkillCap, initSkills, trySkillGain, hasSkill, unlockSkillsForLevel,
 };

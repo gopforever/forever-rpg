@@ -163,7 +163,7 @@ function memberAttack(member, enemy) {
   // Skill gains on successful hit
   if (typeof trySkillGain === 'function') {
     trySkillGain(member, 'offense');
-    const weaponSkill = getWeaponSkillName(weapon.weaponType ? weapon : null);
+    const weaponSkill = getWeaponSkillName(weaponId ? weapon : null);
     trySkillGain(member, weaponSkill);
 
     // Double attack proc
