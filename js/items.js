@@ -529,6 +529,72 @@ const ITEMS = {
     races: [],
     flavor: 'Worn copper currency.',
   },
+
+  // ─── BAGS ──────────────────────────────────────────────────────────────────
+
+  small_pouch: {
+    id: 'small_pouch',
+    name: 'Small Pouch',
+    slot: 'bag',
+    type: 'bag',
+    rarity: 'common',
+    lore: false,
+    nodrop: false,
+    weight: 0.5,
+    capacity: 4,
+    weightReduction: 0,
+    classes: [],
+    races: [],
+    flavor: 'A simple cloth pouch. Holds a few items.',
+  },
+
+  large_pouch: {
+    id: 'large_pouch',
+    name: 'Large Pouch',
+    slot: 'bag',
+    type: 'bag',
+    rarity: 'common',
+    lore: false,
+    nodrop: false,
+    weight: 1.0,
+    capacity: 8,
+    weightReduction: 0,
+    classes: [],
+    races: [],
+    flavor: 'A large leather pouch with several compartments.',
+  },
+
+  travelers_pack: {
+    id: 'travelers_pack',
+    name: "Traveler's Pack",
+    slot: 'bag',
+    type: 'bag',
+    rarity: 'magic',
+    lore: false,
+    nodrop: false,
+    weight: 2.0,
+    capacity: 10,
+    weightReduction: 10,
+    classes: [],
+    races: [],
+    flavor: "A well-crafted adventurer's pack. Items inside weigh a bit less.",
+  },
+
+  gnoll_hide_sack: {
+    id: 'gnoll_hide_sack',
+    name: 'Gnoll Hide Sack',
+    slot: 'bag',
+    type: 'bag',
+    rarity: 'magic',
+    lore: false,
+    nodrop: false,
+    weight: 1.5,
+    capacity: 6,
+    weightReduction: 20,
+    classes: [],
+    races: [],
+    flavor: 'Crude but effective. Smells of wet dog.',
+  },
 };
 
 const STARTING_GEAR = {
