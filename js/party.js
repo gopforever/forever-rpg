@@ -106,7 +106,7 @@ function gainXP(party, xpAmount) {
     }
     char.xpToNext = xpToNextLevel(char.level);
 
-    results.push({ charId: char.id, leveled, oldLevel, newLevel: char.level });
+    results.push({ charId: char.id, charName: char.name, leveled, oldLevel, newLevel: char.level });
   }
 
   return results;
