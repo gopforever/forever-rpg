@@ -10,7 +10,8 @@
    addThreat, getCurrentTarget, tickAbilityCasts, interruptCast,
    dispatchAbilityEffect, selectAbilityForMember,
    tickPets, summonPet, commandPetAttack, buffPet,
-   startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup */
+   startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup,
+   xpForLevel, xpToNextLevel, MAX_LEVEL */
 
 const MAX_CARRY_SLOTS = 30;
 
@@ -539,10 +540,16 @@ function enemyAttack(enemy, target, party) {
     return;
   }
 
+  // Enemy crit check
+  const enemyCritChance = Math.min(0.08, 0.03 + (enemy.level - 1) * 0.005);
+  const enemyIsCrit = Math.random() < enemyCritChance;
+  if (enemyIsCrit) damage = Math.floor(damage * 2);
+
   target.hp = Math.max(0, target.hp - damage);
 
-  addCombatLog(`${enemy.name} hits ${target.name} for ${damage} damage!`, 'enemy');
-  showDamageNumber(damage, target, false);
+  const critSuffix = enemyIsCrit ? ' **CRITICAL HIT!**' : '';
+  addCombatLog(`${enemy.name} hits ${target.name} for ${damage} damage!${critSuffix}`, enemyIsCrit ? 'crit' : 'enemy');
+  showDamageNumber(damage, target, enemyIsCrit);
 
   // Interrupt casting if the target is a caster mid-cast
   if (target.isCasting) {
@@ -740,6 +747,21 @@ function handlePartyWipe() {
   GameState.enemies = [];
   GameState.currentEnemy = null;
 
+  // XP penalty: lose 7% of current level's XP progress, cannot de-level
+  for (const member of GameState.party) {
+    if (typeof xpForLevel === 'function' && typeof xpToNextLevel === 'function') {
+      const levelBase = xpForLevel(member.level);
+      const levelRange = xpToNextLevel(member.level);
+      const penalty = Math.floor(levelRange * 0.07);
+      const newXP = Math.max(levelBase, member.xp - penalty);
+      const lost = member.xp - newXP;
+      member.xp = newXP;
+      if (lost > 0) {
+        addCombatLog(`${member.name} loses ${lost} experience points.`, 'death');
+      }
+    }
+  }
+
   setTimeout(() => {
     for (const member of GameState.party) {
       member.isAlive = true;
@@ -788,10 +810,33 @@ function tickAbilityCasts(party, enemy) {
   for (const member of party) {
     if (!member.isAlive || !member.isCasting || !member.castingAbility) continue;
     if (now >= member.castingAbility.castEndTime) {
+      // Fizzle check — only for abilities with cast time > 0 (instant casts skip this)
+      const channelingSkill = (member.skills && member.skills['channeling']) || 0;
+      // 35% fizzle at skill 0, reaches 0% at skill ~252 (0.35 - 252/720 ≈ 0)
+      const fizzleChance = Math.max(0, 0.35 - channelingSkill / 720);
+      // Only fizzle spell-type abilities (not melee/utility instants)
+      const ability = member.castingAbility.ability;
+      const isMagicAbility = ability.effect && [
+        'damage', 'damage_aoe', 'damage_undead', 'heal', 'heal_pet', 'dot',
+        'lifetap', 'mez', 'stun', 'fear', 'aoe_fear', 'debuff', 'buff',
+        'turn_undead', 'invulnerability'
+      ].includes(ability.effect.type);
+
+      if (isMagicAbility && Math.random() < fizzleChance) {
+        // Fizzle — cast fails, mana already spent
+        addCombatLog(`${member.name}'s ${ability.name} fizzles!`, 'miss');
+        member.abilityCooldowns[ability.name] = now + 2000; // 2 s short cooldown on fizzle
+        member.castingAbility = null;
+        member.isCasting = false;
+        // Still gain channeling skill on fizzle (you learn from failure)
+        if (typeof trySkillGain === 'function') trySkillGain(member, 'channeling');
+        continue;
+      }
+
       // Cast completed — dispatch effect
-      dispatchAbilityEffect(member, member.castingAbility.ability, enemy, GameState.party);
-      member.abilityCooldowns[member.castingAbility.ability.name] =
-        now + (member.castingAbility.ability.recastTime || 0);
+      dispatchAbilityEffect(member, ability, enemy, GameState.party);
+      member.abilityCooldowns[ability.name] =
+        now + (ability.recastTime || 0);
       member.castingAbility = null;
       member.isCasting = false;
     }
