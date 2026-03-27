@@ -143,6 +143,8 @@ function initMainUI() {
   initDraggablePanels();
   updateGameClock();
 
+  if (typeof renderWhoOnlinePanel === 'function') renderWhoOnlinePanel();
+
   if (GameState.selectedEnemyId) {
     selectEnemy(GameState.selectedEnemyId);
     updateEnemyDisplay();
@@ -245,6 +247,7 @@ function changeZone(zoneId) {
   renderZonePanel();
   renderEnemySelector();
   if (typeof updateCombatUI === 'function') updateCombatUI();
+  if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
 }
 
 function renderPartyPanel() {
@@ -1223,6 +1226,110 @@ function renderCityTabContent(tab) {
         renderCityTabContent('guild');
       });
     });
+
+  } else if (tab === 'players') {
+    const listings = typeof getMarketListings === 'function' ? getMarketListings() : [];
+    const fmt2 = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
+
+    if (!listings.length) {
+      el.innerHTML = '<div class="city-empty">No player listings available yet.</div>';
+      return;
+    }
+
+    const rows = listings.map(listing => {
+      const color = (typeof CLASS_COLORS !== 'undefined' && CLASS_COLORS[listing.sellerClass]) || '#e8d5a0';
+      const icon  = (typeof CLASS_ICONS  !== 'undefined' && CLASS_ICONS[listing.sellerClass])  || '⚔';
+      return `
+        <div class="market-listing" data-listing-id="${listing.id}">
+          <span class="market-seller" style="color:${color}">${icon} ${listing.seller}</span>
+          <span class="market-item-name">${listing.itemName}</span>
+          <span class="market-qty">x${listing.qty}</span>
+          <span class="market-price">${fmt2(listing.price * listing.qty)}</span>
+          <button class="city-btn market-buy-btn" data-listing="${listing.id}">Buy</button>
+        </div>
+      `;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="city-section-title">👥 Player Marketplace</div>
+      <div class="market-hint">Ghost player listings — prices vary 80–150% of vendor price.</div>
+      <div class="market-listing-header">
+        <span>Seller</span><span>Item</span><span>Qty</span><span>Price</span><span></span>
+      </div>
+      ${rows}
+    `;
+
+    el.querySelectorAll('.market-buy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const listingId = parseInt(btn.dataset.listing, 10);
+        const listings2 = typeof getMarketListings === 'function' ? getMarketListings() : [];
+        const listing   = listings2.find(l => l.id === listingId);
+        if (!listing) return;
+
+        const totalCost = listing.price * listing.qty;
+        const total = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+        if (total < totalCost) {
+          if (typeof addCombatLog === 'function') addCombatLog(`Not enough coin to buy ${listing.itemName} (${fmt2(totalCost)}).`, 'system');
+          return;
+        }
+
+        // Deduct cost
+        let remaining = total - totalCost;
+        GameState.gold   = Math.floor(remaining / 1000);
+        remaining %= 1000;
+        GameState.silver = Math.floor(remaining / 100);
+        GameState.copper = remaining % 100;
+
+        // Add item to inventory
+        if (typeof addToInventory === 'function') {
+          addToInventory(listing.itemId, listing.qty);
+        }
+
+        // Remove listing
+        const newListings = listings2.filter(l => l.id !== listingId);
+        if (typeof setMarketListings === 'function') setMarketListings(newListings);
+
+        if (typeof addCombatLog === 'function') addCombatLog(`Purchased ${listing.itemName} x${listing.qty} from ${listing.seller} for ${fmt2(totalCost)}.`, 'loot');
+        if (typeof renderTopBar === 'function') renderTopBar();
+        if (typeof updateInventoryUI === 'function') updateInventoryUI();
+
+        renderCityTabContent('players');
+      });
+    });
+
+  } else if (tab === 'leaderboard') {
+    const data = typeof getLeaderboardData === 'function' ? getLeaderboardData() : [];
+
+    if (!data.length) {
+      el.innerHTML = '<div class="city-empty">No ranking data available.</div>';
+      return;
+    }
+
+    const rows = data.map((entry, i) => {
+      const color = (typeof CLASS_COLORS !== 'undefined' && CLASS_COLORS[entry.classId]) || '#e8d5a0';
+      const icon  = (typeof CLASS_ICONS  !== 'undefined' && CLASS_ICONS[entry.classId])  || '⚔';
+      const zone  = (typeof ZONES !== 'undefined' && ZONES[entry.zone]) ? ZONES[entry.zone].name : entry.zone;
+      const name  = entry.isPlayer ? `[YOU] ${entry.name}` : entry.name;
+      const rowClass = entry.isPlayer ? 'leaderboard-you' : '';
+      return `<tr class="${rowClass}">
+        <td>${i + 1}</td>
+        <td style="color:${color}">${name}</td>
+        <td>${icon} ${entry.classId.charAt(0).toUpperCase() + entry.classId.slice(1)}</td>
+        <td>${entry.level}</td>
+        <td>${entry.kills.toLocaleString()}</td>
+        <td>${zone}</td>
+      </tr>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="city-section-title">🏆 World Rankings — Top 20</div>
+      <table class="leaderboard-table">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Class</th><th>Level</th><th>Kills</th><th>Zone</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
   }
 }
 

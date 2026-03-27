@@ -119,6 +119,9 @@ function init() {
   // Wire up all button handlers
   wireUpButtons();
   
+  // Initialize ghost player simulation
+  if (typeof initGhostPlayers === 'function') initGhostPlayers();
+  
   // Start game loops
   startGameLoops();
 }
