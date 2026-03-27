@@ -162,6 +162,8 @@ function enemyAttack(enemy, target, party) {
     target.isAlive = false;
     addCombatLog(`${target.name} has DIED!`, 'death');
 
+    ensureMonsterLogEntry(enemy.id).deaths++;
+
     if (!party.some(m => m.isAlive)) {
       setTimeout(handlePartyWipe, 500);
     }
@@ -218,6 +220,14 @@ function getConColor(partyLevel, enemyLevel) {
   return               { color: 'green',       label: '● Green',      multiplier: 0    };
 }
 
+function ensureMonsterLogEntry(enemyId) {
+  if (!GameState.monsterLog) GameState.monsterLog = {};
+  if (!GameState.monsterLog[enemyId]) {
+    GameState.monsterLog[enemyId] = { kills: 0, deaths: 0, firstSeen: Date.now(), lastKill: null };
+  }
+  return GameState.monsterLog[enemyId];
+}
+
 function handleEnemyDeath(enemy) {
   addCombatLog(`${enemy.name} has been slain!`, 'death');
 
@@ -250,6 +260,10 @@ function handleEnemyDeath(enemy) {
   if (!GameState.killCounts) GameState.killCounts = {};
   if (!GameState.killCounts[enemy.id]) GameState.killCounts[enemy.id] = 0;
   GameState.killCounts[enemy.id]++;
+
+  const logEntry = ensureMonsterLogEntry(enemy.id);
+  logEntry.kills++;
+  logEntry.lastKill = Date.now();
 
   const lootDrops = rollLoot(ENEMIES[enemy.id]);
   for (const drop of lootDrops) {
@@ -453,6 +467,7 @@ function addToBank(itemId, quantity) {
 function depositAllToBank() {
   if (!GameState.inventory) return;
   const keep = [];
+  let depositedCount = 0;
   for (const stack of GameState.inventory) {
     if (!stack) continue;
     const item = ITEMS[stack.itemId];
@@ -460,12 +475,21 @@ function depositAllToBank() {
       keep.push(stack);
     } else {
       const success = addToBank(stack.itemId, stack.quantity);
-      if (!success) keep.push(stack);
+      if (!success) {
+        keep.push(stack);
+      } else {
+        depositedCount++;
+        if (typeof addCombatLog === 'function') {
+          addCombatLog(`Deposited ${item ? item.name : stack.itemId} to bank.`, 'loot');
+        }
+      }
     }
   }
   GameState.inventory = keep;
+  if (typeof saveGame === 'function') saveGame();
   if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
   if (typeof updateInventoryUI === 'function') updateInventoryUI();
+  if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
 }
 
 function tickManaRegen(party) {

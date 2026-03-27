@@ -144,6 +144,7 @@ function initMainUI() {
   updateGameClock();
 
   if (typeof renderWhoOnlinePanel === 'function') renderWhoOnlinePanel();
+  renderMonsterLogPanel();
 
   if (GameState.selectedEnemyId) {
     selectEnemy(GameState.selectedEnemyId);
@@ -246,6 +247,7 @@ function changeZone(zoneId) {
   renderTopBar();
   renderZonePanel();
   renderEnemySelector();
+  renderMonsterLogPanel();
   if (typeof updateCombatUI === 'function') updateCombatUI();
   if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
 }
@@ -344,6 +346,83 @@ function renderKillCountPanel() {
       }).join('')}
     </tbody>
   </table>`;
+}
+
+function renderMonsterLogPanel() {
+  const bodyEl = document.getElementById('monster-log-body');
+  if (!bodyEl) return;
+
+  const zone = ZONES[GameState.zone];
+  if (!zone || zone.isSafeZone) {
+    bodyEl.innerHTML = '<div class="no-kills">No enemies in this zone.</div>';
+    return;
+  }
+
+  const commonEnemies = zone.commonEnemies || [];
+  const rareEnemies = [...new Set(zone.rareEnemies || [])];
+  const allZoneEnemyIds = [...new Set([...commonEnemies, ...rareEnemies])];
+
+  if (allZoneEnemyIds.length === 0) {
+    bodyEl.innerHTML = '<div class="no-kills">No enemies tracked for this zone.</div>';
+    return;
+  }
+
+  const monsterLog = GameState.monsterLog || {};
+  const killCounts = GameState.killCounts || {};
+
+  const entries = allZoneEnemyIds.map(id => {
+    const enemy = ENEMIES[id];
+    const log = monsterLog[id] || null;
+    const kills = killCounts[id] || 0;
+    const deaths = log ? log.deaths : 0;
+    const firstSeen = log ? log.firstSeen : null;
+    const isRare = rareEnemies.includes(id);
+    return { id, enemy, kills, deaths, firstSeen, isRare };
+  });
+
+  // Sort: discovered (kills>0) by kill count desc, then undiscovered
+  entries.sort((a, b) => {
+    if (a.kills > 0 && b.kills === 0) return -1;
+    if (a.kills === 0 && b.kills > 0) return 1;
+    return b.kills - a.kills;
+  });
+
+  bodyEl.innerHTML = entries.map(({ id, enemy, kills, deaths, firstSeen, isRare }) => {
+    const name = enemy ? enemy.name : id;
+    const level = enemy ? enemy.level : '?';
+    const completion = Math.min(100, Math.floor(kills / 10) * 10);
+    const barFill = Math.min(100, completion);
+    const discovered = kills > 0;
+    const rareIcon = isRare ? ' ⭐' : '';
+
+    if (!discovered) {
+      return `
+        <div class="monster-log-entry monster-log-undiscovered">
+          <div class="monster-log-row">
+            <span class="monster-log-name">??? (Undiscovered)${rareIcon}</span>
+            <span class="monster-log-level">Lv.${level}</span>
+          </div>
+          <div class="monster-log-stats">
+            <span>0 kills</span>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="monster-log-entry">
+        <div class="monster-log-row">
+          <span class="monster-log-name">${name}${rareIcon}</span>
+          <span class="monster-log-level">Lv.${level}</span>
+        </div>
+        <div class="monster-log-stats">
+          Kills: <strong>${kills}</strong> &nbsp; Deaths: <strong>${deaths}</strong>
+        </div>
+        <div class="monster-completion-bar-wrap">
+          <div class="monster-completion-bar" style="width:${barFill}%"></div>
+        </div>
+        <div class="monster-log-pct">${completion}% complete</div>
+      </div>`;
+  }).join('');
 }
 
 function renderCombatPanel() {
@@ -831,6 +910,7 @@ function updateInventoryUI() {
 
 function updateKillCountUI() {
   renderKillCountPanel();
+  renderMonsterLogPanel();
 }
 
 function updateGameTime() {
@@ -1037,10 +1117,12 @@ function renderBankSlots() {
     if (stack) {
       const item = ITEMS[stack.itemId];
       const rarityClass = item ? `rarity-${item.rarity}` : '';
+      const shortName = item ? (item.name.length > 10 ? item.name.slice(0, 9) + '…' : item.name) : '?';
       slots.push(`
-        <div class="inv-slot filled ${rarityClass}" data-item="${stack.itemId}" data-bank-slot="${i}">
+        <div class="inv-slot filled bank-slot-filled ${rarityClass}" data-item="${stack.itemId}" data-bank-slot="${i}" title="${item ? item.name : ''}">
           <div class="inv-slot-icon">${getItemIcon(stack.itemId)}</div>
           <div class="inv-slot-count">${stack.quantity > 1 ? stack.quantity : ''}</div>
+          <div class="inv-slot-name">${shortName}</div>
         </div>
       `);
     } else {
@@ -1054,6 +1136,117 @@ function renderBankSlots() {
     </div>
     <div class="inv-grid bank-grid">${slots.join('')}</div>
   `;
+}
+
+function wireBankInteractions(container) {
+  // Left-click filled slot → withdraw
+  container.querySelectorAll('.bank-slot-filled').forEach(slotEl => {
+    slotEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(slotEl.dataset.bankSlot, 10);
+      if (typeof withdrawItemFromBank === 'function') withdrawItemFromBank(idx);
+    });
+    // Right-click → context menu
+    slotEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showBankContextMenu(e, parseInt(slotEl.dataset.bankSlot, 10));
+    });
+  });
+
+  // Left-click empty slot → open deposit picker
+  container.querySelectorAll('.bank-slot').forEach(slotEl => {
+    slotEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(slotEl.dataset.bankSlot, 10);
+      showDepositPicker(slotEl, idx);
+    });
+  });
+}
+
+function showBankContextMenu(e, bankSlotIndex) {
+  document.querySelectorAll('.bank-context-menu').forEach(m => m.remove());
+  const stack = (GameState.bank || [])[bankSlotIndex];
+  if (!stack) return;
+  const item = ITEMS[stack.itemId];
+  const itemName = item ? item.name : stack.itemId;
+
+  const menu = document.createElement('div');
+  menu.className = 'bank-context-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;`;
+  menu.innerHTML = `
+    <div class="ctx-item ctx-withdraw">📤 Withdraw</div>
+    <div class="ctx-item ctx-destroy">🗑 Destroy</div>
+  `;
+  document.body.appendChild(menu);
+
+  menu.querySelector('.ctx-withdraw').addEventListener('click', () => {
+    menu.remove();
+    if (typeof withdrawItemFromBank === 'function') withdrawItemFromBank(bankSlotIndex);
+  });
+  menu.querySelector('.ctx-destroy').addEventListener('click', () => {
+    menu.remove();
+    if (confirm(`Destroy ${itemName}? This cannot be undone.`)) {
+      if (!GameState.bank) return;
+      GameState.bank[bankSlotIndex] = null;
+      while (GameState.bank.length > 0 && GameState.bank[GameState.bank.length - 1] === null) {
+        GameState.bank.pop();
+      }
+      addCombatLog(`Destroyed ${itemName}.`, 'system');
+      if (typeof saveGame === 'function') saveGame();
+      renderCityTabContent('bank');
+    }
+  });
+
+  const dismiss = () => { menu.remove(); document.removeEventListener('click', dismiss); };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
+}
+
+function showDepositPicker(anchorEl, bankSlotIndex) {
+  document.querySelectorAll('.bank-deposit-picker').forEach(p => p.remove());
+  const inventory = GameState.inventory || [];
+  const pickable = inventory.map((s, i) => ({ stack: s, idx: i })).filter(({ stack }) => {
+    if (!stack) return false;
+    const item = ITEMS[stack.itemId];
+    return !(item && item.nodrop);
+  });
+
+  if (pickable.length === 0) {
+    addCombatLog('Nothing in your inventory to deposit.', 'system');
+    return;
+  }
+
+  const picker = document.createElement('div');
+  picker.className = 'bank-deposit-picker';
+  const rect = anchorEl.getBoundingClientRect();
+  picker.style.cssText = `position:fixed;left:${rect.right + 4}px;top:${rect.top}px;z-index:9999;`;
+  picker.innerHTML = `<div class="picker-title">Deposit into bank</div>` +
+    pickable.map(({ stack, idx }) => {
+      const item = ITEMS[stack.itemId];
+      const name = item ? item.name : stack.itemId;
+      const icon = getItemIcon(stack.itemId);
+      return `<div class="picker-row" data-inv-index="${idx}" data-item-id="${stack.itemId}">${icon} ${name}${stack.quantity > 1 ? ` x${stack.quantity}` : ''}</div>`;
+    }).join('');
+  document.body.appendChild(picker);
+
+  picker.querySelectorAll('.picker-row').forEach(row => {
+    row.addEventListener('click', () => {
+      picker.remove();
+      const invIdx = parseInt(row.dataset.invIndex, 10);
+      const itemId = row.dataset.itemId;
+      if (typeof depositItemToBank === 'function') {
+        depositItemToBank(itemId, invIdx);
+      }
+    });
+  });
+
+  const dismiss = (ev) => {
+    if (!picker.contains(ev.target)) {
+      picker.remove();
+      document.removeEventListener('click', dismiss);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
 }
 
 // ─── City Panel ───────────────────────────────────────────────────────────────
@@ -1094,6 +1287,7 @@ function renderCityTabContent(tab) {
 
   if (tab === 'bank') {
     el.innerHTML = renderBankSlots();
+    wireBankInteractions(el);
     // Wire deposit-all button
     const depositBtn = el.querySelector('#deposit-all-btn');
     if (depositBtn) {
@@ -1362,7 +1556,9 @@ if (typeof module !== 'undefined') module.exports = {
   renderBagSlots,
   renderBagContents,
   renderBankSlots,
+  wireBankInteractions,
   renderCityPanel,
   renderCityTabContent,
+  renderMonsterLogPanel,
   getItemIcon,
 };

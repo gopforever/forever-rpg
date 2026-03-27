@@ -214,6 +214,53 @@ function sellToVendor(itemId, quantity) {
   return true;
 }
 
+// ─── Bank Operations ──────────────────────────────────────────────────────────
+
+function depositItemToBank(itemId, fromInventoryIndex) {
+  if (!GameState.inventory) return false;
+  const stack = GameState.inventory[fromInventoryIndex];
+  if (!stack || stack.itemId !== itemId) return false;
+  const item = ITEMS[itemId];
+  if (item && item.nodrop) {
+    addCombatLog(`${item ? item.name : itemId} is no-drop and cannot be banked.`, 'system');
+    return false;
+  }
+  const success = addToBank(itemId, stack.quantity);
+  if (!success) {
+    addCombatLog('Bank is full!', 'system');
+    return false;
+  }
+  GameState.inventory.splice(fromInventoryIndex, 1);
+  addCombatLog(`Deposited ${item ? item.name : itemId} to bank.`, 'loot');
+  if (typeof saveGame === 'function') saveGame();
+  if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+  if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
+  return true;
+}
+
+function withdrawItemFromBank(bankSlotIndex) {
+  if (!GameState.bank) return false;
+  const stack = GameState.bank[bankSlotIndex];
+  if (!stack) return false;
+  const item = ITEMS[stack.itemId];
+  if (typeof addToInventory === 'function') {
+    addToInventory(stack.itemId, stack.quantity);
+  } else {
+    if (!GameState.inventory) GameState.inventory = [];
+    GameState.inventory.push({ itemId: stack.itemId, quantity: stack.quantity });
+  }
+  GameState.bank[bankSlotIndex] = null;
+  // Compact nulls from end
+  while (GameState.bank.length > 0 && GameState.bank[GameState.bank.length - 1] === null) {
+    GameState.bank.pop();
+  }
+  addCombatLog(`Withdrew ${item ? item.name : stack.itemId} from bank.`, 'loot');
+  if (typeof saveGame === 'function') saveGame();
+  if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+  if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
+  return true;
+}
+
 // ─── Zone Travel ──────────────────────────────────────────────────────────────
 
 function travelToZone(zoneId) {
@@ -243,4 +290,5 @@ if (typeof module !== 'undefined') module.exports = {
   GUILDS, CITY_VENDORS, GUILD_SPELLS,
   formatCoins, getGuildForClass, getAvailableSpells,
   buySpell, buyFromVendor, sellToVendor, travelToZone,
+  depositItemToBank, withdrawItemFromBank,
 };
