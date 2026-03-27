@@ -1262,8 +1262,8 @@ function renderCityTabContent(tab) {
     el.querySelectorAll('.market-buy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const listingId = parseInt(btn.dataset.listing, 10);
-        const listings2 = typeof getMarketListings === 'function' ? getMarketListings() : [];
-        const listing   = listings2.find(l => l.id === listingId);
+        const currentListings = typeof getMarketListings === 'function' ? getMarketListings() : [];
+        const listing   = currentListings.find(l => l.id === listingId);
         if (!listing) return;
 
         const totalCost = listing.price * listing.qty;
@@ -1286,7 +1286,7 @@ function renderCityTabContent(tab) {
         }
 
         // Remove listing
-        const newListings = listings2.filter(l => l.id !== listingId);
+        const newListings = currentListings.filter(l => l.id !== listingId);
         if (typeof setMarketListings === 'function') setMarketListings(newListings);
 
         if (typeof addCombatLog === 'function') addCombatLog(`Purchased ${listing.itemName} x${listing.qty} from ${listing.seller} for ${fmt2(totalCost)}.`, 'loot');

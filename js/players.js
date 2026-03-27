@@ -7,13 +7,16 @@ const GHOST_SAVE_KEY     = 'foreverRPG_ghosts';
 const GHOST_TICK_KEY     = 'foreverRPG_ghostTick';
 const MARKET_SAVE_KEY    = 'foreverRPG_market';
 const TICK_SECONDS       = 30;           // 30 real seconds = 1 tick
-const MAX_OFFLINE_TICKS  = 8640;         // 72 hours worth of 30-second ticks
-const MARKET_REFRESH_MS  = 300000;       // 5 minutes
+const MAX_OFFLINE_TICKS  = 8640;         // 8640 ticks (72 hours at 30-second intervals)
 const MARKET_TRICKLE_MS  = 150000;       // 2.5 minutes
 const CHAT_MAX_MESSAGES  = 30;
 const WORLD_FEED_MAX     = 3;
 const WHO_ONLINE_MAX     = 8;
 const WHO_ONLINE_MIN     = 4;
+const CHAT_MIN_DELAY_MS  = 20000;        // minimum 20 seconds between chat messages
+const CHAT_DELAY_RANGE_MS = 25000;       // random extra 0–25 seconds
+const WORLD_EVENT_MIN_MS = 30000;        // minimum 30 seconds between world events
+const WORLD_EVENT_RANGE_MS = 60000;      // random extra 0–60 seconds
 
 // Class icons matching CLASSES object
 const CLASS_ICONS = {
@@ -409,7 +412,7 @@ function triggerChatMessage() {
 }
 
 function scheduleChatMessage() {
-  const delay = 20000 + Math.random() * 25000;  // 20–45 seconds
+  const delay = CHAT_MIN_DELAY_MS + Math.random() * CHAT_DELAY_RANGE_MS;
   _chatInterval = setTimeout(() => {
     triggerChatMessage();
     scheduleChatMessage();
@@ -436,7 +439,7 @@ function getGhostStatus(ghost) {
 
 function pickZoneGhosts(zoneId) {
   // Deterministically pick 4–8 ghosts for this zone based on ghost id + day
-  const count = WHO_ONLINE_MIN + Math.floor(seededRand(ghostSeed(zoneId.length, zoneId.charCodeAt(0))) * (WHO_ONLINE_MAX - WHO_ONLINE_MIN + 1));
+  const count = WHO_ONLINE_MIN + Math.floor(seededRand(ghostSeed(zoneId.length, zoneId.charCodeAt(0))) * (WHO_ONLINE_MAX - WHO_ONLINE_MIN));
   const shuffled = [..._ghosts].sort((a, b) => seededRand(ghostSeed(a.id)) - seededRand(ghostSeed(b.id)));
   // Force zone so they appear to be in this zone
   const selected = shuffled.slice(0, count).map(g => ({ ...g, zone: zoneId }));
@@ -636,7 +639,7 @@ function initGhostPlayers() {
   // World feed events
   if (_worldFeedInterval) clearInterval(_worldFeedInterval);
   const scheduleWorldEvent = () => {
-    const delay = 30000 + Math.random() * 60000;
+    const delay = WORLD_EVENT_MIN_MS + Math.random() * WORLD_EVENT_RANGE_MS;
     _worldFeedInterval = setTimeout(() => {
       generateWorldEvent();
       scheduleWorldEvent();
