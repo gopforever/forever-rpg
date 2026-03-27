@@ -46,6 +46,8 @@ function startCombat(enemyId) {
   GameState.combatActive = true;
   GameState.inCombat = true;
   GameState.threatTable = {};
+  GameState._lastHPRegenTick = Date.now();
+  GameState._lastBuffDecayTick = Date.now();
 
   addCombatLog(`--- ${template.name} engages! ---`, 'system');
 
