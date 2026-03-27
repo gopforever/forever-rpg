@@ -269,6 +269,18 @@ function wireUpButtons() {
     });
   }
 
+  // Sit / Stand button
+  const sitBtn = document.getElementById('sit-btn');
+  if (sitBtn) {
+    sitBtn.addEventListener('click', () => {
+      if (GameState.isSitting) {
+        if (typeof standUp === 'function') standUp();
+      } else {
+        if (typeof sitDown === 'function') sitDown();
+      }
+    });
+  }
+
   // Auto-loot toggle
   const autoLootToggle = document.getElementById('autoloot-toggle');
   if (autoLootToggle) {
@@ -310,6 +322,12 @@ function updateStopButtonState() {
   } else {
     stopBtn.disabled = true;
     stopBtn.classList.remove('combat-active');
+  }
+
+  const sitBtn = document.getElementById('sit-btn');
+  if (sitBtn) {
+    sitBtn.disabled = !!(GameState.inCombat);
+    sitBtn.textContent = GameState.isSitting ? '🧍 Stand' : '🧘 Sit';
   }
 }
 

@@ -338,6 +338,7 @@ const ENEMIES = {
     type: 'animal',
     isRare: false,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'bear_pelt', chance: 0.75, quantity: [1, 1] },
       { itemId: 'copper_coin', chance: 0.7, quantity: [2, 8] },
@@ -420,6 +421,7 @@ const ENEMIES = {
     isRare: false,
     isUndead: false,
     magicResist: 50,
+    enrages: true,
     lootTable: [
       { itemId: 'copper_coin', chance: 0.7, quantity: [3, 8] },
       { itemId: 'silver_coin', chance: 0.2, quantity: [1, 3] },
@@ -460,6 +462,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'fishbone_earring', chance: 1.0, quantity: [1, 1] },
       { itemId: 'silver_coin', chance: 1.0, quantity: [5, 20] },
@@ -479,6 +482,7 @@ const ENEMIES = {
     type: 'undead',
     isRare: true,
     isUndead: true,
+    enrages: true,
     lootTable: [
       { itemId: 'glowing_black_stone', chance: 1.0, quantity: [1, 1] },
       { itemId: 'bone_chips', chance: 1.0, quantity: [5, 10] },
@@ -741,6 +745,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'gnoll_fang', chance: 0.7, quantity: [2, 4] },
       { itemId: 'spiked_collar', chance: 0.12, quantity: [1, 1] },
@@ -764,6 +769,7 @@ const ENEMIES = {
     isRare: true,
     isUndead: false,
     magicResist: 25,
+    enrages: true,
     lootTable: [
       { itemId: 'gnoll_fang', chance: 0.75, quantity: [2, 5] },
       { itemId: 'runed_totem_staff', chance: 0.15, quantity: [1, 1] },
@@ -830,6 +836,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'gnoll_fang', chance: 1.0, quantity: [2, 4] },
       { itemId: 'elgnubs_gnoll_hide_belt', chance: 0.3, quantity: [1, 1] },
@@ -853,6 +860,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     statusProcs: [
       { type: 'poison', chance: 0.35, duration: 16000, damage: 12 },
     ],
@@ -899,6 +907,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'spiked_collar', chance: 1.0, quantity: [1, 1] },
       { itemId: 'gnoll_fang', chance: 1.0, quantity: [3, 6] },
@@ -920,6 +929,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: true,
     isUndead: false,
+    enrages: true,
     lootTable: [
       { itemId: 'blackburrow_stout', chance: 1.0, quantity: [1, 1] },
       { itemId: 'copper_coin', chance: 0.9, quantity: [5, 15] },

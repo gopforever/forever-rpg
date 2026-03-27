@@ -47,6 +47,8 @@ function makeLiveEnemy(enemyId) {
     mezzedUntil: 0,
     fearedUntil: 0,
     hasCalledForHelp: false,
+    enraged: false,
+    hasFled: false,
   };
 }
 
@@ -96,6 +98,11 @@ function startCombat(enemyId) {
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
 
+  if (GameState.isSitting) {
+    GameState.isSitting = false;
+    addCombatLog('You stand up as combat begins!', 'system');
+  }
+
   addCombatLog(`--- ${template.name} engages! ---`, 'system');
 
   if (typeof updateCombatUI === 'function') updateCombatUI();
@@ -119,6 +126,11 @@ function startGroupCombat(enemyIds) {
   GameState.threatTable = {};
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
+
+  if (GameState.isSitting) {
+    GameState.isSitting = false;
+    addCombatLog('You stand up as combat begins!', 'system');
+  }
 
   const names = liveEnemies.map(e => e.name).join(', ');
   addCombatLog(`You are ambushed by a group: ${names}!`, 'system');
@@ -167,6 +179,41 @@ function tryCallForHelp(enemy) {
 function selectEnemy(enemyId) {
   GameState.selectedEnemyId = enemyId;
   startCombat(enemyId);
+}
+
+/**
+ * Attempts to pull an add from the zone when a fleeing enemy calls for help.
+ * @param {object} fleeingEnemy - Live enemy object that is fleeing
+ */
+function tryPullAdd(fleeingEnemy) {
+  if (!GameState.enemies || GameState.enemies.length >= MAX_ENCOUNTER_ENEMIES) return;
+
+  const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+  if (!zone) return;
+
+  const activeIds = new Set(GameState.enemies.map(e => e.id));
+  const candidates = (zone.commonEnemies || []).filter(id => !activeIds.has(id));
+  if (candidates.length === 0) return;
+
+  const fleeingTemplate = ENEMIES[fleeingEnemy.id];
+  const sameType = fleeingTemplate
+    ? candidates.filter(id => {
+        const t = ENEMIES[id];
+        return t && t.type === fleeingTemplate.type;
+      })
+    : [];
+
+  const poolToUse = sameType.length > 0 ? sameType : candidates;
+  const addId = poolToUse[Math.floor(Math.random() * poolToUse.length)];
+  if (!addId) return;
+
+  if (Math.random() < 0.4) {
+    const add = makeLiveEnemy(addId);
+    if (!add) return;
+    GameState.enemies.push(add);
+    addCombatLog(`${fleeingEnemy.name}'s cries bring ${add.name} rushing to help!`, 'system');
+    if (typeof updateCombatUI === 'function') updateCombatUI();
+  }
 }
 
 function stopCombat() {
@@ -246,6 +293,30 @@ function combatTick() {
     if (!GameState.combatActive) return;
   }
   if (!GameState.enemies || GameState.enemies.length === 0) return;
+
+  // Enrage check: enemies below 20% HP enrage if their template has enrages: true
+  for (const enemy of GameState.enemies) {
+    if (enemy.hp > 0 && !enemy.enraged && (enemy.hp / enemy.maxHP) < 0.2) {
+      const template = ENEMIES[enemy.id];
+      if (template && template.enrages) {
+        enemy.enraged = true;
+        enemy.atk = Math.floor(enemy.atk * 1.5);
+        addCombatLog(`${enemy.name} ENRAGES!`, 'system');
+      }
+    }
+  }
+
+  // Flee check: enemies below 15% HP may attempt to flee and call for help
+  for (const enemy of GameState.enemies) {
+    if (enemy.hp > 0 && !enemy.hasFled && (enemy.hp / enemy.maxHP) < 0.15) {
+      enemy.hasFled = true;
+      if (Math.random() < 0.6) {
+        enemy.fearedUntil = Date.now() + 8000;
+        addCombatLog(`${enemy.name} attempts to flee!`, 'system');
+        tryPullAdd(enemy);
+      }
+    }
+  }
 
   const healer = getHealerInParty(party);
   if (healer && healer.isAlive && healer.mana > 0) {
@@ -1185,11 +1256,36 @@ function depositAllToBank() {
 }
 
 function tickManaRegen(party) {
+  const sitting = !GameState.inCombat && GameState.isSitting;
   for (const member of party) {
     if (!member.isAlive || member.maxMana === 0) continue;
-    const regenRate = Math.floor(member.level * 0.5 + 1);
+    let regenRate;
+    if (sitting) {
+      const meditationSkill = (member.skills && member.skills['meditation']) || 0;
+      regenRate = Math.floor(3 + member.level * 0.5 + meditationSkill / 25);
+      if (typeof trySkillGain === 'function') trySkillGain(member, 'meditation');
+    } else if (!GameState.inCombat) {
+      regenRate = Math.floor(member.level * 0.5 + 2);
+    } else {
+      regenRate = Math.floor(member.level * 0.5 + 1);
+    }
     member.mana = Math.min(member.maxMana, member.mana + regenRate);
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember };
+function sitDown() {
+  if (GameState.inCombat) return;
+  GameState.isSitting = true;
+  addCombatLog('You sit down to meditate.', 'system');
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+/**
+ * Makes the player character stand up and updates the UI state.
+ */
+function standUp() {
+  GameState.isSitting = false;
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, sitDown, standUp };

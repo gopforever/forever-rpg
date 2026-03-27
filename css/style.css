@@ -992,6 +992,23 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   50% { border-color: #ff4444; box-shadow: 0 0 12px rgba(255, 68, 68, 0.5); }
 }
 
+/* ─── Sit / Stand Button ──────────────────────────────────────────────────── */
+
+.btn-sit {
+  margin-top: 6px;
+  padding: 4px 12px;
+  background: #1a2a1a;
+  border: 1px solid #3a6a3a;
+  color: #88cc88;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-sit:hover:not(:disabled) { background: #2a3a2a; border-color: #5a9a5a; }
+.btn-sit:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ─── Inventory Panel ─────────────────────────────────────────────────────── */
 
 .inv-weight-bar-area {
