@@ -35,7 +35,8 @@ const CLASSES = {
       { name: 'Stun', description: 'Call upon divine power to momentarily stun an enemy, leaving them helpless and unable to act for several seconds.', manaCost: 20, castTime: 1500, recastTime: 12000, effect: { type: 'stun', duration: 3000 } },
       { name: 'Divine Aura', description: 'Surround yourself with a shimmering barrier of divine energy that renders you completely invulnerable to all damage for a brief time.', manaCost: 0, castTime: 0, recastTime: 300000, effect: { type: 'invulnerability', duration: 18000 } },
       { name: 'Undead Ward', description: 'Invoke a holy ward that repels undead creatures, sending them fleeing in terror from the power of your divine faith.', manaCost: 25, castTime: 2000, recastTime: 15000, effect: { type: 'turn_undead', value: 50 } },
-      { name: 'Healing', description: 'Invoke a prayer of healing to restore hit points to yourself or a wounded ally, calling upon your deity to mend their injuries.', manaCost: 40, castTime: 3000, recastTime: 4000, effect: { type: 'heal', value: 120 } }
+      { name: 'Healing', description: 'Invoke a prayer of healing to restore hit points to yourself or a wounded ally, calling upon your deity to mend their injuries.', manaCost: 40, castTime: 3000, recastTime: 4000, effect: { type: 'heal', value: 120 } },
+      { name: 'Revive', description: 'Revives a fallen ally with holy power, restoring them to life with a portion of their hit points.', manaCost: 60, castTime: 6000, recastTime: 90000, effect: { type: 'resurrect' } },
     ],
     startingWeapon: 'short_sword',
     icon: '🛡️'
@@ -308,7 +309,8 @@ const CLASSES = {
       { name: "Nature's Boon", description: "Invoke a boon of natural regeneration on an ally, accelerating their body's own healing processes to continuously restore hit points over time.", manaCost: 50, castTime: 3000, recastTime: 10000, effect: { type: 'buff', stat: 'hp_regen', value: 10 } },
       { name: 'Spirit of Wolf', description: 'Call upon the spirit of the wolf to grant yourself and nearby allies its legendary speed, dramatically increasing movement rate for an extended duration.', manaCost: 50, castTime: 3000, recastTime: 15000, effect: { type: 'buff', stat: 'speed', value: 40 } },
       { name: 'Entangle', description: 'Cause thick roots and vines to erupt from the ground and bind your target completely, rooting them in place and preventing all movement.', manaCost: 45, castTime: 2500, recastTime: 10000, effect: { type: 'root', duration: 30000 } },
-      { name: 'Immolate', description: 'Surround your target in a swirling column of natural flame, dealing fire damage and leaving a burning damage-over-time effect from the scorching heat.', manaCost: 80, castTime: 2500, recastTime: 6000, effect: { type: 'damage_dot', value: 55 } }
+      { name: 'Immolate', description: 'Surround your target in a swirling column of natural flame, dealing fire damage and leaving a burning damage-over-time effect from the scorching heat.', manaCost: 80, castTime: 2500, recastTime: 6000, effect: { type: 'damage_dot', value: 55 } },
+      { name: 'Reincarnation', description: 'Returns a fallen ally to life through nature magic, restoring them with a portion of their hit points.', manaCost: 70, castTime: 7000, recastTime: 75000, effect: { type: 'resurrect' } },
     ],
     startingWeapon: 'crude_staff',
     icon: '🌿'

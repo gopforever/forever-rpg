@@ -228,7 +228,16 @@ function stopCombat() {
 }
 
 function combatTick() {
-  if (!GameState.combatActive) return;
+  // Always tick regen regardless of combat state
+  if (GameState.party && GameState.party.length > 0) {
+    tickManaRegen(GameState.party);
+    tickHPRegen(GameState.party);
+  }
+
+  if (!GameState.combatActive) {
+    if (typeof updatePartyUI === 'function') updatePartyUI();
+    return;
+  }
   if (!GameState.enemies || GameState.enemies.length === 0) return;
 
   const party = GameState.party;
@@ -344,9 +353,26 @@ function combatTick() {
     } else if (enemy.fearedUntil && nowAtk < enemy.fearedUntil) {
       addCombatLog(`${enemy.name} flees in terror!`, 'system');
     } else {
-      const target = getCurrentTarget(party);
-      if (target && target.isAlive) {
-        enemyAttack(enemy, target, party);
+      const template = ENEMIES[enemy.id];
+      if (template && template.aoeAttack) {
+        // AoE: announce the first time this enemy sweeps
+        if (!enemy.hasAnnouncedAoe) {
+          enemy.hasAnnouncedAoe = true;
+          addCombatLog(`${enemy.name} unleashes a sweeping attack!`, 'system');
+        }
+        const primaryTarget = getCurrentTarget(party);
+        if (primaryTarget && primaryTarget.isAlive) {
+          enemyAttack(enemy, primaryTarget, party);
+        }
+        const splashTargets = party.filter(m => m.isAlive && m !== primaryTarget);
+        for (const splashTarget of splashTargets) {
+          enemyAttackAoe(enemy, splashTarget, party, 0.6);
+        }
+      } else {
+        const target = getCurrentTarget(party);
+        if (target && target.isAlive) {
+          enemyAttack(enemy, target, party);
+        }
       }
     }
   }
@@ -377,8 +403,6 @@ function combatTick() {
       if (typeof trySkillGain === 'function') trySkillGain(member, 'mend');
     }
   }
-
-  tickManaRegen(party);
 
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
@@ -600,6 +624,63 @@ function enemyAttack(enemy, target, party) {
   }
 }
 
+function enemyAttackAoe(enemy, target, party, multiplier) {
+  // AoE splash: no dodge/parry/riposte, reduced damage
+  const missChance = getMissChance({ DEX: 75, statBonuses: {} }, target);
+  if (Math.random() < missChance * 0.5) return; // halved miss chance for AoE
+
+  // Check if target is invulnerable
+  const invulnEffect = target.statusEffectMap && target.statusEffectMap['invulnerable'];
+  if (invulnEffect && Date.now() < invulnEffect.endTime) {
+    addCombatLog(`${target.name} is invulnerable!`, 'miss');
+    return;
+  }
+
+  const effectiveAtk = Math.max(1, enemy.atk - (enemy.debuffs && enemy.debuffs.STR ? Math.floor(enemy.debuffs.STR / 5) : 0));
+  let damage = Math.max(1, Math.floor((effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5))) * (multiplier || 0.6)));
+  damage = applyACMitigation(damage, target);
+  damage = Math.max(1, damage);
+
+  target.hp = Math.max(0, target.hp - damage);
+  addCombatLog(`${enemy.name}'s attack splashes ${target.name} for ${damage} damage!`, 'enemy');
+  showDamageNumber(damage, target, false);
+
+  if (typeof trySkillGain === 'function') trySkillGain(target, 'defense');
+
+  if (target.hp <= 0) {
+    target.isAlive = false;
+    addCombatLog(`${target.name} has DIED!`, 'death');
+    ensureMonsterLogEntry(enemy.id).deaths++;
+    if (!party.some(m => m.isAlive)) {
+      setTimeout(handlePartyWipe, 500);
+    }
+  }
+
+  // Status procs still apply on AoE splash (halved proc chance)
+  if (enemy.statusProcs && enemy.statusProcs.length > 0) {
+    for (const proc of enemy.statusProcs) {
+      if (Math.random() < (proc.chance || 0) * 0.5) {
+        const resistValue = target.statBonuses && target.statBonuses.resists
+          ? (target.statBonuses.resists[proc.type] || 0)
+          : 0;
+        if (resistValue > 0 && Math.random() * 100 < resistValue) {
+          addCombatLog(`${target.name} resists the ${proc.type}!`, 'miss');
+          continue;
+        }
+        applyStatusEffect(target, {
+          type: proc.type,
+          damage: proc.damage || 0,
+          duration: proc.duration || 10000,
+          endTime: Date.now() + (proc.duration || 10000),
+          tickInterval: proc.tickInterval || 3000,
+          nextTick: Date.now() + (proc.tickInterval || 3000),
+        });
+        addCombatLog(`${target.name} is afflicted with ${proc.type} from ${enemy.name}'s AoE!`, 'poison');
+      }
+    }
+  }
+}
+
 function performHeal(healer, party) {
   const target = getLowestHPMember(party);
   if (!target) return;
@@ -723,6 +804,7 @@ function handleEnemyDeath(enemy) {
 
   // All enemies are dead — end the encounter
   GameState.combatActive = false;
+  GameState.inCombat = false;
 
   if (GameState.selectedEnemyId) {
     const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : 3000;
@@ -1044,6 +1126,30 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       break;
     }
 
+    // ── Resurrect ────────────────────────────────
+    case 'resurrect': {
+      const deadMember = party.find(m => !m.isAlive);
+      if (!deadMember) {
+        addCombatLog(`${caster.name}'s resurrection finds no fallen ally.`, 'system');
+        break;
+      }
+      deadMember.isAlive = true;
+      deadMember.hp = Math.max(1, Math.floor(deadMember.maxHP * 0.2));
+      deadMember.mana = Math.max(0, Math.floor(deadMember.maxMana * 0.1));
+      deadMember.statusEffects = [];
+      if (deadMember.statusEffectMap) deadMember.statusEffectMap = {};
+      deadMember.castingAbility = null;
+      deadMember.isCasting = false;
+      addCombatLog(`${caster.name} resurrects ${deadMember.name}! They return with 20% HP.`, 'heal');
+      if (typeof addThreat === 'function') addThreat(caster, 500);
+      if (typeof trySkillGain === 'function') {
+        trySkillGain(caster, 'alteration');
+        trySkillGain(caster, 'channeling');
+      }
+      if (typeof updatePartyUI === 'function') updatePartyUI();
+      break;
+    }
+
     // ── Pet commands ─────────────────────────────
     case 'summon_pet':
       if (typeof summonPet === 'function') summonPet(caster);
@@ -1085,9 +1191,15 @@ function selectAbilityForMember(member, enemy, party) {
   const lowestHP = getLowestHPMember(party);
   const partyHurt = lowestHP && (lowestHP.hp / lowestHP.maxHP) < 0.6;
 
-  // Healers prioritize healing
-  if (partyHurt && ['cleric', 'druid', 'shaman', 'paladin', 'beastlord'].includes(member.classId)) {
-    chosen = candidates.find(ab => ab.effect && (ab.effect.type === 'heal' || ab.effect.type === 'heal_pet'));
+  // Healers: prioritize rez if someone is dead, then heal if hurt
+  if (['cleric', 'druid', 'shaman', 'paladin', 'beastlord'].includes(member.classId)) {
+    const hasDead = party.some(m => !m.isAlive);
+    if (hasDead) {
+      chosen = candidates.find(ab => ab.effect && ab.effect.type === 'resurrect');
+    }
+    if (!chosen && partyHurt) {
+      chosen = candidates.find(ab => ab.effect && (ab.effect.type === 'heal' || ab.effect.type === 'heal_pet'));
+    }
   }
 
   // Casters prioritize damage
@@ -1318,6 +1430,32 @@ function tickManaRegen(party) {
   }
 }
 
+function tickHPRegen(party) {
+  const sitting = !GameState.inCombat && GameState.isSitting;
+  for (const member of party) {
+    if (!member.isAlive) continue;
+    if (member.hp >= member.maxHP) continue;
+
+    let regenRate;
+    const sta = member.STA || 0;
+
+    if (sitting) {
+      // Sitting out of combat: generous regen
+      regenRate = Math.floor(2 + sta / 20 + member.level * 0.3);
+    } else if (!GameState.inCombat) {
+      // Standing out of combat: moderate regen
+      regenRate = Math.floor(1 + sta / 40 + member.level * 0.15);
+    } else {
+      // In combat: very slow STA-based tick
+      regenRate = Math.floor(sta / 60);
+    }
+
+    if (regenRate > 0) {
+      member.hp = Math.min(member.maxHP, member.hp + regenRate);
+    }
+  }
+}
+
 function sitDown() {
   if (GameState.inCombat) return;
   GameState.isSitting = true;
@@ -1333,4 +1471,4 @@ function standUp() {
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, sitDown, standUp };
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp };

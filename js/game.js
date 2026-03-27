@@ -82,20 +82,6 @@ function gameTick() {
   // Out-of-combat only ticks
   if (!GameState.combatActive && GameState.party.length > 0) {
 
-    // HP regen every 3 seconds
-    if (!GameState._lastHPRegenTick) GameState._lastHPRegenTick = now;
-    if (now - GameState._lastHPRegenTick >= 3000) {
-      GameState._lastHPRegenTick = now;
-      let regenHappened = false;
-      for (const member of GameState.party) {
-        if (!member.isAlive || member.hp >= member.maxHP) continue;
-        const regenAmt = Math.max(1, Math.floor(member.level + (member.STA || 0) / 10));
-        member.hp = Math.min(member.maxHP, member.hp + regenAmt);
-        regenHappened = true;
-      }
-      if (regenHappened && typeof updatePartyUI === 'function') updatePartyUI();
-    }
-
     // Buff/status decay every 1 second
     if (!GameState._lastBuffDecayTick) GameState._lastBuffDecayTick = now;
     if (now - GameState._lastBuffDecayTick >= 1000) {
