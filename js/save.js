@@ -14,6 +14,7 @@ function saveGame() {
     silver: GameState.silver,
     copper: GameState.copper,
     killCounts: GameState.killCounts,
+    monsterLog: GameState.monsterLog,
     settings: GameState.settings,
     zone: GameState.zone,
     selectedEnemyId: GameState.selectedEnemyId,
@@ -85,6 +86,7 @@ function applyLoadedSave(data) {
   GameState.silver = data.silver || 0;
   GameState.copper = data.copper || 0;
   GameState.killCounts = data.killCounts || {};
+  GameState.monsterLog = data.monsterLog || {};
   GameState.settings = { ...GameState.settings, ...data.settings };
   GameState.zone = data.zone || 'qeynos_hills';
   GameState.selectedEnemyId = data.selectedEnemyId || null;
@@ -138,4 +140,15 @@ function savePanelPosition(panelId, x, y, collapsed) {
   localStorage.setItem('foreverRPG_panels', JSON.stringify(positions));
 }
 
-if (typeof module !== 'undefined') module.exports = { saveGame, loadGame, hasSave, deleteSave, exportSave, importSave, applyLoadedSave, checkOfflineProgress, applyOfflineProgress, getPanelPositions, savePanelPosition };
+function hardReset() {
+  const first = confirm(
+    '⚠ HARD RESET — This will wipe ALL progress including ghost players and start completely fresh.\n\nThis is a BETA testing tool. Are you sure?'
+  );
+  if (!first) return;
+  const second = confirm('Really reset everything? This cannot be undone.');
+  if (!second) return;
+  localStorage.clear();
+  location.reload();
+}
+
+if (typeof module !== 'undefined') module.exports = { saveGame, loadGame, hasSave, deleteSave, exportSave, importSave, applyLoadedSave, checkOfflineProgress, applyOfflineProgress, getPanelPositions, savePanelPosition, hardReset };

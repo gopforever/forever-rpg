@@ -15,6 +15,7 @@ const GameState = {
   silver: 0,
   copper: 0,
   killCounts: {},
+  monsterLog: {},
   combatLog: [],
   recentLoot: [],
   combatActive: false,
@@ -174,6 +175,14 @@ function wireUpButtons() {
         deleteSave();
         location.reload();
       }
+    });
+  }
+
+  // Hard reset button (BETA)
+  const hardResetBtn = document.getElementById('hard-reset-btn');
+  if (hardResetBtn) {
+    hardResetBtn.addEventListener('click', () => {
+      if (typeof hardReset === 'function') hardReset();
     });
   }
   
