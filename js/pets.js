@@ -135,6 +135,24 @@ function tickPets(enemy) {
   }
 }
 
+function commandPetAttack(caster, enemy) {
+  const pet = getPetForOwner(caster.id);
+  if (!pet) return;
+  petAttack(pet, enemy);
+}
+
+function buffPet(caster, effect) {
+  const pet = getPetForOwner(caster.id);
+  if (!pet) return;
+  const healAmt = effect.value || 0;
+  if (healAmt > 0) {
+    pet.hp = Math.min(pet.maxHP, pet.hp + healAmt);
+    if (typeof addCombatLog === 'function') {
+      addCombatLog(`${caster.name} buffs ${pet.name} for ${healAmt} HP!`, 'spell');
+    }
+  }
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { PET_TEMPLATES, CLASS_DEFAULT_PET, getPetMaxHP, summonPet, dismissPet, getPetForOwner, petAttack, tickPets };
+  module.exports = { PET_TEMPLATES, CLASS_DEFAULT_PET, getPetMaxHP, summonPet, dismissPet, getPetForOwner, petAttack, tickPets, commandPetAttack, buffPet };
 }
