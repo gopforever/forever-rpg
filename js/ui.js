@@ -181,14 +181,48 @@ function renderZonePanel() {
   if (zoneInfoEl) {
     const zone = ZONES[GameState.zone];
     if (zone) {
+      const isSafe = zone.isSafeZone ? '<div class="zone-safe-badge">🕊 Safe Zone</div>' : '';
+      const levelDisplay = zone.isSafeZone ? 'City' : `Levels ${zone.levelRange[0]}-${zone.levelRange[1]}`;
+      const connections = (zone.connections || []).map(connId => {
+        const conn = ZONES[connId];
+        if (!conn) return '';
+        return `<button class="zone-travel-btn" data-zone="${connId}">➤ ${conn.name}</button>`;
+      }).join('');
       zoneInfoEl.innerHTML = `
         <div class="zone-name">${zone.name}</div>
-        <div class="zone-levels">Levels ${zone.levelRange[0]}-${zone.levelRange[1]}</div>
+        <div class="zone-levels">${levelDisplay}</div>
+        ${isSafe}
         <div class="zone-desc">${zone.description}</div>
+        ${connections ? `<div class="zone-connections">${connections}</div>` : ''}
       `;
+      zoneInfoEl.querySelectorAll('.zone-travel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (typeof travelToZone === 'function') travelToZone(btn.dataset.zone);
+        });
+      });
     }
   }
+
+  // Show/hide city panel vs combat panels based on zone type
+  const zone = ZONES[GameState.zone];
+  const isSafe = zone && zone.isSafeZone;
+  const cityPanel = document.getElementById('city-panel');
+  const combatArea = document.getElementById('combat-area');
+  const enemyGridContainer = document.getElementById('enemy-grid-container');
+  const lootDisplay = document.getElementById('loot-display');
+
+  if (cityPanel) cityPanel.style.display = isSafe ? 'block' : 'none';
+  if (combatArea) combatArea.style.display = isSafe ? 'none' : '';
+  if (enemyGridContainer) enemyGridContainer.style.display = isSafe ? 'none' : '';
+  if (lootDisplay) lootDisplay.style.display = isSafe ? 'none' : '';
+
+  if (isSafe) {
+    GameState.combatActive = false;
+    GameState.currentEnemy = null;
+    renderCityPanel();
+  }
 }
+
 
 function renderPartyPanel() {
   const rosterEl = document.getElementById('party-roster');
@@ -996,6 +1030,179 @@ function renderBankSlots() {
   `;
 }
 
+// ─── City Panel ───────────────────────────────────────────────────────────────
+
+function renderCityPanel() {
+  const cityPanel = document.getElementById('city-panel');
+  if (!cityPanel) return;
+
+  // Ensure correct tab is active and content rendered
+  const activeBtnEl = cityPanel.querySelector('.city-tab-btn.active');
+  const activeTab = activeBtnEl ? activeBtnEl.dataset.cityTab : 'bank';
+
+  // Wire tab buttons (only once, by removing/re-adding via innerHTML replacement would reset listeners,
+  // so use a flag approach)
+  if (!cityPanel.dataset.tabsWired) {
+    cityPanel.addEventListener('click', (e) => {
+      const btn = e.target.closest('.city-tab-btn');
+      if (btn) {
+        cityPanel.querySelectorAll('.city-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cityPanel.querySelectorAll('.city-tab-content').forEach(c => c.style.display = 'none');
+        const target = document.getElementById(`city-tab-${btn.dataset.cityTab}`);
+        if (target) target.style.display = '';
+        renderCityTabContent(btn.dataset.cityTab);
+      }
+    });
+    cityPanel.dataset.tabsWired = '1';
+  }
+
+  renderCityTabContent(activeTab);
+}
+
+function renderCityTabContent(tab) {
+  const el = document.getElementById(`city-tab-${tab}`);
+  if (!el) return;
+
+  const fmt = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
+
+  if (tab === 'bank') {
+    el.innerHTML = renderBankSlots();
+    // Wire deposit-all button
+    const depositBtn = el.querySelector('#deposit-all-btn');
+    if (depositBtn) {
+      depositBtn.addEventListener('click', () => {
+        if (typeof depositAllToBank === 'function') depositAllToBank();
+        renderCityTabContent('bank');
+      });
+    }
+    // Tooltips for bank items
+    el.querySelectorAll('[data-item]').forEach(itemEl => {
+      if (itemEl.dataset.item) attachTooltip(itemEl, () => getItemTooltipHTML(itemEl.dataset.item));
+    });
+    // Coin exchange display
+    const totalCopper = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+    const exchangeDiv = document.createElement('div');
+    exchangeDiv.className = 'city-coin-exchange';
+    exchangeDiv.innerHTML = `
+      <div class="city-section-title">💰 Coin Purse</div>
+      <div class="coin-row"><span class="gold-amount">${GameState.gold || 0}g</span> <span class="silver-amount">${GameState.silver || 0}s</span> <span class="copper-amount">${GameState.copper || 0}c</span></div>
+      <div class="coin-total">Total: ${fmt(totalCopper)}</div>
+    `;
+    el.insertAdjacentElement('afterbegin', exchangeDiv);
+
+  } else if (tab === 'market') {
+    const vendors = typeof CITY_VENDORS !== 'undefined' ? CITY_VENDORS : [];
+    const itemsForSale = vendors.map(entry => {
+      const item = typeof ITEMS !== 'undefined' ? ITEMS[entry.itemId] : null;
+      if (!item) return '';
+      return `
+        <div class="vendor-row" data-item="${entry.itemId}">
+          <span class="vendor-item-name">${getItemIcon(entry.itemId)} ${item.name}</span>
+          <span class="vendor-item-price">${fmt(entry.buyPrice)}</span>
+          <button class="city-btn" data-buy="${entry.itemId}">Buy</button>
+        </div>
+      `;
+    }).join('');
+
+    // Build sell list from inventory
+    const inventory = GameState.inventory || [];
+    const sellRows = inventory.filter(Boolean).map(stack => {
+      const item = typeof ITEMS !== 'undefined' ? ITEMS[stack.itemId] : null;
+      if (!item || item.nodrop) return '';
+      const vendorRef = vendors.find(v => v.itemId === stack.itemId);
+      const basePrice = vendorRef ? vendorRef.buyPrice : 2;
+      const sellPrice = Math.max(1, Math.floor(basePrice * 0.5));
+      return `
+        <div class="vendor-row">
+          <span class="vendor-item-name">${getItemIcon(stack.itemId)} ${item.name}${stack.quantity > 1 ? ` x${stack.quantity}` : ''}</span>
+          <span class="vendor-item-price">${fmt(sellPrice)}/ea</span>
+          <button class="city-btn sell-btn" data-sell="${stack.itemId}">Sell</button>
+        </div>
+      `;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="city-section-title">🛒 General Merchant</div>
+      <div class="vendor-list">${itemsForSale || '<div class="city-empty">No items available.</div>'}</div>
+      <div class="city-section-title" style="margin-top:12px">💼 Sell Items</div>
+      <div class="vendor-list">${sellRows || '<div class="city-empty">Your inventory is empty.</div>'}</div>
+    `;
+
+    el.querySelectorAll('[data-buy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (typeof buyFromVendor === 'function') buyFromVendor(btn.dataset.buy);
+        renderCityTabContent('market');
+      });
+    });
+    el.querySelectorAll('[data-sell]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (typeof sellToVendor === 'function') sellToVendor(btn.dataset.sell, 1);
+        renderCityTabContent('market');
+      });
+    });
+    el.querySelectorAll('[data-item]').forEach(itemEl => {
+      if (itemEl.dataset.item) attachTooltip(itemEl, () => getItemTooltipHTML(itemEl.dataset.item));
+    });
+
+  } else if (tab === 'guild') {
+    const char = GameState.party[GameState.inspectedCharIndex || 0];
+    if (!char) {
+      el.innerHTML = '<div class="city-empty">No character selected.</div>';
+      return;
+    }
+
+    const guild = typeof getGuildForClass === 'function' ? getGuildForClass(char.classId) : null;
+
+    let guildHtml = '';
+    if (!guild || !guild.npc) {
+      guildHtml = `<div class="guild-info"><div class="guild-no-guild">⚠ Your guild is not located in Qeynos.</div><div class="guild-hint">${guild ? guild.name : ''}</div></div>`;
+    } else {
+      guildHtml = `
+        <div class="guild-info">
+          <div class="guild-name">${guild.name}</div>
+          <div class="guild-npc">Guild Master: <span class="guild-npc-name">${guild.npc}</span></div>
+          <div class="guild-location">📍 ${guild.location}</div>
+        </div>
+      `;
+    }
+
+    const availableSpells = typeof getAvailableSpells === 'function'
+      ? getAvailableSpells(char.classId, char.level)
+      : [];
+    const learnedSpells = GameState.learnedSpells || [];
+
+    const spellRows = availableSpells.map(spell => {
+      const owned = learnedSpells.includes(spell.id);
+      return `
+        <div class="spell-row ${owned ? 'spell-owned' : ''}">
+          <div class="spell-info">
+            <div class="spell-name">${spell.name} ${owned ? '✓' : ''}</div>
+            <div class="spell-meta">Lv.${spell.level} · ${spell.manaCost > 0 ? spell.manaCost + ' MP' : 'No mana'}</div>
+          </div>
+          <div class="spell-purchase">
+            <span class="spell-price">${fmt(spell.buyPrice)}</span>
+            ${owned ? '' : `<button class="city-btn" data-buy-spell="${spell.id}">Buy</button>`}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    el.innerHTML = `
+      ${guildHtml}
+      <div class="city-section-title" style="margin-top:12px">📜 Spells Available</div>
+      ${spellRows || '<div class="city-empty">No spells available for your class and level.</div>'}
+    `;
+
+    el.querySelectorAll('[data-buy-spell]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (typeof buySpell === 'function') buySpell(btn.dataset.buySpell);
+        renderCityTabContent('guild');
+      });
+    });
+  }
+}
+
 // ─── Module Export ────────────────────────────────────────────────────────────
 
 if (typeof module !== 'undefined') module.exports = {
@@ -1018,5 +1225,7 @@ if (typeof module !== 'undefined') module.exports = {
   renderBagSlots,
   renderBagContents,
   renderBankSlots,
+  renderCityPanel,
+  renderCityTabContent,
   getItemIcon,
 };

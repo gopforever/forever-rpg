@@ -189,6 +189,67 @@ const ZONES = {
     connections: ['west_karana', 'qeynos'],
     respawnTime: 3000,
   },
+
+  qeynos: {
+    id: 'qeynos',
+    name: 'Qeynos',
+    shortName: 'QEY',
+    levelRange: [1, 60],
+    xpModifier: 1,
+    description: 'The City of Honor. A safe haven for adventurers.',
+    isSafeZone: true,
+    bindPoint: true,
+    enemyPool: [],
+    enemies: [],
+    commonEnemies: [],
+    rareEnemies: [],
+    rareSpawnChance: 0,
+    ambientColor: '#2a1e0e',
+    minimapSVG: `<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;">
+  <defs>
+    <linearGradient id="cityGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a2e1a"/>
+      <stop offset="100%" stop-color="#1a1208"/>
+    </linearGradient>
+  </defs>
+  <rect width="280" height="200" fill="url(#cityGrad)"/>
+  <!-- City walls -->
+  <rect x="10" y="10" width="260" height="180" fill="none" stroke="#8a7040" stroke-width="4" rx="4"/>
+  <rect x="18" y="18" width="244" height="164" fill="none" stroke="#6a5030" stroke-width="1.5" rx="2"/>
+  <!-- Roads -->
+  <line x1="140" y1="18" x2="140" y2="182" stroke="#5a4820" stroke-width="5"/>
+  <line x1="18" y1="100" x2="262" y2="100" stroke="#5a4820" stroke-width="5"/>
+  <!-- North District -->
+  <rect x="30" y="25" width="100" height="65" fill="#1e1a0e" stroke="#4a3a18" stroke-width="1" rx="2"/>
+  <text x="80" y="55" text-anchor="middle" font-family="serif" font-size="8" fill="#c8a84b">North Qeynos</text>
+  <text x="80" y="67" text-anchor="middle" font-family="serif" font-size="6" fill="#8a7040">Temple of Life</text>
+  <text x="80" y="78" text-anchor="middle" font-family="serif" font-size="6" fill="#8a7040">Guild Halls</text>
+  <!-- Mage Tower -->
+  <rect x="150" y="25" width="100" height="65" fill="#1a1a2a" stroke="#3a3a5a" stroke-width="1" rx="2"/>
+  <text x="200" y="52" text-anchor="middle" font-family="serif" font-size="8" fill="#8888ff">Mage Tower</text>
+  <text x="200" y="64" text-anchor="middle" font-family="serif" font-size="6" fill="#6666cc">The Concordance</text>
+  <circle cx="200" cy="40" r="8" fill="none" stroke="#6666cc" stroke-width="1" opacity="0.6"/>
+  <text x="200" y="43" text-anchor="middle" font-family="serif" font-size="10" fill="#aaaaff">✦</text>
+  <!-- Bank -->
+  <rect x="110" y="80" width="60" height="40" fill="#2a2010" stroke="#c8a84b" stroke-width="1.5" rx="2"/>
+  <text x="140" y="97" text-anchor="middle" font-family="serif" font-size="8" fill="#c8a84b">🏦 Bank</text>
+  <text x="140" y="108" text-anchor="middle" font-family="serif" font-size="6" fill="#8a7040">of Qeynos</text>
+  <!-- South Qeynos -->
+  <rect x="30" y="115" width="100" height="55" fill="#1e1a0e" stroke="#4a3a18" stroke-width="1" rx="2"/>
+  <text x="80" y="140" text-anchor="middle" font-family="serif" font-size="8" fill="#c8a84b">South Qeynos</text>
+  <text x="80" y="152" text-anchor="middle" font-family="serif" font-size="6" fill="#8a7040">Market • Sewers</text>
+  <!-- Market District -->
+  <rect x="150" y="115" width="100" height="55" fill="#1e1a0e" stroke="#4a3a18" stroke-width="1" rx="2"/>
+  <text x="200" y="140" text-anchor="middle" font-family="serif" font-size="8" fill="#c8a84b">Merchant Row</text>
+  <text x="200" y="152" text-anchor="middle" font-family="serif" font-size="6" fill="#8a7040">Vendors • Inn</text>
+  <!-- Gate label -->
+  <text x="140" y="195" text-anchor="middle" font-family="serif" font-size="6" fill="#c4962a" opacity="0.9">◄ Qeynos Hills</text>
+  <!-- Zone border frame -->
+  <rect width="280" height="200" fill="none" stroke="#8a7040" stroke-width="2" rx="3"/>
+</svg>`,
+    connections: ['qeynos_hills'],
+    respawnTime: 0,
+  },
 };
 
 function getZone(id) {

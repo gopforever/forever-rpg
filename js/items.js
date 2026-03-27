@@ -595,6 +595,21 @@ const ITEMS = {
     races: [],
     flavor: 'Crude but effective. Smells of wet dog.',
   },
+
+  bread_loaf: {
+    id: 'bread_loaf',
+    name: 'Bread Loaf',
+    slot: 'inventory',
+    type: 'food',
+    rarity: 'common',
+    lore: false,
+    nodrop: false,
+    weight: 0.1,
+    ac: 0,
+    classes: [],
+    races: [],
+    flavor: 'A fresh-baked loaf from the bakers of Qeynos. Restores your strength.',
+  },
 };
 
 const STARTING_GEAR = {
