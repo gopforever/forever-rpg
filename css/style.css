@@ -1150,3 +1150,12 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .bank-slot {
   background: #050403;
 }
+
+/* Con color indicator dots */
+.con-dot { font-size: 0.85em; }
+.con-dot.con-red       { color: #ff4444; }
+.con-dot.con-yellow    { color: #ffcc00; }
+.con-dot.con-white     { color: #dddddd; }
+.con-dot.con-blue      { color: #4488ff; }
+.con-dot.con-lightblue { color: #88ccff; }
+.con-dot.con-green     { color: #44cc44; }

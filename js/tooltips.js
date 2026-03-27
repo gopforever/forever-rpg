@@ -125,7 +125,21 @@ function getEnemyTooltipHTML(enemyId) {
   html += `<div class="tt-name" style="color:${enemy.isRare ? '#ff8800' : '#e8d5a0'}">${enemy.name}</div>`;
   html += `<div class="tt-row"><span class="tt-label">Level:</span> ${enemy.level}</div>`;
   html += `<div class="tt-row"><span class="tt-label">HP:</span> ${enemy.hp} <span class="tt-label">ATK:</span> ${enemy.atk} <span class="tt-label">AC:</span> ${enemy.ac}</div>`;
-  html += `<div class="tt-row"><span class="tt-label">XP:</span> ${enemy.xp}</div>`;
+
+  const highestLevel = (typeof GameState !== 'undefined' && GameState.party)
+    ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
+    : 1;
+  const con = (typeof getConColor === 'function') ? getConColor(highestLevel, enemy.level) : null;
+  const zoneData = (typeof GameState !== 'undefined' && GameState.zone && typeof ZONES !== 'undefined') ? ZONES[GameState.zone] : null;
+  const zoneXpMod = zoneData && zoneData.xpModifier ? zoneData.xpModifier : 1;
+  const effectiveXp = con ? Math.floor(enemy.xp * zoneXpMod * con.multiplier) : enemy.xp;
+
+  if (con) {
+    html += `<div class="tt-row"><span class="tt-label">Con:</span> <span class="con-dot con-${con.color}">${con.label}</span></div>`;
+    html += `<div class="tt-row"><span class="tt-label">XP:</span> ${effectiveXp} <span class="tt-muted">(base ${enemy.xp})</span></div>`;
+  } else {
+    html += `<div class="tt-row"><span class="tt-label">XP:</span> ${enemy.xp}</div>`;
+  }
 
   const tags = [enemy.type];
   if (enemy.isUndead) tags.push('Undead');
