@@ -510,8 +510,180 @@ const SPRITES = {
     <ellipse cx="32" cy="32" rx="16" ry="20" fill="none" stroke="#8800cc" stroke-width="1" opacity="0.5" stroke-dasharray="3,4"/>
   </svg>`,
 
-};
+  // ─── EVERFROST PEAKS SPRITES ───────────────────────────────────────────────
 
+  frost_goblin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="42" rx="13" ry="12" fill="#3a6090"/>
+    <ellipse cx="32" cy="24" rx="11" ry="10" fill="#4a78b0"/>
+    <ellipse cx="20" cy="22" rx="4" ry="5" fill="#3a6090"/>
+    <ellipse cx="44" cy="22" rx="4" ry="5" fill="#3a6090"/>
+    <ellipse cx="27" cy="22" rx="3" ry="3.5" fill="#c0e0ff"/>
+    <ellipse cx="37" cy="22" rx="3" ry="3.5" fill="#c0e0ff"/>
+    <circle cx="27" cy="22" r="1.5" fill="#002244"/>
+    <circle cx="37" cy="22" r="1.5" fill="#002244"/>
+    <circle cx="27.5" cy="21.5" r="0.5" fill="#ffffff"/>
+    <circle cx="37.5" cy="21.5" r="0.5" fill="#ffffff"/>
+    <ellipse cx="32" cy="27" rx="2" ry="1.5" fill="#2a5080"/>
+    <path d="M28 30 Q32 33 36 30" fill="none" stroke="#1a3060" stroke-width="1.5"/>
+    <polygon points="29,30 27,34 31,30" fill="#ddeeff"/>
+    <polygon points="35,30 37,34 33,30" fill="#ddeeff"/>
+    <rect x="42" y="30" width="4" height="16" rx="1" fill="#88ccff" opacity="0.9" transform="rotate(-20 44 38)"/>
+    <ellipse cx="25" cy="54" rx="5" ry="4" fill="#3a6090"/>
+    <ellipse cx="39" cy="54" rx="5" ry="4" fill="#3a6090"/>
+    <polygon points="20,38 23,31 26,38" fill="#aaddff" opacity="0.7"/>
+    <polygon points="38,36 41,29 44,36" fill="#aaddff" opacity="0.7"/>
+  </svg>`,
+
+  ice_wolf: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <path d="M8 38 Q4 28 8 20" fill="none" stroke="#d0e8ff" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="32" cy="40" rx="20" ry="13" fill="#c8dcf0"/>
+    <ellipse cx="50" cy="33" rx="13" ry="11" fill="#d0e4f8"/>
+    <polygon points="42,24 46,14 52,24" fill="#c0d4e8"/>
+    <polygon points="52,22 56,13 60,22" fill="#c0d4e8"/>
+    <ellipse cx="60" cy="36" rx="5" ry="4" fill="#b8cce0"/>
+    <circle cx="62" cy="34" r="1.5" fill="#2244aa"/>
+    <ellipse cx="63" cy="36" rx="2" ry="1.5" fill="#1a3080"/>
+    <circle cx="53" cy="30" r="2.5" fill="#88bbff"/>
+    <circle cx="53" cy="30" r="1.2" fill="#111133"/>
+    <circle cx="53.5" cy="29.5" r="0.4" fill="#ffffff"/>
+    <rect x="16" y="50" width="6" height="10" rx="3" fill="#b8cce0"/>
+    <rect x="26" y="52" width="6" height="9" rx="3" fill="#b8cce0"/>
+    <rect x="37" y="51" width="6" height="9" rx="3" fill="#b8cce0"/>
+    <rect x="46" y="50" width="6" height="10" rx="3" fill="#b8cce0"/>
+    <polygon points="24,35 26,28 28,35" fill="#aaddff" opacity="0.8"/>
+    <polygon points="33,33 35,27 37,33" fill="#aaddff" opacity="0.8"/>
+  </svg>`,
+
+  snow_skeleton: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <line x1="32" y1="20" x2="32" y2="56" stroke="#ddeeff" stroke-width="3"/>
+    <ellipse cx="32" cy="15" rx="11" ry="12" fill="#eef5ff"/>
+    <ellipse cx="27" cy="13" rx="3.5" ry="4" fill="#1a3a5a"/>
+    <ellipse cx="37" cy="13" rx="3.5" ry="4" fill="#1a3a5a"/>
+    <ellipse cx="27" cy="13" rx="2" ry="2.5" fill="#88bbff" opacity="0.9"/>
+    <ellipse cx="37" cy="13" rx="2" ry="2.5" fill="#88bbff" opacity="0.9"/>
+    <rect x="25" y="22" width="14" height="6" rx="2" fill="#e0eeff"/>
+    <line x1="28" y1="22" x2="28" y2="28" stroke="#1a3a5a" stroke-width="1"/>
+    <line x1="32" y1="22" x2="32" y2="28" stroke="#1a3a5a" stroke-width="1"/>
+    <line x1="36" y1="22" x2="36" y2="28" stroke="#1a3a5a" stroke-width="1"/>
+    <path d="M24,30 Q18,34 20,40" fill="none" stroke="#ddeeff" stroke-width="2"/>
+    <path d="M26,32 Q19,37 21,43" fill="none" stroke="#ddeeff" stroke-width="2"/>
+    <path d="M40,30 Q46,34 44,40" fill="none" stroke="#ddeeff" stroke-width="2"/>
+    <path d="M38,32 Q45,37 43,43" fill="none" stroke="#ddeeff" stroke-width="2"/>
+    <ellipse cx="32" cy="46" rx="8" ry="5" fill="none" stroke="#ddeeff" stroke-width="2"/>
+    <line x1="26" y1="50" x2="22" y2="63" stroke="#ddeeff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="38" y1="50" x2="42" y2="63" stroke="#ddeeff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="22" y1="30" x2="10" y2="42" stroke="#ddeeff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="42" y1="30" x2="54" y2="42" stroke="#ddeeff" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="32" cy="35" rx="14" ry="12" fill="#aaccff" opacity="0.15"/>
+  </svg>`,
+
+  frozen_zombie: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="42" rx="14" ry="16" fill="#2a4a3a"/>
+    <ellipse cx="32" cy="42" rx="14" ry="16" fill="#88aacc" opacity="0.35"/>
+    <ellipse cx="32" cy="22" rx="12" ry="13" fill="#3a5a44"/>
+    <ellipse cx="32" cy="22" rx="12" ry="13" fill="#99bbdd" opacity="0.3"/>
+    <ellipse cx="26" cy="19" rx="3.5" ry="3" fill="#0a2a1a"/>
+    <ellipse cx="38" cy="19" rx="3.5" ry="3" fill="#0a2a1a"/>
+    <ellipse cx="26" cy="19" rx="2" ry="2" fill="#4488cc" opacity="0.8"/>
+    <ellipse cx="38" cy="19" rx="2" ry="2" fill="#4488cc" opacity="0.8"/>
+    <path d="M26 27 Q32 31 38 27" fill="none" stroke="#0a1a10" stroke-width="1.5"/>
+    <rect x="3" y="34" width="15" height="7" rx="3.5" fill="#2a4a3a" transform="rotate(-15 10 37)"/>
+    <rect x="46" y="34" width="15" height="7" rx="3.5" fill="#2a4a3a" transform="rotate(15 53 37)"/>
+    <rect x="22" y="56" width="8" height="10" rx="4" fill="#2a4a3a"/>
+    <rect x="34" y="56" width="8" height="10" rx="4" fill="#2a4a3a"/>
+    <polygon points="14,28 17,20 20,28" fill="#aaccff" opacity="0.9"/>
+    <polygon points="44,28 47,20 50,28" fill="#aaccff" opacity="0.9"/>
+    <polygon points="28,10 32,2 36,10" fill="#bbddff" opacity="0.8"/>
+  </svg>`,
+
+  everfrost_gnoll: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="42" rx="14" ry="13" fill="#4a5a70"/>
+    <ellipse cx="32" cy="24" rx="12" ry="11" fill="#5a6a80"/>
+    <ellipse cx="32" cy="30" rx="6" ry="5" fill="#4a5a70"/>
+    <polygon points="20,16 17,6 26,14" fill="#5a6a80"/>
+    <polygon points="44,16 47,6 38,14" fill="#5a6a80"/>
+    <circle cx="26" cy="21" r="3" fill="#88aacc"/>
+    <circle cx="38" cy="21" r="3" fill="#88aacc"/>
+    <circle cx="26" cy="21" r="1.5" fill="#111"/>
+    <circle cx="38" cy="21" r="1.5" fill="#111"/>
+    <circle cx="26.5" cy="20.5" r="0.5" fill="#fff"/>
+    <circle cx="38.5" cy="20.5" r="0.5" fill="#fff"/>
+    <ellipse cx="32" cy="29" rx="2.5" ry="2" fill="#3a4a60"/>
+    <polygon points="29,33 27,38 31,33" fill="#ddeeff"/>
+    <polygon points="35,33 37,38 33,33" fill="#ddeeff"/>
+    <rect x="3" y="36" width="14" height="5" rx="2.5" fill="#4a5a70" transform="rotate(-25 10 38)"/>
+    <rect x="47" y="26" width="4" height="22" rx="2" fill="#7a8a9a"/>
+    <polygon points="47,26 51,26 49,18" fill="#aaddff" opacity="0.9"/>
+    <ellipse cx="24" cy="55" rx="6" ry="5" fill="#4a5a70"/>
+    <ellipse cx="40" cy="55" rx="6" ry="5" fill="#4a5a70"/>
+    <ellipse cx="32" cy="42" rx="8" ry="5" fill="#aaccee" opacity="0.25"/>
+  </svg>`,
+
+  ice_giant_scout: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="44" rx="18" ry="16" fill="#4a7a9a"/>
+    <ellipse cx="32" cy="20" rx="16" ry="15" fill="#5a8aaa"/>
+    <path d="M16,14 Q18,4 32,2 Q46,4 48,14" fill="#88aacc"/>
+    <polygon points="28,2 32,-4 36,2" fill="#cceeff" opacity="0.9"/>
+    <ellipse cx="25" cy="18" rx="4" ry="4.5" fill="#002244"/>
+    <ellipse cx="39" cy="18" rx="4" ry="4.5" fill="#002244"/>
+    <ellipse cx="25" cy="18" rx="2.5" ry="3" fill="#5599ff"/>
+    <ellipse cx="39" cy="18" rx="2.5" ry="3" fill="#5599ff"/>
+    <ellipse cx="32" cy="24" rx="3" ry="2.5" fill="#4a7a9a"/>
+    <path d="M20,28 Q32,35 44,28" fill="#88aacc" opacity="0.6"/>
+    <rect x="50" y="28" width="7" height="28" rx="3" fill="#8a6a4a"/>
+    <rect x="46" y="20" width="14" height="12" rx="3" fill="#aaccee"/>
+    <rect x="4" y="36" width="12" height="8" rx="4" fill="#4a7a9a"/>
+    <rect x="48" y="30" width="10" height="8" rx="4" fill="#4a7a9a" transform="rotate(30 53 34)"/>
+    <rect x="18" y="56" width="10" height="10" rx="5" fill="#3a6a8a"/>
+    <rect x="36" y="56" width="10" height="10" rx="5" fill="#3a6a8a"/>
+    <text x="32" y="47" text-anchor="middle" font-family="serif" font-size="10" fill="#aaddff" opacity="0.7">❄</text>
+  </svg>`,
+
+  a_wooly_mammoth: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="30" cy="42" rx="26" ry="18" fill="#5a4a38"/>
+    <ellipse cx="30" cy="42" rx="24" ry="16" fill="#6a5a48"/>
+    <ellipse cx="52" cy="34" rx="14" ry="13" fill="#6a5a48"/>
+    <path d="M62 40 Q66 48 62 56 Q60 60 56 58" fill="none" stroke="#5a4a38" stroke-width="6" stroke-linecap="round"/>
+    <path d="M58 42 Q68 46 70 55 Q70 60 64 60" fill="none" stroke="#eeeebb" stroke-width="4" stroke-linecap="round"/>
+    <path d="M56 44 Q64 52 62 60" fill="none" stroke="#ddddaa" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="56" cy="30" r="3" fill="#1a1008"/>
+    <circle cx="56" cy="30" r="1.5" fill="#cc8800"/>
+    <circle cx="56.5" cy="29.5" r="0.5" fill="#ffffff"/>
+    <ellipse cx="42" cy="26" rx="7" ry="5" fill="#4a3a28"/>
+    <path d="M10,30 Q14,24 18,30" fill="none" stroke="#4a3a28" stroke-width="2"/>
+    <path d="M18,26 Q22,20 26,26" fill="none" stroke="#4a3a28" stroke-width="2"/>
+    <path d="M26,24 Q30,18 34,24" fill="none" stroke="#4a3a28" stroke-width="2"/>
+    <rect x="10" y="56" width="8" height="10" rx="4" fill="#5a4a38"/>
+    <rect x="22" y="58" width="8" height="8" rx="4" fill="#5a4a38"/>
+    <rect x="34" y="58" width="8" height="8" rx="4" fill="#5a4a38"/>
+    <rect x="46" y="56" width="8" height="10" rx="4" fill="#5a4a38"/>
+    <ellipse cx="22" cy="28" rx="10" ry="4" fill="#ddeeff" opacity="0.6"/>
+    <ellipse cx="38" cy="26" rx="8" ry="3" fill="#ddeeff" opacity="0.5"/>
+  </svg>`,
+
+  permafrost_spectre: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="35" rx="22" ry="26" fill="#1a3a5a" opacity="0.5"/>
+    <path d="M16,38 Q14,52 20,58 Q26,64 32,60 Q38,64 44,58 Q50,52 48,38 Q42,28 32,26 Q22,28 16,38 Z" fill="#336699" opacity="0.6"/>
+    <path d="M20,58 Q22,64 18,68" fill="none" stroke="#88aacc" stroke-width="2" opacity="0.7"/>
+    <path d="M32,60 Q32,66 30,70" fill="none" stroke="#88aacc" stroke-width="2" opacity="0.7"/>
+    <path d="M44,58 Q42,64 46,68" fill="none" stroke="#88aacc" stroke-width="2" opacity="0.7"/>
+    <ellipse cx="32" cy="22" rx="13" ry="14" fill="#3a5a7a" opacity="0.85"/>
+    <ellipse cx="26" cy="19" rx="4" ry="5" fill="#0a1a2a"/>
+    <ellipse cx="38" cy="19" rx="4" ry="5" fill="#0a1a2a"/>
+    <ellipse cx="26" cy="19" rx="2.5" ry="3.5" fill="#66aaff" opacity="0.9"/>
+    <ellipse cx="38" cy="19" rx="2.5" ry="3.5" fill="#66aaff" opacity="0.9"/>
+    <ellipse cx="26" cy="19" rx="1" ry="1.5" fill="#aaddff"/>
+    <ellipse cx="38" cy="19" rx="1" ry="1.5" fill="#aaddff"/>
+    <path d="M25,27 Q32,32 39,27" fill="#0a1a2a" stroke="#1a3a5a" stroke-width="1"/>
+    <path d="M14,34 Q8,28 10,20" fill="none" stroke="#4488aa" stroke-width="1.5" opacity="0.6" stroke-dasharray="3,2"/>
+    <path d="M50,34 Q56,28 54,20" fill="none" stroke="#4488aa" stroke-width="1.5" opacity="0.6" stroke-dasharray="3,2"/>
+    <polygon points="8,42 11,34 14,42" fill="#aaccff" opacity="0.7"/>
+    <polygon points="50,42 53,34 56,42" fill="#aaccff" opacity="0.7"/>
+    <polygon points="26,8 29,0 32,8" fill="#bbddff" opacity="0.6"/>
+    <ellipse cx="32" cy="35" rx="20" ry="22" fill="none" stroke="#4488bb" stroke-width="1" opacity="0.4" stroke-dasharray="4,3"/>
+  </svg>`,
+
+};
 const PORTRAITS = {
 
   warrior: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -767,7 +939,6 @@ const PORTRAITS = {
     <ellipse cx="22" cy="17" rx="2" ry="1" fill="#cc4400" opacity="0.6"/>
     <ellipse cx="26" cy="17" rx="2" ry="1" fill="#cc4400" opacity="0.6"/>
   </svg>`,
-
 };
 
 /**

@@ -370,6 +370,7 @@ body {
 }
 .effect-slow { border-color: #4488ff; color: #4488ff; }
 .effect-poison { border-color: #44aa44; color: #44aa44; }
+.effect-cold { border-color: #88ccff; color: #88ccff; }
 .effect-stun { border-color: #ffcc00; color: #ffcc00; }
 .effect-mez { border-color: #8844ff; color: #8844ff; }
 .effect-fear { border-color: #ff8844; color: #ff8844; }
@@ -516,6 +517,8 @@ body {
 .log-levelup { color: #ffdd44; font-weight: bold; letter-spacing: 0.5px; }
 .log-system { color: #7a7a5a; font-style: italic; }
 .log-poison { color: #44cc44; }
+.log-cold   { color: #88ccff; }
+.log-disease{ color: #aacc44; }
 .log-buff   { color: #88ddaa; }
 .log-debuff { color: #dd8844; }
 

@@ -446,6 +446,121 @@ const ZONES = {
     connections: ['qeynos_hills', 'everfrost_peaks'],
     respawnTime: 22000,
   },
+
+  everfrost_peaks: {
+    id: 'everfrost_peaks',
+    name: 'Everfrost Peaks',
+    shortName: 'EF',
+    levelRange: [10, 20],
+    xpModifier: 1.1,
+    description: 'A frozen wasteland of jagged ice and howling blizzards. The undead walk here, and worse things lurk beneath the snow.',
+    enemies: [
+      'frost_goblin',
+      'ice_wolf',
+      'snow_skeleton',
+      'frozen_zombie',
+      'everfrost_gnoll',
+      'ice_giant_scout',
+      'a_wooly_mammoth',
+      'permafrost_spectre',
+    ],
+    commonEnemies: [
+      'frost_goblin',
+      'ice_wolf',
+      'snow_skeleton',
+      'frozen_zombie',
+      'everfrost_gnoll',
+    ],
+    rareEnemies: [
+      'ice_giant_scout',
+      'a_wooly_mammoth',
+      'permafrost_spectre',
+    ],
+    rareSpawnChance: 0.10,
+    groups: [
+      { members: ['frost_goblin', 'frost_goblin'], weight: 4 },
+      { members: ['everfrost_gnoll', 'frost_goblin'], weight: 3 },
+      { members: ['ice_wolf', 'ice_wolf'], weight: 3 },
+      { members: ['snow_skeleton', 'frozen_zombie'], weight: 2 },
+    ],
+    groupSpawnChance: 0.25,
+    respawnTime: 4000,
+    isSafeZone: false,
+    ambientColor: '#0a1a2a',
+    connections: ['blackburrow'],
+    flavorLines: [
+      'The wind howls across the frozen tundra like a mourning spirit.',
+      'Your breath fogs in the bitter air. Something moves beneath the snow.',
+      'The creak of ice echoes from every direction.',
+      'Skeletal figures stagger through the blizzard, drawn by living warmth.',
+      'A distant roar shakes the permafrost. Something large is nearby.',
+    ],
+    minimapSVG: `<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;">
+  <defs>
+    <linearGradient id="efSkyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1a2e"/>
+      <stop offset="100%" stop-color="#1a3050"/>
+    </linearGradient>
+    <linearGradient id="efSnowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c8ddf0"/>
+      <stop offset="100%" stop-color="#8ab0cc"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="280" height="200" fill="url(#efSkyGrad)"/>
+
+  <!-- Stars -->
+  <circle cx="20" cy="15" r="1" fill="#ffffff" opacity="0.8"/>
+  <circle cx="55" cy="8" r="1.2" fill="#ffffff" opacity="0.9"/>
+  <circle cx="100" cy="18" r="0.8" fill="#aaccff" opacity="0.7"/>
+  <circle cx="145" cy="6" r="1" fill="#ffffff" opacity="0.8"/>
+  <circle cx="200" cy="12" r="1.2" fill="#ffffff" opacity="0.9"/>
+  <circle cx="245" cy="20" r="0.8" fill="#aaccff" opacity="0.7"/>
+  <circle cx="265" cy="9" r="1" fill="#ffffff" opacity="0.8"/>
+
+  <!-- Far mountain peaks -->
+  <polygon points="0,110 30,55 60,110" fill="#1a2d42" opacity="0.9"/>
+  <polygon points="40,110 80,40 120,110" fill="#1e3348" opacity="0.9"/>
+  <polygon points="100,110 140,30 180,110" fill="#1a2d42" opacity="0.9"/>
+  <polygon points="160,110 200,50 240,110" fill="#1e3348" opacity="0.9"/>
+  <polygon points="220,110 255,60 280,110" fill="#1a2d42" opacity="0.9"/>
+
+  <!-- Snow caps on peaks -->
+  <polygon points="30,55 22,75 38,75" fill="#ddeeff" opacity="0.9"/>
+  <polygon points="80,40 68,65 92,65" fill="#eef5ff" opacity="0.9"/>
+  <polygon points="140,30 126,58 154,58" fill="#ddeeff" opacity="0.9"/>
+  <polygon points="200,50 188,72 212,72" fill="#eef5ff" opacity="0.9"/>
+  <polygon points="255,60 245,78 265,78" fill="#ddeeff" opacity="0.9"/>
+
+  <!-- Snow ground -->
+  <path d="M0,130 Q40,120 80,128 Q120,136 160,122 Q200,110 240,125 Q260,132 280,128 L280,200 L0,200 Z" fill="url(#efSnowGrad)"/>
+
+  <!-- Snow drifts / texture -->
+  <ellipse cx="60" cy="148" rx="30" ry="8" fill="#ddeeff" opacity="0.5"/>
+  <ellipse cx="160" cy="140" rx="25" ry="6" fill="#ddeeff" opacity="0.5"/>
+  <ellipse cx="230" cy="152" rx="20" ry="5" fill="#ddeeff" opacity="0.5"/>
+
+  <!-- Ice formation (center) -->
+  <polygon points="130,125 137,105 144,125" fill="#88bbdd" opacity="0.8"/>
+  <polygon points="144,125 150,110 157,125" fill="#99ccee" opacity="0.7"/>
+
+  <!-- Blackburrow connection arrow (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#1a1008" stroke="#4a2a08" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a" opacity="0.9">◄ BB</text>
+
+  <!-- Skull marker (danger) -->
+  <text x="245" y="100" text-anchor="middle" font-family="serif" font-size="10" fill="#6a8aaa" opacity="0.6">☠</text>
+
+  <!-- "You Are Here" -->
+  <circle cx="32" cy="92" r="7" fill="#000000" opacity="0.5"/>
+  <text x="32" y="96" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="32" cy="92" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#2a4466" stroke-width="2" rx="3"/>
+</svg>`,
+  },
 };
 
 function getZone(id) {
