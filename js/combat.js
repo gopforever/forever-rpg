@@ -1553,6 +1553,7 @@ function selectAbilityForMember(member, enemy, party) {
     member.isCasting = true;
     member.castingAbility = {
       ability: chosen,
+      castStartTime: now,
       castEndTime: now + chosen.castTime,
       targetType: chosen.effect ? chosen.effect.type : 'none',
     };
