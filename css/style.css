@@ -1203,9 +1203,10 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 }
 
 .bank-grid {
-  grid-template-columns: repeat(10, 1fr);
-  max-height: 300px;
+  grid-template-columns: repeat(8, 1fr);
+  max-height: 360px;
   overflow-y: auto;
+  gap: 3px;
 }
 
 .inv-slot {
@@ -2052,12 +2053,39 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 3px;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .bank-slot-filled:hover {
   border-color: #c8a84b;
   box-shadow: 0 0 4px rgba(200,168,75,0.3);
 }
+
+.bank-slot-filled .inv-slot-name {
+  font-size: 0.6rem;
+  padding: 2px 1px;
+  line-height: 1.2;
+}
+
+.bank-slot-filled .inv-slot-icon {
+  font-size: 1.4rem;
+}
+
+.bank-slot-filled .inv-slot-count {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.6rem;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 0 2px #000;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.bank-slot-filled.rarity-magic   { border-color: #4444cc; box-shadow: 0 0 4px rgba(68,68,204,0.4); }
+.bank-slot-filled.rarity-rare    { border-color: #cc8844; box-shadow: 0 0 4px rgba(204,136,68,0.4); }
+.bank-slot-filled.rarity-legendary { border-color: #cc44cc; box-shadow: 0 0 5px rgba(204,68,204,0.5); }
 
 /* ─── Bank Context Menu ───────────────────────────────────────────────────── */
 
@@ -2504,8 +2532,8 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 6px 12px;
   background: var(--panel-bg);
   border-top: 1px solid var(--panel-border);
   border-bottom: 1px solid var(--panel-border);
@@ -2523,8 +2551,8 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 }
 .hotbar-slot {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   background: var(--panel-bg2);
   border: 1px solid var(--panel-border);
   display: flex;
@@ -2544,25 +2572,24 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   position: absolute;
   top: 2px;
   left: 3px;
-  font-size: 8px;
+  font-size: 9px;
   color: var(--text-dim);
   font-family: 'Share Tech Mono', monospace;
   line-height: 1;
 }
-.hotbar-icon { font-size: 18px; line-height: 1; }
+.hotbar-icon { font-size: 28px; line-height: 1; margin-bottom: 1px; }
 .hotbar-name {
-  font-size: 7px;
+  font-size: 8px;
   color: var(--text-secondary);
   font-family: 'Share Tech Mono', monospace;
   line-height: 1.1;
-  margin-top: 2px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .hotbar-cost {
-  font-size: 7px;
+  font-size: 8px;
   color: #4466bb;
   font-family: 'Share Tech Mono', monospace;
 }
@@ -2584,3 +2611,42 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .enemy-card.incoming-attack {
   animation: incomingAttackPulse 0.4s ease-in-out infinite;
 }
+
+/* ─── Drag and Drop ──────────────────────────────────────────────────────── */
+.inv-slot[draggable="true"]:hover { cursor: grab; }
+.inv-slot.drag-source {
+  opacity: 0.4;
+  border-color: var(--gold);
+  outline: 1px dashed var(--gold);
+}
+.inv-slot.drag-over {
+  border-color: #88ccff !important;
+  box-shadow: 0 0 6px rgba(136,204,255,0.5);
+  background: rgba(136,204,255,0.08);
+}
+
+/* ─── Party Member Context Menu ─────────────────────────────────────────── */
+.party-member-ctx {
+  position: fixed;
+  z-index: 9999;
+  background: #12100d;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.8);
+  overflow: hidden;
+  min-width: 180px;
+}
+.party-member-ctx .ctx-item {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(74,56,32,0.2);
+}
+.party-member-ctx .ctx-item:last-child { border-bottom: none; }
+.party-member-ctx .ctx-item:hover { background: rgba(200,168,75,0.15); }
+.party-member-ctx .ctx-revive { color: #88cc44; }
+.party-member-ctx .ctx-info   { color: #4488cc; }
+.party-member-ctx .ctx-destroy { color: #cc4444; }
