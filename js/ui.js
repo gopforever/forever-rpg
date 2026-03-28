@@ -229,6 +229,12 @@ function initMainUI() {
 
   // Keyboard hotbar: number keys 1–8 trigger ability slots
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const examineModal = document.getElementById('examine-modal');
+      if (examineModal && examineModal.style.display !== 'none') {
+        examineModal.style.display = 'none';
+      }
+    }
     const num = parseInt(e.key);
     if (num >= 1 && num <= 8 && !e.ctrlKey && !e.altKey && !e.metaKey) {
       const activeEl = document.activeElement;
@@ -1547,7 +1553,62 @@ function updateCombatUI() {
   updateEnemyDisplay();
   updatePartyUI();
   renderTopBar();
+  renderDPSMeter();
   if (typeof updateStopButtonState === 'function') updateStopButtonState();
+}
+
+/**
+ * Renders the DPS meter panel showing per-member damage totals and DPS rate.
+ * @returns {void}
+ */
+function renderDPSMeter() {
+  let el = document.getElementById('dps-meter');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'dps-meter';
+    el.className = 'dps-meter';
+    const combatLog = document.getElementById('combat-log-container');
+    if (combatLog) combatLog.parentNode.insertBefore(el, combatLog);
+    else return;
+  }
+
+  const dps = (typeof GameState !== 'undefined' && GameState.combatDPS) ? GameState.combatDPS : null;
+  if (!dps || !dps.damageByMember || Object.keys(dps.damageByMember).length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = 'block';
+  const elapsed = dps.sessionStart ? Math.max(1, (Date.now() - dps.sessionStart) / 1000) : 1;
+  const entries = Object.entries(dps.damageByMember)
+    .map(([name, dmg]) => ({ name, dmg, dps: (dmg / elapsed).toFixed(1) }))
+    .sort((a, b) => b.dmg - a.dmg);
+  const maxDmg = entries[0] ? entries[0].dmg : 1;
+
+  const rows = entries.map(e => {
+    const pct = Math.round((e.dmg / maxDmg) * 100);
+    return `<div class="dps-row">
+      <span class="dps-name">${e.name}</span>
+      <div class="dps-bar-wrap"><div class="dps-bar" style="width:${pct}%"></div></div>
+      <span class="dps-dmg">${e.dmg.toLocaleString()}</span>
+      <span class="dps-rate">${e.dps}/s</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="dps-header">⚔ DPS Meter <button class="dps-reset-btn" id="dps-reset-btn">Reset</button></div>
+    ${rows}
+  `;
+
+  const resetBtn = el.querySelector('#dps-reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (typeof GameState !== 'undefined') {
+        GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: Date.now() };
+      }
+      renderDPSMeter();
+    }, { once: true });
+  }
 }
 
 /**
@@ -1743,7 +1804,10 @@ function renderInventoryPanel() {
 
   panel.querySelectorAll('[data-item]').forEach(el => {
     if (el.dataset.item) {
-      attachTooltip(el, () => getItemTooltipHTML(el.dataset.item));
+      const member = (GameState.party || [])[GameState.inspectedCharIndex || 0];
+      attachTooltip(el, () => typeof getItemTooltipHTMLWithCompare === 'function'
+        ? getItemTooltipHTMLWithCompare(el.dataset.item, member)
+        : getItemTooltipHTML(el.dataset.item));
     }
   });
 
@@ -1960,6 +2024,7 @@ function equipItemOnMember(itemId, inventorySlotIndex, member) {
 
   if (typeof computeDerivedStats === 'function') computeDerivedStats(member);
   addCombatLog(`${member.name} equips ${item.name}.`, 'system');
+  if (typeof checkAchievements === 'function') checkAchievements('equip', { item });
   if (typeof saveGame === 'function') saveGame();
   renderInventoryPanel();
   renderEquipmentPanel();
@@ -2002,6 +2067,24 @@ function unequipItem(slotId, member) {
  * @param {string}     itemId     - The item ID in the slot.
  * @param {number}     invIndex   - Index in GameState.inventory.
  */
+/**
+ * Opens the examine modal with full item details.
+ * @param {string} itemId - The item ID to examine.
+ */
+function showExamineModal(itemId) {
+  let modal = document.getElementById('examine-modal');
+  if (!modal) return;
+  const html = typeof getItemTooltipHTML === 'function' ? getItemTooltipHTML(itemId) : '';
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.innerHTML = `<button class="modal-close examine-modal-close">✕</button><div class="examine-body">${html}</div>`;
+    content.querySelector('.examine-modal-close').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+  modal.style.display = 'flex';
+}
+
 function showItemContextMenu(e, itemId, invIndex) {
   document.querySelectorAll('.item-context-menu').forEach(m => m.remove());
   const item = ITEMS[itemId];
@@ -2023,10 +2106,16 @@ function showItemContextMenu(e, itemId, invIndex) {
   }
 
   menu.innerHTML = `
+    <div class="ctx-item ctx-examine">🔍 Examine</div>
     ${equipOptions}
     <div class="ctx-item ctx-drop ctx-destroy">🗑 Drop</div>
   `;
   document.body.appendChild(menu);
+
+  menu.querySelector('.ctx-examine').addEventListener('click', () => {
+    menu.remove();
+    showExamineModal(itemId);
+  });
 
   menu.querySelectorAll('.ctx-equip:not(.ctx-disabled)').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2062,13 +2151,21 @@ function showItemContextMenu(e, itemId, invIndex) {
  */
 function showUnequipContextMenu(e, slotId, member) {
   document.querySelectorAll('.item-context-menu').forEach(m => m.remove());
+  const itemId = member && member.equipment ? member.equipment[slotId] : null;
   const menu = document.createElement('div');
   menu.className = 'item-context-menu';
   menu.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;`;
-  menu.innerHTML = `<div class="ctx-item">📤 Unequip</div>`;
+  menu.innerHTML = `
+    ${itemId ? '<div class="ctx-item ctx-examine">🔍 Examine</div>' : ''}
+    <div class="ctx-item">📤 Unequip</div>
+  `;
   document.body.appendChild(menu);
 
-  menu.querySelector('.ctx-item').addEventListener('click', () => {
+  if (itemId) {
+    const examBtn = menu.querySelector('.ctx-examine');
+    if (examBtn) examBtn.addEventListener('click', () => { menu.remove(); showExamineModal(itemId); });
+  }
+  menu.querySelector('.ctx-item:last-child').addEventListener('click', () => {
     menu.remove();
     unequipItem(slotId, member);
   });
@@ -2096,11 +2193,16 @@ function showBankContextMenu(e, bankSlotIndex) {
   menu.className = 'bank-context-menu';
   menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;`;
   menu.innerHTML = `
+    <div class="ctx-item ctx-examine">🔍 Examine</div>
     <div class="ctx-item ctx-withdraw">📤 Withdraw</div>
     <div class="ctx-item ctx-destroy">🗑 Destroy</div>
   `;
   document.body.appendChild(menu);
 
+  menu.querySelector('.ctx-examine').addEventListener('click', () => {
+    menu.remove();
+    showExamineModal(stack.itemId);
+  });
   menu.querySelector('.ctx-withdraw').addEventListener('click', () => {
     menu.remove();
     if (typeof withdrawItemFromBank === 'function') withdrawItemFromBank(bankSlotIndex);
@@ -2368,12 +2470,7 @@ function renderCityTabContent(tab) {
     const listings = typeof getMarketListings === 'function' ? getMarketListings() : [];
     const fmt2 = typeof formatCoins === 'function' ? formatCoins : (c) => `${c}c`;
 
-    if (!listings.length) {
-      el.innerHTML = '<div class="city-empty">No player listings available yet.</div>';
-      return;
-    }
-
-    const rows = listings.map(listing => {
+    const rows = listings.length ? listings.map(listing => {
       const color = (typeof CLASS_COLORS !== 'undefined' && CLASS_COLORS[listing.sellerClass]) || '#e8d5a0';
       const icon  = (typeof CLASS_ICONS  !== 'undefined' && CLASS_ICONS[listing.sellerClass])  || '⚔';
       return `
@@ -2385,6 +2482,25 @@ function renderCityTabContent(tab) {
           <button class="city-btn market-buy-btn" data-listing="${listing.id}">Buy</button>
         </div>
       `;
+    }).join('') : '<div class="city-empty">No player listings available yet.</div>';
+
+    // Build list sell section — non-nodrop items from player inventory
+    const sellableItems = (GameState.inventory || []).filter(s => {
+      if (!s) return false;
+      const it = typeof ITEMS !== 'undefined' ? ITEMS[s.itemId] : null;
+      return it && !it.nodrop;
+    });
+    const listRows = sellableItems.map(stack => {
+      const it = ITEMS[stack.itemId];
+      const icon = typeof getItemIcon === 'function' ? getItemIcon(stack.itemId) : '';
+      const base = typeof getBasePrice === 'function' ? getBasePrice(stack.itemId) : 2;
+      return `
+        <div class="vendor-row market-list-row">
+          <span class="vendor-item-name">${icon} ${it.name}${stack.quantity > 1 ? ` x${stack.quantity}` : ''}</span>
+          <input class="market-price-input" type="number" min="1" placeholder="Price (copper)" data-list-item="${stack.itemId}" value="${Math.round(base * 1.1)}">
+          <button class="city-btn market-list-btn" data-list-item="${stack.itemId}">List</button>
+        </div>
+      `;
     }).join('');
 
     el.innerHTML = `
@@ -2394,13 +2510,27 @@ function renderCityTabContent(tab) {
         <span>Seller</span><span>Item</span><span>Qty</span><span>Price</span><span></span>
       </div>
       ${rows}
+      <div class="city-section-title" style="margin-top:14px">📦 List Item on Market</div>
+      ${listRows || '<div class="city-empty">No listable items in your inventory.</div>'}
     `;
+
+    el.querySelectorAll('.market-list-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const itemId = btn.dataset.listItem;
+        const row = btn.closest('.market-list-row');
+        const input = row ? row.querySelector('.market-price-input') : null;
+        const price = input ? parseInt(input.value, 10) : 0;
+        if (typeof playerListItemOnMarket === 'function') {
+          playerListItemOnMarket(itemId, price);
+        }
+      });
+    });
 
     el.querySelectorAll('.market-buy-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const listingId = parseInt(btn.dataset.listing, 10);
+        const listingId = btn.dataset.listing;
         const currentListings = typeof getMarketListings === 'function' ? getMarketListings() : [];
-        const listing   = currentListings.find(l => l.id === listingId);
+        const listing   = currentListings.find(l => String(l.id) === String(listingId));
         if (!listing) return;
 
         const totalCost = listing.price * listing.qty;
@@ -2423,7 +2553,7 @@ function renderCityTabContent(tab) {
         }
 
         // Remove listing
-        const newListings = currentListings.filter(l => l.id !== listingId);
+        const newListings = currentListings.filter(l => String(l.id) !== String(listingId));
         if (typeof setMarketListings === 'function') setMarketListings(newListings);
 
         if (typeof addCombatLog === 'function') addCombatLog(`Purchased ${listing.itemName} x${listing.qty} from ${listing.seller} for ${fmt2(totalCost)}.`, 'loot');
@@ -2731,4 +2861,6 @@ if (typeof module !== 'undefined') module.exports = {
   unequipItem,
   showItemContextMenu,
   showUnequipContextMenu,
+  showExamineModal,
+  renderDPSMeter,
 };

@@ -285,4 +285,101 @@ function getMemberTooltipHTML(member) {
   </div>`;
 }
 
-if (typeof module !== 'undefined') module.exports = { initTooltips, showTooltip, hideTooltip, attachTooltip, getItemTooltipHTML, getEnemyTooltipHTML, getStatTooltipHTML, getAbilityTooltipHTML, getClassTooltipHTML, getMemberTooltipHTML };
+/**
+ * Builds item tooltip HTML with stat deltas compared to the currently equipped item in the same slot.
+ * @param {string} itemId  - The item ID to show.
+ * @param {object} [member] - The party member to compare equipment against. Falls back to inspected member.
+ * @returns {string} HTML string for the tooltip with delta indicators.
+ */
+function getItemTooltipHTMLWithCompare(itemId, member) {
+  const item = ITEMS[itemId];
+  if (!item) return '<div class="tt-error">Unknown item</div>';
+
+  // Resolve the party member for comparison
+  if (!member && typeof GameState !== 'undefined' && GameState.party && GameState.party.length) {
+    const idx = GameState.inspectedCharIndex || 0;
+    member = GameState.party[idx];
+  }
+
+  // Find currently equipped item in same slot
+  let equippedItem = null;
+  if (member && member.equipment && item.slot) {
+    const equippedId = member.equipment[item.slot];
+    if (equippedId && typeof ITEMS !== 'undefined') equippedItem = ITEMS[equippedId];
+  }
+
+  const rarityColors = {
+    common: '#ffffff', magic: '#5588ff', rare: '#ffcc00', named: '#ff8800'
+  };
+  const color = rarityColors[item.rarity] || '#ffffff';
+
+  const delta = (newVal, oldVal) => {
+    const d = (newVal || 0) - (oldVal || 0);
+    if (d > 0) return ` <span class="tt-delta-up">(▲+${d})</span>`;
+    if (d < 0) return ` <span class="tt-delta-down">(▼${d})</span>`;
+    return '';
+  };
+
+  let html = `<div class="tt-item">`;
+  html += `<div class="tt-name" style="color:${color}">${item.name}</div>`;
+
+  if (!equippedItem) {
+    html += `<div class="tt-compare-hint" style="color:#888;font-size:0.7em">(new slot)</div>`;
+  } else {
+    html += `<div class="tt-compare-hint" style="color:#888;font-size:0.7em">vs [${equippedItem.name}]</div>`;
+  }
+
+  if (item.lore) html += `<div class="tt-flag tt-lore">LORE</div>`;
+  if (item.nodrop) html += `<div class="tt-flag tt-nodrop">NO DROP</div>`;
+
+  if (item.slot) html += `<div class="tt-row"><span class="tt-label">Slot:</span> ${item.slot.replace(/_/g, ' ').toUpperCase()}</div>`;
+
+  if (item.type === 'weapon') {
+    const dmgDelta = equippedItem && equippedItem.type === 'weapon' ? delta(item.dmg, equippedItem.dmg) : (equippedItem ? '' : '');
+    const delayDelta = equippedItem && equippedItem.type === 'weapon' ? delta(-(item.delay || 0), -(equippedItem.delay || 0)) : '';
+    html += `<div class="tt-row"><span class="tt-label">Damage:</span> ${item.dmg}${dmgDelta} <span class="tt-label">Delay:</span> ${item.delay}${delayDelta}</div>`;
+    html += `<div class="tt-row"><span class="tt-label">Type:</span> ${item.weaponType}</div>`;
+    if (item.dmg && item.delay) {
+      const ratio = (item.dmg / (item.delay / 10)).toFixed(2);
+      html += `<div class="tt-row"><span class="tt-label">Ratio:</span> ${ratio}</div>`;
+    }
+  }
+
+  if (item.ac) {
+    const acDelta = equippedItem ? delta(item.ac, equippedItem.ac) : '';
+    html += `<div class="tt-row"><span class="tt-label">AC:</span> ${item.ac}${acDelta}</div>`;
+  }
+
+  if (item.stats) {
+    const statMap = { STR: 'STR', DEX: 'DEX', AGI: 'AGI', STA: 'STA', WIS: 'WIS', INT: 'INT', CHA: 'CHA' };
+    for (const [key, label] of Object.entries(statMap)) {
+      if (item.stats[key]) {
+        const statDelta = equippedItem && equippedItem.stats ? delta(item.stats[key], equippedItem.stats[key]) : '';
+        html += `<div class="tt-stat">+${item.stats[key]} ${label}${statDelta}</div>`;
+      }
+    }
+  }
+
+  if (item.resists) {
+    for (const [res, val] of Object.entries(item.resists)) {
+      if (val) {
+        const resDelta = (equippedItem && equippedItem.resists) ? delta(val, equippedItem.resists[res] || 0) : '';
+        html += `<div class="tt-stat">+${val} SV ${res.charAt(0).toUpperCase() + res.slice(1)}${resDelta}</div>`;
+      }
+    }
+  }
+
+  if (item.effect) html += `<div class="tt-effect">Effect: ${item.effect}</div>`;
+
+  if (item.classes && item.classes.length > 0) {
+    html += `<div class="tt-classes">${item.classes.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}</div>`;
+  }
+
+  html += `<div class="tt-weight">WT: ${item.weight || 0}</div>`;
+  if (item.flavor) html += `<div class="tt-flavor">"${item.flavor}"</div>`;
+
+  html += '</div>';
+  return html;
+}
+
+if (typeof module !== 'undefined') module.exports = { initTooltips, showTooltip, hideTooltip, attachTooltip, getItemTooltipHTML, getItemTooltipHTMLWithCompare, getEnemyTooltipHTML, getStatTooltipHTML, getAbilityTooltipHTML, getClassTooltipHTML, getMemberTooltipHTML };

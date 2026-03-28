@@ -384,6 +384,7 @@ function stopCombat() {
   GameState.enemies = [];
   GameState.currentEnemy = null;
   GameState.selectedEnemyId = null;
+  GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: Date.now() };
   addCombatLog('Combat stopped.', 'system');
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
@@ -648,6 +649,13 @@ function memberAttack(member, enemy) {
   damage = Math.max(1, damage);
 
   enemy.hp = Math.max(0, enemy.hp - damage);
+
+  // DPS tracking
+  if (typeof GameState !== 'undefined') {
+    if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+    GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+    GameState.combatDPS.damageByMember[member.name] = (GameState.combatDPS.damageByMember[member.name] || 0) + damage;
+  }
 
   const logType = isCrit ? 'crit' : 'hit';
   const critText = isCrit ? ' **CRITICAL HIT!**' : '';
@@ -1134,6 +1142,7 @@ function handlePartyWipe() {
   GameState.combatActive = false;
   GameState.inCombat = false;
   GameState.enemies = [];
+  GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: Date.now() };
 
   // Achievement hook: fight loss
   if (typeof checkAchievements === 'function') checkAchievements('fight_loss', {});
@@ -1285,6 +1294,26 @@ function interruptCast(member) {
  * @param {object[]} party   - Full party array
  * @returns {void}
  */
+/**
+ * Returns the damage value from a spell effect, supporting both the
+ * canonical `effect.value` field and the legacy `effect.dmg` shorthand.
+ * @param {object} effect - The ability effect object.
+ * @returns {number} The damage value (defaults to 0).
+ */
+function getEffectDamageValue(effect) {
+  return effect.value || effect.dmg || 0;
+}
+
+/**
+ * Returns the heal amount from a spell effect, supporting both
+ * `effect.healAmount` (legacy guild spell field) and `effect.value`.
+ * @param {object} effect - The ability effect object.
+ * @returns {number} The heal amount (defaults to 0).
+ */
+function getEffectHealValue(effect) {
+  return effect.healAmount || effect.value || 0;
+}
+
 function dispatchAbilityEffect(caster, ability, enemy, party) {
   const effect = ability.effect;
   if (!effect) return;
@@ -1293,7 +1322,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     // ── Damage ──────────────────────────────────
     case 'damage': {
       if (!enemy) break;
-      let dmg = effect.value || 0;
+      let dmg = getEffectDamageValue(effect);
       const resistPct = (enemy.magicResist || 0) / 100;
       dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
       if (caster.skills) {
@@ -1301,6 +1330,12 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
         dmg = Math.floor(dmg * (1 + spellSkill / 1000));
       }
       enemy.hp = Math.max(0, enemy.hp - dmg);
+      // DPS tracking
+      if (typeof GameState !== 'undefined') {
+        if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+        GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+        GameState.combatDPS.damageByMember[caster.name] = (GameState.combatDPS.damageByMember[caster.name] || 0) + dmg;
+      }
       addCombatLog(`${caster.name} hits ${enemy.name} for ${dmg} magic damage!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg * 1.5);
       if (typeof trySkillGain === 'function') {
@@ -1312,7 +1347,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
 
     case 'damage_aoe': {
       if (!enemy) break;
-      let dmg = effect.value || 0;
+      let dmg = getEffectDamageValue(effect);
       const resistPct = (enemy.magicResist || 0) / 100;
       dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
       enemy.hp = Math.max(0, enemy.hp - dmg);
@@ -1340,7 +1375,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     case 'heal_pet': {
       const healTarget = getLowestHPMember(party) || caster;
       if (!healTarget || !healTarget.isAlive) break;
-      const healAmt = Math.min(effect.value || 0, Math.max(0, healTarget.maxHP - healTarget.hp));
+      const healAmt = Math.min(getEffectHealValue(effect), Math.max(0, healTarget.maxHP - healTarget.hp));
       healTarget.hp = Math.min(healTarget.maxHP, healTarget.hp + healAmt);
       addCombatLog(`${caster.name} heals ${healTarget.name} for ${healAmt} HP.`, 'heal');
       // Healing generates aggro
@@ -1356,7 +1391,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     case 'lifetap': {
       if (!enemy) break;
       const resistPct = (enemy.magicResist || 0) / 100;
-      let dmg = Math.max(1, Math.floor((effect.value || 0) * (1 - resistPct)));
+      let dmg = Math.max(1, Math.floor(getEffectDamageValue(effect) * (1 - resistPct)));
       enemy.hp = Math.max(0, enemy.hp - dmg);
       caster.hp = Math.min(caster.maxHP, caster.hp + dmg);
       addCombatLog(`${caster.name} lifetaps ${enemy.name} for ${dmg}!`, 'spell');
@@ -1509,6 +1544,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       break;
     }
 
+    // ── Summon ────────────────────────────────────
+    case 'summon': {
+      if (effect.summon === 'food') {
+        if (typeof addToInventory === 'function') addToInventory('bread_loaf', 1);
+        addCombatLog(`${caster.name} conjures a meal from thin air!`, 'spell');
+      } else if (effect.summon === 'pet') {
+        if (typeof summonPet === 'function') summonPet(caster);
+      }
+      break;
+    }
+
     // ── Pet commands ─────────────────────────────
     case 'summon_pet':
       if (typeof summonPet === 'function') summonPet(caster);
@@ -1546,8 +1592,27 @@ function selectAbilityForMember(member, enemy, party) {
   if (!cls || !cls.abilities) return;
   const now = Date.now();
 
+  // Merge base class abilities with purchased guild spells for this member
+  const learnedAbilities = [];
+  if (typeof GameState !== 'undefined' && GameState.learnedSpells && typeof GUILD_SPELLS !== 'undefined') {
+    for (const spellId of GameState.learnedSpells) {
+      const spell = GUILD_SPELLS.find(s => s.id === spellId);
+      if (spell && spell.classId === member.classId && spell.level <= member.level) {
+        learnedAbilities.push({
+          name: spell.name,
+          manaCost: spell.manaCost || 0,
+          castTime: 2000,
+          recastTime: 6000,
+          effect: spell.effect,
+          description: spell.name,
+        });
+      }
+    }
+  }
+  const allAbilities = [...cls.abilities, ...learnedAbilities];
+
   // Gather candidate abilities: usable, off cooldown, mana available
-  const candidates = cls.abilities.filter(ab => {
+  const candidates = allAbilities.filter(ab => {
     if (member.abilityCooldowns[ab.name] && now < member.abilityCooldowns[ab.name]) return false;
     if ((ab.manaCost || 0) > (member.mana || 0)) return false;
     if (!enemy && ab.effect && ['damage', 'damage_aoe', 'damage_undead', 'stun', 'fear', 'aoe_fear', 'mez', 'dot', 'lifetap', 'taunt'].includes(ab.effect.type)) return false;

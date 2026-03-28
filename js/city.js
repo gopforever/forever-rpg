@@ -53,95 +53,95 @@ const CITY_VENDORS = [
  */
 const GUILD_SPELLS = [
   // Cleric
-  { id: 'spell_minor_healing',   name: 'Minor Healing',             classId: 'cleric',       level: 1,  manaCost: 10, effect: { healAmount: 30  }, buyPrice: 500  },
-  { id: 'spell_light_healing',   name: 'Light Healing',             classId: 'cleric',       level: 5,  manaCost: 20, effect: { healAmount: 80  }, buyPrice: 1500 },
-  { id: 'spell_healing',         name: 'Healing',                   classId: 'cleric',       level: 9,  manaCost: 40, effect: { healAmount: 150 }, buyPrice: 3500 },
+  { id: 'spell_minor_healing',   name: 'Minor Healing',             classId: 'cleric',       level: 1,  manaCost: 10, effect: { type: 'heal', value: 30   }, buyPrice: 500  },
+  { id: 'spell_light_healing',   name: 'Light Healing',             classId: 'cleric',       level: 5,  manaCost: 20, effect: { type: 'heal', value: 80   }, buyPrice: 1500 },
+  { id: 'spell_healing',         name: 'Healing',                   classId: 'cleric',       level: 9,  manaCost: 40, effect: { type: 'heal', value: 150  }, buyPrice: 3500 },
   // Druid
-  { id: 'spell_burst_of_flame',  name: 'Burst of Flame',            classId: 'druid',        level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
-  { id: 'spell_skin_like_wood',  name: 'Skin like Wood',            classId: 'druid',        level: 5,  manaCost: 20, effect: { ac: 12          }, buyPrice: 1500 },
-  { id: 'spell_regeneration',    name: 'Regeneration',              classId: 'druid',        level: 9,  manaCost: 30, effect: { hpRegen: 5      }, buyPrice: 3500 },
+  { id: 'spell_burst_of_flame',  name: 'Burst of Flame',            classId: 'druid',        level: 1,  manaCost: 10, effect: { type: 'damage', value: 15 }, buyPrice: 500  },
+  { id: 'spell_skin_like_wood',  name: 'Skin like Wood',            classId: 'druid',        level: 5,  manaCost: 20, effect: { type: 'buff', stat: 'ac', value: 12, duration: 60000 }, buyPrice: 1500 },
+  { id: 'spell_regeneration',    name: 'Regeneration',              classId: 'druid',        level: 9,  manaCost: 30, effect: { type: 'buff', stat: 'hp_regen', value: 5, duration: 60000 }, buyPrice: 3500 },
   // Shaman
-  { id: 'spell_burst_flame_sh',  name: 'Burst of Flame',            classId: 'shaman',       level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
-  { id: 'spell_talisman_tnarg',  name: 'Talisman of Tnarg',         classId: 'shaman',       level: 5,  manaCost: 25, effect: { healAmount: 100 }, buyPrice: 1500 },
-  { id: 'spell_malo',            name: 'Malo',                      classId: 'shaman',       level: 9,  manaCost: 35, effect: { debuff: 'malo'  }, buyPrice: 3500 },
+  { id: 'spell_burst_flame_sh',  name: 'Burst of Flame',            classId: 'shaman',       level: 1,  manaCost: 10, effect: { type: 'damage', value: 15 }, buyPrice: 500  },
+  { id: 'spell_talisman_tnarg',  name: 'Talisman of Tnarg',         classId: 'shaman',       level: 5,  manaCost: 25, effect: { type: 'heal', value: 100  }, buyPrice: 1500 },
+  { id: 'spell_malo',            name: 'Malo',                      classId: 'shaman',       level: 9,  manaCost: 35, effect: { type: 'debuff', stat: 'magic', value: 20, duration: 30000 }, buyPrice: 3500 },
   // Wizard
-  { id: 'spell_burst_flame_wz',  name: 'Burst of Flame',            classId: 'wizard',       level: 1,  manaCost: 10, effect: { dmg: 20         }, buyPrice: 500  },
-  { id: 'spell_shock_of_ice',    name: 'Shock of Ice',              classId: 'wizard',       level: 5,  manaCost: 25, effect: { dmg: 55         }, buyPrice: 1500 },
-  { id: 'spell_lava_bolt',       name: 'Lava Bolt',                 classId: 'wizard',       level: 9,  manaCost: 50, effect: { dmg: 110        }, buyPrice: 3500 },
+  { id: 'spell_burst_flame_wz',  name: 'Burst of Flame',            classId: 'wizard',       level: 1,  manaCost: 10, effect: { type: 'damage', value: 20 }, buyPrice: 500  },
+  { id: 'spell_shock_of_ice',    name: 'Shock of Ice',              classId: 'wizard',       level: 5,  manaCost: 25, effect: { type: 'damage', value: 55 }, buyPrice: 1500 },
+  { id: 'spell_lava_bolt',       name: 'Lava Bolt',                 classId: 'wizard',       level: 9,  manaCost: 50, effect: { type: 'damage', value: 110 }, buyPrice: 3500 },
   // Magician
-  { id: 'spell_burst_flame_mg',  name: 'Burst of Flame',            classId: 'magician',     level: 1,  manaCost: 10, effect: { dmg: 20         }, buyPrice: 500  },
-  { id: 'spell_summon_food',     name: 'Summon Food',               classId: 'magician',     level: 1,  manaCost: 10, effect: { summon: 'food'  }, buyPrice: 500  },
-  { id: 'spell_monster_summon',  name: 'Monster Summoning I',       classId: 'magician',     level: 5,  manaCost: 40, effect: { summon: 'pet'   }, buyPrice: 2000 },
+  { id: 'spell_burst_flame_mg',  name: 'Burst of Flame',            classId: 'magician',     level: 1,  manaCost: 10, effect: { type: 'damage', value: 20 }, buyPrice: 500  },
+  { id: 'spell_summon_food',     name: 'Summon Food',               classId: 'magician',     level: 1,  manaCost: 10, effect: { type: 'summon', summon: 'food' }, buyPrice: 500  },
+  { id: 'spell_monster_summon',  name: 'Monster Summoning I',       classId: 'magician',     level: 5,  manaCost: 40, effect: { type: 'summon', summon: 'pet'  }, buyPrice: 2000 },
   // Enchanter
-  { id: 'spell_mesmerize',       name: 'Mesmerize',                 classId: 'enchanter',    level: 1,  manaCost: 15, effect: { mez: true       }, buyPrice: 500  },
-  { id: 'spell_breeze',          name: 'Breeze',                    classId: 'enchanter',    level: 5,  manaCost: 20, effect: { manaRegen: 3    }, buyPrice: 1500 },
-  { id: 'spell_clarity',         name: 'Clarity',                   classId: 'enchanter',    level: 9,  manaCost: 30, effect: { manaRegen: 7    }, buyPrice: 3500 },
+  { id: 'spell_mesmerize',       name: 'Mesmerize',                 classId: 'enchanter',    level: 1,  manaCost: 15, effect: { type: 'mez', duration: 20000 }, buyPrice: 500  },
+  { id: 'spell_breeze',          name: 'Breeze',                    classId: 'enchanter',    level: 5,  manaCost: 20, effect: { type: 'buff', stat: 'mana_regen', value: 3, duration: 60000 }, buyPrice: 1500 },
+  { id: 'spell_clarity',         name: 'Clarity',                   classId: 'enchanter',    level: 9,  manaCost: 30, effect: { type: 'buff', stat: 'mana_regen', value: 7, duration: 60000 }, buyPrice: 3500 },
   // Necromancer
-  { id: 'spell_lifetap',         name: 'Lifetap',                   classId: 'necromancer',  level: 1,  manaCost: 15, effect: { dmg: 18, heal: 18 }, buyPrice: 500  },
-  { id: 'spell_fear',            name: 'Fear',                      classId: 'necromancer',  level: 5,  manaCost: 25, effect: { fear: true      }, buyPrice: 1500 },
-  { id: 'spell_plague',          name: 'Plague',                    classId: 'necromancer',  level: 9,  manaCost: 40, effect: { dot: 15         }, buyPrice: 3500 },
+  { id: 'spell_lifetap',         name: 'Lifetap',                   classId: 'necromancer',  level: 1,  manaCost: 15, effect: { type: 'lifetap', value: 18  }, buyPrice: 500  },
+  { id: 'spell_fear',            name: 'Fear',                      classId: 'necromancer',  level: 5,  manaCost: 25, effect: { type: 'fear', duration: 10000 }, buyPrice: 1500 },
+  { id: 'spell_plague',          name: 'Plague',                    classId: 'necromancer',  level: 9,  manaCost: 40, effect: { type: 'dot', value: 15      }, buyPrice: 3500 },
   // Paladin
-  { id: 'spell_minor_heal_pal',  name: 'Minor Healing',             classId: 'paladin',      level: 1,  manaCost: 10, effect: { healAmount: 25  }, buyPrice: 500  },
-  { id: 'spell_flash_of_light',  name: 'Flash of Light',            classId: 'paladin',      level: 5,  manaCost: 20, effect: { stun: true      }, buyPrice: 1500 },
+  { id: 'spell_minor_heal_pal',  name: 'Minor Healing',             classId: 'paladin',      level: 1,  manaCost: 10, effect: { type: 'heal', value: 25    }, buyPrice: 500  },
+  { id: 'spell_flash_of_light',  name: 'Flash of Light',            classId: 'paladin',      level: 5,  manaCost: 20, effect: { type: 'stun', duration: 3000 }, buyPrice: 1500 },
   // Shadow Knight
-  { id: 'spell_fear_sk',         name: 'Fear',                      classId: 'shadowknight', level: 5,  manaCost: 25, effect: { fear: true      }, buyPrice: 1500 },
-  { id: 'spell_lifetap_sk',      name: 'Lifetap',                   classId: 'shadowknight', level: 1,  manaCost: 15, effect: { dmg: 18, heal: 18 }, buyPrice: 500  },
+  { id: 'spell_fear_sk',         name: 'Fear',                      classId: 'shadowknight', level: 5,  manaCost: 25, effect: { type: 'fear', duration: 10000 }, buyPrice: 1500 },
+  { id: 'spell_lifetap_sk',      name: 'Lifetap',                   classId: 'shadowknight', level: 1,  manaCost: 15, effect: { type: 'lifetap', value: 18  }, buyPrice: 500  },
   // Bard
-  { id: 'spell_anthem_de_arms',  name: 'Anthem de Arms',            classId: 'bard',         level: 1,  manaCost: 0,  effect: { atkBuff: 5      }, buyPrice: 500  },
-  { id: 'spell_lyssa_solidarity',name: "Lyssa's Solidarity of Vision", classId: 'bard',      level: 5,  manaCost: 0,  effect: { acBuff: 8       }, buyPrice: 1500 },
+  { id: 'spell_anthem_de_arms',  name: 'Anthem de Arms',            classId: 'bard',         level: 1,  manaCost: 0,  effect: { type: 'buff', stat: 'attack', value: 5, duration: 30000 }, buyPrice: 500  },
+  { id: 'spell_lyssa_solidarity',name: "Lyssa's Solidarity of Vision", classId: 'bard',      level: 5,  manaCost: 0,  effect: { type: 'buff', stat: 'ac', value: 8, duration: 30000 }, buyPrice: 1500 },
   // Ranger
-  { id: 'spell_burst_flame_rng', name: 'Burst of Flame',            classId: 'ranger',       level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
-  { id: 'spell_snare',           name: 'Snare',                     classId: 'ranger',       level: 5,  manaCost: 20, effect: { snare: true     }, buyPrice: 1500 },
+  { id: 'spell_burst_flame_rng', name: 'Burst of Flame',            classId: 'ranger',       level: 1,  manaCost: 10, effect: { type: 'damage', value: 15 }, buyPrice: 500  },
+  { id: 'spell_snare',           name: 'Snare',                     classId: 'ranger',       level: 5,  manaCost: 20, effect: { type: 'debuff', stat: 'slow', value: 30, duration: 8000 }, buyPrice: 1500 },
   // Beastlord
-  { id: 'spell_minor_heal_bst',  name: 'Minor Healing',             classId: 'beastlord',    level: 1,  manaCost: 10, effect: { healAmount: 25  }, buyPrice: 500  },
-  { id: 'spell_burst_flame_bst', name: 'Burst of Flame',            classId: 'beastlord',    level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+  { id: 'spell_minor_heal_bst',  name: 'Minor Healing',             classId: 'beastlord',    level: 1,  manaCost: 10, effect: { type: 'heal', value: 25    }, buyPrice: 500  },
+  { id: 'spell_burst_flame_bst', name: 'Burst of Flame',            classId: 'beastlord',    level: 1,  manaCost: 10, effect: { type: 'damage', value: 15 }, buyPrice: 500  },
 
   // ─── High-Level Spells (Level 45–55) ─────────────────────────────────────
 
   // Cleric — level 45-55
-  { id: 'spell_divine_aura',        name: 'Divine Aura',           classId: 'cleric',       level: 45, manaCost: 180, effect: { healAmount: 800  }, buyPrice: 85000  },
-  { id: 'spell_complete_heal',      name: 'Complete Heal',         classId: 'cleric',       level: 50, manaCost: 300, effect: { healAmount: 2000 }, buyPrice: 150000 },
-  { id: 'spell_celestial_healing',  name: 'Celestial Healing',     classId: 'cleric',       level: 55, manaCost: 400, effect: { healAmount: 3000 }, buyPrice: 250000 },
+  { id: 'spell_divine_aura',        name: 'Divine Aura',           classId: 'cleric',       level: 45, manaCost: 180, effect: { type: 'heal', value: 800   }, buyPrice: 85000  },
+  { id: 'spell_complete_heal',      name: 'Complete Heal',         classId: 'cleric',       level: 50, manaCost: 300, effect: { type: 'heal', value: 2000  }, buyPrice: 150000 },
+  { id: 'spell_celestial_healing',  name: 'Celestial Healing',     classId: 'cleric',       level: 55, manaCost: 400, effect: { type: 'heal', value: 3000  }, buyPrice: 250000 },
 
   // Druid — level 45-55
-  { id: 'spell_nature_walker',      name: 'Nature Walker\'s Behest', classId: 'druid',      level: 45, manaCost: 160, effect: { dmg: 380        }, buyPrice: 80000  },
-  { id: 'spell_storm_strike',       name: 'Storm Strike',          classId: 'druid',        level: 50, manaCost: 250, effect: { dmg: 600        }, buyPrice: 140000 },
-  { id: 'spell_superior_regen',     name: 'Superior Regeneration', classId: 'druid',        level: 55, manaCost: 350, effect: { hpRegen: 22     }, buyPrice: 220000 },
+  { id: 'spell_nature_walker',      name: 'Nature Walker\'s Behest', classId: 'druid',      level: 45, manaCost: 160, effect: { type: 'damage', value: 380 }, buyPrice: 80000  },
+  { id: 'spell_storm_strike',       name: 'Storm Strike',          classId: 'druid',        level: 50, manaCost: 250, effect: { type: 'damage', value: 600 }, buyPrice: 140000 },
+  { id: 'spell_superior_regen',     name: 'Superior Regeneration', classId: 'druid',        level: 55, manaCost: 350, effect: { type: 'buff', stat: 'hp_regen', value: 22, duration: 60000 }, buyPrice: 220000 },
 
   // Shaman — level 45-55
-  { id: 'spell_cannibalize_iv',     name: 'Cannibalize IV',        classId: 'shaman',       level: 45, manaCost: 0,   effect: { manaRegen: 12   }, buyPrice: 80000  },
-  { id: 'spell_avatar',             name: 'Avatar',                classId: 'shaman',       level: 50, manaCost: 280, effect: { atkBuff: 80     }, buyPrice: 145000 },
-  { id: 'spell_torpor',             name: 'Torpor',                classId: 'shaman',       level: 55, manaCost: 400, effect: { healAmount: 1500 }, buyPrice: 240000 },
+  { id: 'spell_cannibalize_iv',     name: 'Cannibalize IV',        classId: 'shaman',       level: 45, manaCost: 0,   effect: { type: 'buff', stat: 'mana_regen', value: 12, duration: 60000 }, buyPrice: 80000  },
+  { id: 'spell_avatar',             name: 'Avatar',                classId: 'shaman',       level: 50, manaCost: 280, effect: { type: 'buff', stat: 'attack', value: 80, duration: 30000 }, buyPrice: 145000 },
+  { id: 'spell_torpor',             name: 'Torpor',                classId: 'shaman',       level: 55, manaCost: 400, effect: { type: 'heal', value: 1500  }, buyPrice: 240000 },
 
   // Wizard — level 45-55
-  { id: 'spell_sunstrike',          name: 'Sunstrike',             classId: 'wizard',       level: 45, manaCost: 195, effect: { dmg: 720        }, buyPrice: 90000  },
-  { id: 'spell_ice_comet',          name: 'Ice Comet',             classId: 'wizard',       level: 50, manaCost: 290, effect: { dmg: 1100       }, buyPrice: 160000 },
-  { id: 'spell_time_stop',          name: 'Time Stop',             classId: 'wizard',       level: 55, manaCost: 400, effect: { stun: true      }, buyPrice: 250000 },
+  { id: 'spell_sunstrike',          name: 'Sunstrike',             classId: 'wizard',       level: 45, manaCost: 195, effect: { type: 'damage', value: 720  }, buyPrice: 90000  },
+  { id: 'spell_ice_comet',          name: 'Ice Comet',             classId: 'wizard',       level: 50, manaCost: 290, effect: { type: 'damage', value: 1100 }, buyPrice: 160000 },
+  { id: 'spell_time_stop',          name: 'Time Stop',             classId: 'wizard',       level: 55, manaCost: 400, effect: { type: 'stun', duration: 5000 }, buyPrice: 250000 },
 
   // Magician — level 45-55
-  { id: 'spell_elemental_simulacrum', name: 'Elemental Simulacrum', classId: 'magician',    level: 45, manaCost: 200, effect: { summon: 'pet'   }, buyPrice: 90000  },
-  { id: 'spell_monster_summon_iii', name: 'Monster Summoning III', classId: 'magician',     level: 50, manaCost: 300, effect: { summon: 'pet'   }, buyPrice: 160000 },
-  { id: 'spell_dagger_of_symbols',  name: 'Dagger of Symbols',    classId: 'magician',     level: 55, manaCost: 380, effect: { dmg: 850        }, buyPrice: 240000 },
+  { id: 'spell_elemental_simulacrum', name: 'Elemental Simulacrum', classId: 'magician',    level: 45, manaCost: 200, effect: { type: 'summon', summon: 'pet' }, buyPrice: 90000  },
+  { id: 'spell_monster_summon_iii', name: 'Monster Summoning III', classId: 'magician',     level: 50, manaCost: 300, effect: { type: 'summon', summon: 'pet' }, buyPrice: 160000 },
+  { id: 'spell_dagger_of_symbols',  name: 'Dagger of Symbols',    classId: 'magician',     level: 55, manaCost: 380, effect: { type: 'damage', value: 850  }, buyPrice: 240000 },
 
   // Enchanter — level 45-55
-  { id: 'spell_beguile',            name: 'Beguile',               classId: 'enchanter',    level: 45, manaCost: 170, effect: { mez: true       }, buyPrice: 85000  },
-  { id: 'spell_clarity_ii',         name: 'Clarity II',            classId: 'enchanter',    level: 50, manaCost: 200, effect: { manaRegen: 15   }, buyPrice: 150000 },
-  { id: 'spell_rune_v',             name: 'Rune V',                classId: 'enchanter',    level: 55, manaCost: 350, effect: { ac: 120         }, buyPrice: 240000 },
+  { id: 'spell_beguile',            name: 'Beguile',               classId: 'enchanter',    level: 45, manaCost: 170, effect: { type: 'mez', duration: 30000 }, buyPrice: 85000  },
+  { id: 'spell_clarity_ii',         name: 'Clarity II',            classId: 'enchanter',    level: 50, manaCost: 200, effect: { type: 'buff', stat: 'mana_regen', value: 15, duration: 60000 }, buyPrice: 150000 },
+  { id: 'spell_rune_v',             name: 'Rune V',                classId: 'enchanter',    level: 55, manaCost: 350, effect: { type: 'buff', stat: 'ac', value: 120, duration: 60000 }, buyPrice: 240000 },
 
   // Necromancer — level 45-55
-  { id: 'spell_death_peace',        name: 'Death Peace',           classId: 'necromancer',  level: 45, manaCost: 160, effect: { mez: true       }, buyPrice: 85000  },
-  { id: 'spell_lich',               name: 'Lich',                  classId: 'necromancer',  level: 50, manaCost: 0,   effect: { manaRegen: 20   }, buyPrice: 150000 },
-  { id: 'spell_quivering_veil',     name: 'Quivering Veil of Xarn', classId: 'necromancer', level: 55, manaCost: 400, effect: { dot: 180        }, buyPrice: 250000 },
+  { id: 'spell_death_peace',        name: 'Death Peace',           classId: 'necromancer',  level: 45, manaCost: 160, effect: { type: 'mez', duration: 30000 }, buyPrice: 85000  },
+  { id: 'spell_lich',               name: 'Lich',                  classId: 'necromancer',  level: 50, manaCost: 0,   effect: { type: 'buff', stat: 'mana_regen', value: 20, duration: 60000 }, buyPrice: 150000 },
+  { id: 'spell_quivering_veil',     name: 'Quivering Veil of Xarn', classId: 'necromancer', level: 55, manaCost: 400, effect: { type: 'dot', value: 180 }, buyPrice: 250000 },
 
   // Paladin — level 45-55
-  { id: 'spell_holy_might',         name: 'Holy Might',            classId: 'paladin',      level: 45, manaCost: 160, effect: { dmg: 400        }, buyPrice: 85000  },
-  { id: 'spell_symbol_of_marr',     name: 'Symbol of Marr',        classId: 'paladin',      level: 50, manaCost: 250, effect: { healAmount: 900 }, buyPrice: 150000 },
-  { id: 'spell_supernal_remedy',    name: 'Supernal Remedy',       classId: 'paladin',      level: 55, manaCost: 350, effect: { healAmount: 1600 }, buyPrice: 240000 },
+  { id: 'spell_holy_might',         name: 'Holy Might',            classId: 'paladin',      level: 45, manaCost: 160, effect: { type: 'damage_undead', value: 400 }, buyPrice: 85000  },
+  { id: 'spell_symbol_of_marr',     name: 'Symbol of Marr',        classId: 'paladin',      level: 50, manaCost: 250, effect: { type: 'heal', value: 900  }, buyPrice: 150000 },
+  { id: 'spell_supernal_remedy',    name: 'Supernal Remedy',       classId: 'paladin',      level: 55, manaCost: 350, effect: { type: 'heal', value: 1600 }, buyPrice: 240000 },
 
   // Shadow Knight — level 45-55
-  { id: 'spell_leech',              name: 'Leech',                 classId: 'shadowknight', level: 45, manaCost: 160, effect: { dmg: 380, heal: 380 }, buyPrice: 85000  },
-  { id: 'spell_bond_of_death',      name: 'Bond of Death',         classId: 'shadowknight', level: 50, manaCost: 260, effect: { dot: 120        }, buyPrice: 150000 },
-  { id: 'spell_dread_gaze',         name: 'Dread Gaze',            classId: 'shadowknight', level: 55, manaCost: 380, effect: { fear: true      }, buyPrice: 240000 },
+  { id: 'spell_leech',              name: 'Leech',                 classId: 'shadowknight', level: 45, manaCost: 160, effect: { type: 'lifetap', value: 380 }, buyPrice: 85000  },
+  { id: 'spell_bond_of_death',      name: 'Bond of Death',         classId: 'shadowknight', level: 50, manaCost: 260, effect: { type: 'dot', value: 120    }, buyPrice: 150000 },
+  { id: 'spell_dread_gaze',         name: 'Dread Gaze',            classId: 'shadowknight', level: 55, manaCost: 380, effect: { type: 'fear', duration: 15000 }, buyPrice: 240000 },
 ];
 
 // ─── Coin Formatting ──────────────────────────────────────────────────────────

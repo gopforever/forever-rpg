@@ -269,7 +269,7 @@ function weightedLevel() {
 // ─── Ghost Party Builder ─────────────────────────────────────────────────────────
 
 function createGhostParty(leaderName, leaderClassId) {
-  const size = 1 + Math.floor(Math.random() * 5);
+  const size = 5;
   const usedClasses = new Set([leaderClassId]);
   const usedNames   = new Set([leaderName]);
 
@@ -365,9 +365,11 @@ function tryAutoEquip(ghost, newItem) {
 
 // ─── Ghost Player Definitions ───────────────────────────────────────────────────
 
+const BEGINNER_ZONES = ['qeynos_hills', 'blackburrow'];
+
 function createSingleGhost(id, name, isNew) {
   const classId     = GHOST_CLASSES[Math.floor(Math.random() * GHOST_CLASSES.length)];
-  const zone        = COMBAT_ZONES[Math.floor(Math.random() * COMBAT_ZONES.length)];
+  const zone        = BEGINNER_ZONES[Math.floor(Math.random() * BEGINNER_ZONES.length)];
   const xpRate      = 0.8 + Math.random() * 0.7;
   const personality = PERSONALITY_TYPES[Math.floor(Math.random() * PERSONALITY_TYPES.length)];
   const ghost = {
@@ -1055,9 +1057,69 @@ function ghostBuyFromMarket(ghost) {
     pushWorldEvent(`🛒 <strong style="color:${CLASS_COLORS[ghost.classId]}">${ghost.name}</strong> purchased [${itemName}] from the market.`);
     if (sellerName && sellerName !== ghost.name) {
       pushWorldEvent(`🤝 <strong>${sellerName}</strong> sold [${itemName}] to <strong style="color:${CLASS_COLORS[ghost.classId]}">${ghost.name}</strong> for ${price}c`);
+      // If the seller is the real player, credit them gold
+      if (listing.sellerId === 'player' && typeof GameState !== 'undefined') {
+        GameState.copper = (GameState.copper || 0) + price;
+        // Normalize coins
+        if (GameState.copper >= 100) {
+          GameState.silver = (GameState.silver || 0) + Math.floor(GameState.copper / 100);
+          GameState.copper = GameState.copper % 100;
+        }
+        if (GameState.silver >= 10) {
+          GameState.gold = (GameState.gold || 0) + Math.floor(GameState.silver / 10);
+          GameState.silver = GameState.silver % 10;
+        }
+        if (typeof addCombatLog === 'function') addCombatLog(`💰 Your item [${itemName}] sold on the market for ${price}c!`, 'loot');
+        if (typeof renderTopBar === 'function') renderTopBar();
+      }
     }
     break;
   }
+}
+
+/**
+ * Lists one of the real player's inventory items on the Player Marketplace.
+ * @param {string} itemId - The item ID to list.
+ * @param {number} price  - Listing price in copper.
+ */
+function playerListItemOnMarket(itemId, price) {
+  if (!itemId || !price || price <= 0) {
+    if (typeof addCombatLog === 'function') addCombatLog('Invalid listing — enter a valid item and price > 0.', 'system');
+    return;
+  }
+  const inventory = typeof GameState !== 'undefined' ? (GameState.inventory || []) : [];
+  const stackIdx = inventory.findIndex(s => s && s.itemId === itemId);
+  if (stackIdx === -1) {
+    if (typeof addCombatLog === 'function') addCombatLog('Item not found in your inventory.', 'system');
+    return;
+  }
+  const item = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
+  if (!item) { if (typeof addCombatLog === 'function') addCombatLog('Unknown item.', 'system'); return; }
+  if (item.nodrop) {
+    if (typeof addCombatLog === 'function') addCombatLog(`${item.name} is NO DROP and cannot be listed.`, 'system');
+    return;
+  }
+
+  // Remove one from inventory
+  const stack = inventory[stackIdx];
+  stack.quantity -= 1;
+  if (stack.quantity <= 0) inventory.splice(stackIdx, 1);
+
+  const sellerName = (GameState.party && GameState.party.length) ? GameState.party[0].name : 'You';
+  if (_marketListings.length >= 30) _marketListings.shift();
+  _marketListings.push({
+    id: `${Date.now()}_${Math.random()}`,
+    itemId: item.id, itemName: item.name,
+    seller: sellerName, sellerId: 'player', sellerClass: null,
+    qty: 1, price: Math.round(price),
+  });
+  saveMarket(_marketListings);
+
+  if (typeof addCombatLog === 'function') addCombatLog(`Listed [${item.name}] on the Player Marketplace for ${price}c.`, 'loot');
+  if (typeof saveGame === 'function') saveGame();
+  if (typeof checkAchievements === 'function') checkAchievements('market_sell', {});
+  if (typeof renderCityTabContent === 'function') renderCityTabContent('players');
+  if (typeof updateInventoryUI === 'function') updateInventoryUI();
 }
 
 // ─── Ghost Tick Simulation ──────────────────────────────────────────────────────
@@ -1082,7 +1144,7 @@ function simulateGhostTick(ghost) {
       if (!z || zid === ghost.zone) return false;
       if (!z.levelRange) return true;
       const [lo, hi] = z.levelRange;
-      return ghost.level >= lo - 5 && ghost.level <= hi + 5;
+      return ghost.level >= lo - 2 && ghost.level <= hi + 3;
     });
     if (suitableZones.length) {
       ghost.zone = suitableZones[Math.floor(Math.random() * suitableZones.length)];
@@ -1127,7 +1189,14 @@ function simulateGhostTick(ghost) {
   if (!ghost.inventory) ghost.inventory = [];
   if (!ghost.equipment) ghost.equipment = {};
   if (Math.random() < 0.15 && typeof ITEMS !== 'undefined') {
-    const lootable = Object.values(ITEMS).filter(i => !i.nodrop && i.name && (i.levelReq || 0) <= ghost.level);
+    const zoneData = typeof ZONES !== 'undefined' ? ZONES[ghost.zone] : null;
+    const zoneMaxLevel = (zoneData && zoneData.levelRange) ? zoneData.levelRange[1] : ghost.level;
+    const zoneMinLevel = (zoneData && zoneData.levelRange) ? zoneData.levelRange[0] : 1;
+    const lootable = Object.values(ITEMS).filter(i => {
+      if (i.nodrop || !i.name) return false;
+      const itemLevel = i.levelReq || zoneMinLevel;
+      return itemLevel <= ghost.level && itemLevel <= zoneMaxLevel + 5;
+    });
     if (lootable.length) {
       const newItem = lootable[Math.floor(Math.random() * lootable.length)];
       if (ghost.inventory.length >= 20) ghost.inventory.shift();
@@ -1370,6 +1439,7 @@ if (typeof module !== 'undefined') module.exports = {
   generateMarketListings,
   showGhostInspectModal,
   showGhostContextMenu,
+  playerListItemOnMarket,
   CLASS_ICONS,
   CLASS_COLORS,
 };
