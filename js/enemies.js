@@ -281,7 +281,7 @@ const ENEMIES = {
       { itemId: 'silver_coin', chance: 0.17, quantity: [1, 3] },
     ],
     statusEffects: [],
-    callsForHelp: { chance: 0.35, addIds: ['gnoll_pup', 'gnoll'] },
+    callsForHelp: { chance: 0.55, addIds: ['gnoll_pup', 'gnoll'] },
     description: 'Stationed at the perimeter of the gnoll camp, the watcher calls out with a piercing howl when intruders approach.',
   },
 
@@ -489,7 +489,7 @@ const ENEMIES = {
       { itemId: 'rusty_short_sword', chance: 0.15, quantity: [1, 1] },
     ],
     statusEffects: [],
-    callsForHelp: { chance: 0.20, addIds: ['bandit'] },
+    callsForHelp: { chance: 0.50, addIds: ['bandit'] },
     description: 'A desperate cutthroat who preys on travelers along the roads outside Qeynos.',
   },
 
@@ -592,7 +592,7 @@ const ENEMIES = {
       { itemId: 'silver_coin', chance: 0.09, quantity: [1, 1] },
     ],
     statusEffects: [],
-    callsForHelp: { chance: 0.25, addIds: ['a_scrawny_gnoll'] },
+    callsForHelp: { chance: 0.50, addIds: ['a_scrawny_gnoll'] },
     description: 'A lean, mangy gnoll barely past puphood. Dangerous in numbers.',
   },
 
@@ -657,7 +657,7 @@ const ENEMIES = {
     ],
     statusEffects: [],
     // burly_gnoll and a_burly_gnoll are two distinct difficulty variants of the same species
-    callsForHelp: { chance: 0.30, addIds: ['burly_gnoll', 'a_burly_gnoll'] },
+    callsForHelp: { chance: 0.55, addIds: ['burly_gnoll', 'a_burly_gnoll'] },
     description: 'Built like a wall of fur and muscle, the burly gnoll is no mere sentry.',
   },
 
@@ -1022,7 +1022,7 @@ const ENEMIES = {
     statusProcs: [
       { chance: 0.15, type: 'cold', damage: 5, duration: 9000 },
     ],
-    callsForHelp: { chance: 0.25, addIds: ['ice_wolf'] },
+    callsForHelp: { chance: 0.50, addIds: ['ice_wolf'] },
     lootTable: [
       { itemId: 'ice_wolf_claw', chance: 0.25, quantity: [1, 1] },
       { itemId: 'ice_wolf_pelt', chance: 0.20, quantity: [1, 1] },
@@ -1089,7 +1089,7 @@ const ENEMIES = {
     type: 'humanoid',
     isRare: false,
     isUndead: false,
-    callsForHelp: { chance: 0.30, addIds: ['everfrost_gnoll', 'frost_goblin'] },
+    callsForHelp: { chance: 0.55, addIds: ['everfrost_gnoll', 'frost_goblin'] },
     lootTable: [
       { itemId: 'everfrost_spear', chance: 0.10, quantity: [1, 1] },
       { itemId: 'frost_goblin_shiv', chance: 0.15, quantity: [1, 1] },
