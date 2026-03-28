@@ -356,7 +356,7 @@ function renderPartyPanel() {
       const statusIcons = (member.statusEffects || [])
         .filter(e => Date.now() < e.endTime)
         .map(e => {
-          const icons = { poison: '☠', disease: '🤢', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡', buff_attack: '🎵' };
+          const icons = { poison: '☠', disease: '🤢', cold: '🧊', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡', buff_attack: '🎵' };
           return `<span class="status-icon" title="${e.type}">${icons[e.type] || '✦'}</span>`;
         }).join('');
 
