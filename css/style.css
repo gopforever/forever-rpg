@@ -1047,6 +1047,66 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .btn-sit:hover:not(:disabled) { background: #2a3a2a; border-color: #5a9a5a; }
 .btn-sit:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ─── Combat Button Row ───────────────────────────────────────────────────── */
+
+.combat-btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.combat-btn-row .btn-sit {
+  margin-top: 0;
+  width: auto;
+  flex: 1;
+}
+
+/* ─── Pull Button ─────────────────────────────────────────────────────────── */
+
+.btn-pull {
+  background: #1a2a0a;
+  border: 1px solid #4a7a1a;
+  color: #88cc44;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+.btn-pull:hover:not(:disabled) { background: #2a4a14; border-color: #66aa22; }
+.btn-pull:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Camp Button ─────────────────────────────────────────────────────────── */
+
+.btn-camp {
+  background: #1a1208;
+  border: 1px solid #7a5a1a;
+  color: #c8a84b;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+.btn-camp:hover { background: #2a2010; border-color: #aa8822; }
+.btn-camp.camp-active { border-color: #c8a84b; color: #ffe88a; background: #2a2010; }
+
+/* ─── Camp Indicator ──────────────────────────────────────────────────────── */
+
+#camp-indicator {
+  font-size: 0.72rem;
+  color: #c8a84b;
+  margin-top: 4px;
+  padding: 2px 4px;
+  border-left: 2px solid #7a5a1a;
+}
+
+/* ─── Bard Song Log Classes ───────────────────────────────────────────────── */
+
+.log-buff { color: #88ccff; }
+.log-song { color: #ff9944; font-style: italic; }
+
 /* ─── Inventory Panel ─────────────────────────────────────────────────────── */
 
 .inv-weight-bar-area {

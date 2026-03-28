@@ -32,6 +32,8 @@ const GameState = {
   gameTime: { day: 1, hour: 6 },
   _lastHPRegenTick: 0,
   _lastBuffDecayTick: 0,
+  isPulling: false,
+  camp: null,
 };
 
 // ============================================================
@@ -255,6 +257,26 @@ function wireUpButtons() {
     });
   }
 
+  // Pull button
+  const pullBtn = document.getElementById('pull-btn');
+  if (pullBtn) {
+    pullBtn.addEventListener('click', () => {
+      if (typeof pullEnemy === 'function') pullEnemy();
+    });
+  }
+
+  // Set / Break Camp button
+  const setCampBtn = document.getElementById('set-camp-btn');
+  if (setCampBtn) {
+    setCampBtn.addEventListener('click', () => {
+      if (GameState.camp) {
+        if (typeof breakCamp === 'function') breakCamp();
+      } else {
+        if (typeof setCamp === 'function') setCamp();
+      }
+    });
+  }
+
   // Sit / Stand button
   const sitBtn = document.getElementById('sit-btn');
   if (sitBtn) {
@@ -314,6 +336,39 @@ function updateStopButtonState() {
   if (sitBtn) {
     sitBtn.disabled = !!(GameState.inCombat);
     sitBtn.textContent = GameState.isSitting ? '🧍 Stand' : '🧘 Sit';
+  }
+
+  const pullBtn = document.getElementById('pull-btn');
+  if (pullBtn) {
+    const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+    const canPull = !GameState.combatActive && !GameState.isPulling && !!GameState.selectedEnemyId && zone && !zone.isSafeZone;
+    pullBtn.disabled = !canPull;
+    pullBtn.textContent = GameState.isPulling ? '🏃 Pulling...' : '🎯 Pull';
+  }
+
+  const setCampBtn = document.getElementById('set-camp-btn');
+  if (setCampBtn) {
+    if (GameState.camp) {
+      setCampBtn.textContent = '⛺ Break Camp';
+      setCampBtn.title = 'Break your current camp';
+      setCampBtn.classList.add('camp-active');
+    } else {
+      setCampBtn.textContent = '⛺ Set Camp';
+      setCampBtn.title = 'Set camp on the selected enemy';
+      setCampBtn.classList.remove('camp-active');
+    }
+  }
+
+  const campIndicator = document.getElementById('camp-indicator');
+  if (campIndicator) {
+    if (GameState.camp) {
+      const campEnemyName = ENEMIES && ENEMIES[GameState.camp.enemyId] ? ENEMIES[GameState.camp.enemyId].name : GameState.camp.enemyId;
+      campIndicator.textContent = `⛺ Camp: ${campEnemyName}`;
+      campIndicator.style.display = '';
+    } else {
+      campIndicator.textContent = '';
+      campIndicator.style.display = 'none';
+    }
   }
 }
 
