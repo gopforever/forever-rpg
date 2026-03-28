@@ -8,7 +8,7 @@ const SAVE_KEY = 'foreverRPG_save';
  * Current save data schema version number.
  * @type {number}
  */
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 /**
  * Serializes the current GameState to localStorage as a versioned JSON object.
@@ -60,8 +60,8 @@ function loadGame() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data) return null;
-    // Accept current version; migrate v1 saves
-    if (data.version !== SAVE_VERSION && data.version !== 1) return null;
+    // Accept current version and migrate v1/v2 saves
+    if (![1, 2, SAVE_VERSION].includes(data.version)) return null;
     return data;
   } catch (e) {
     console.error('Load failed:', e);
@@ -130,6 +130,8 @@ function applyLoadedSave(data) {
         ? initSkills(charData.classId, charData.level)
         : {};
     }
+    // Migrate race field — default to 'human' for older saves
+    charData.race = charData.race || 'human';
     if (typeof unlockSkillsForLevel === 'function') unlockSkillsForLevel(charData);
     // Restore ability tracking fields — cast state always resets on load
     charData.abilityCooldowns = charData.abilityCooldowns || {};

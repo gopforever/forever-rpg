@@ -59,15 +59,67 @@ function hideCharacterCreation() {
   document.getElementById('creation-overlay').style.display = 'none';
 }
 
+/** @type {Object.<string, string>} Maps archetype IDs to display labels. */
+const ARCHETYPE_LABELS = {
+  'Melee': '⚔ Melee',
+  'Hybrid': '🛡 Hybrid',
+  'Caster': '🔮 Caster',
+  'Priest': '✨ Priest',
+};
+
 /**
- * Renders the five character-creation slot cards with name inputs, class
- * selectors, and live class preview sections.
+ * Builds and returns the innerHTML for a class <select> dropdown.
+ * When availableClassIds is provided, only those classes are shown grouped
+ * by archetype. When null, all classes (including beastlord/berserker) are
+ * shown for backwards compatibility.
+ * @param {Array<string>|null} availableClassIds - Filtered class IDs, or null for all.
+ * @returns {string} The HTML string of <option> and <optgroup> elements.
+ */
+function buildClassSelectHTML(availableClassIds) {
+  const classIds = availableClassIds
+    ? availableClassIds.filter(id => CLASSES[id])
+    : Object.keys(CLASSES);
+
+  // Group by archetype in canonical order
+  const archetypeOrder = ['Melee', 'Hybrid', 'Caster', 'Priest'];
+  const groups = {};
+  for (const id of classIds) {
+    const cls = CLASSES[id];
+    if (!cls) continue;
+    const arch = cls.archetype || 'Melee';
+    if (!groups[arch]) groups[arch] = [];
+    groups[arch].push(id);
+  }
+
+  let html = '<option value="">-- Select Class --</option>';
+  for (const arch of archetypeOrder) {
+    if (!groups[arch] || groups[arch].length === 0) continue;
+    const label = ARCHETYPE_LABELS[arch] || arch;
+    html += `<optgroup label="${label}">`;
+    for (const id of groups[arch]) {
+      html += `<option value="${id}">${CLASSES[id].name}</option>`;
+    }
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+/**
+ * Renders the five character-creation slot cards with name inputs, race
+ * selectors, class selectors (filtered by race), and live preview sections.
  * @returns {void}
  */
 function renderCreationSlots() {
   const container = document.getElementById('creation-slots');
   if (!container) return;
   container.innerHTML = '';
+
+  // Build race options HTML once
+  let raceOptionsHTML = '<option value="">-- Select Race --</option>';
+  for (const raceId of Object.keys(RACES)) {
+    const race = RACES[raceId];
+    raceOptionsHTML += `<option value="${raceId}">${race.icon} ${race.name}</option>`;
+  }
 
   for (let i = 0; i < 5; i++) {
     const slot = document.createElement('div');
@@ -76,45 +128,80 @@ function renderCreationSlots() {
     slot.innerHTML = `
       <div class="slot-header">Slot ${i + 1}</div>
       <input type="text" class="char-name-input" id="char-name-${i}" placeholder="Character Name" maxlength="20">
-      <select class="char-class-select" id="char-class-${i}">
-        <option value="">-- Select Class --</option>
-        <optgroup label="⚔ Melee">
-          <option value="berserker">Berserker</option>
-          <option value="monk">Monk</option>
-          <option value="rogue">Rogue</option>
-          <option value="warrior">Warrior</option>
-        </optgroup>
-        <optgroup label="🛡 Hybrid">
-          <option value="bard">Bard</option>
-          <option value="beastlord">Beastlord</option>
-          <option value="paladin">Paladin</option>
-          <option value="ranger">Ranger</option>
-          <option value="shadowknight">Shadow Knight</option>
-        </optgroup>
-        <optgroup label="🔮 Caster">
-          <option value="enchanter">Enchanter</option>
-          <option value="magician">Magician</option>
-          <option value="necromancer">Necromancer</option>
-          <option value="wizard">Wizard</option>
-        </optgroup>
-        <optgroup label="✨ Priest">
-          <option value="cleric">Cleric</option>
-          <option value="druid">Druid</option>
-          <option value="shaman">Shaman</option>
-        </optgroup>
+      <select class="char-race-select" id="char-race-${i}">
+        ${raceOptionsHTML}
+      </select>
+      <div class="race-preview" id="race-preview-${i}"></div>
+      <select class="char-class-select" id="char-class-${i}" disabled>
+        ${buildClassSelectHTML(null)}
       </select>
       <div class="class-preview" id="class-preview-${i}"></div>
     `;
     container.appendChild(slot);
 
-    const select = slot.querySelector('.char-class-select');
-    const preview = slot.querySelector('.class-preview');
-    select.addEventListener('change', () => {
-      updateClassPreview(select.value, preview);
+    const raceSelect = slot.querySelector('.char-race-select');
+    const classSelect = slot.querySelector('.char-class-select');
+    const racePreview = slot.querySelector('.race-preview');
+    const classPreview = slot.querySelector('.class-preview');
+
+    raceSelect.addEventListener('change', () => {
+      const raceId = raceSelect.value;
+      if (raceId && RACES[raceId]) {
+        // Filter class dropdown to race-valid classes
+        classSelect.innerHTML = buildClassSelectHTML(RACES[raceId].availableClasses);
+        classSelect.disabled = false;
+        updateRacePreview(raceId, racePreview);
+      } else {
+        // No race chosen — show all classes (backwards compat)
+        classSelect.innerHTML = buildClassSelectHTML(null);
+        classSelect.disabled = true;
+        racePreview.innerHTML = '';
+      }
+      // Clear class selection and preview when race changes
+      classSelect.value = '';
+      classPreview.innerHTML = '';
     });
 
-    attachTooltip(select, () => select.value ? getClassTooltipHTML(select.value) : '');
+    classSelect.addEventListener('change', () => {
+      updateClassPreview(classSelect.value, classPreview);
+    });
+
+    attachTooltip(classSelect, () => classSelect.value ? getClassTooltipHTML(classSelect.value) : '');
   }
+}
+
+/**
+ * Updates a race-preview element with the icon, name, description, base stats,
+ * and starting zone for the selected race.
+ * @param {string}      raceId    - The race identifier key (e.g. `"human"`).
+ * @param {HTMLElement} previewEl - The DOM element to write the preview into.
+ * @returns {void}
+ */
+function updateRacePreview(raceId, previewEl) {
+  if (!raceId || !RACES[raceId]) {
+    previewEl.innerHTML = '';
+    return;
+  }
+  const race = RACES[raceId];
+  const desc = race.description || '';
+  const shortDesc = desc.length > 120 ? desc.substring(0, 120) + '...' : desc;
+  const s = race.baseStats;
+  previewEl.innerHTML = `
+    <div class="preview-icon">${race.icon || ''}</div>
+    <div class="preview-name">${race.name}</div>
+    <div class="preview-desc">${shortDesc}</div>
+    <div class="preview-stats">
+      <span>STR ${s.STR}</span>
+      <span>DEX ${s.DEX}</span>
+      <span>AGI ${s.AGI}</span>
+      <span>STA ${s.STA}</span>
+      <span>WIS ${s.WIS}</span>
+      <span>INT ${s.INT}</span>
+      <span>CHA ${s.CHA}</span>
+    </div>
+    <div class="preview-zone">📍 Starts in: Qeynos</div>
+  `;
+}
 }
 
 /**
@@ -160,13 +247,21 @@ function handleBeginAdventure() {
   for (let i = 0; i < 5; i++) {
     const nameInput = document.getElementById(`char-name-${i}`);
     const classSelect = document.getElementById(`char-class-${i}`);
-    if (nameInput && classSelect && nameInput.value.trim() && classSelect.value) {
-      chars.push({ name: nameInput.value.trim(), classId: classSelect.value });
+    const raceSelect = document.getElementById(`char-race-${i}`);
+    const name = nameInput ? nameInput.value.trim() : '';
+    const classId = classSelect ? classSelect.value : '';
+    const raceId = raceSelect ? raceSelect.value : '';
+    if (name && classId) {
+      if (!raceId) {
+        alert(`Please select a race for character in Slot ${i + 1}!`);
+        return;
+      }
+      chars.push({ name, classId, raceId });
     }
   }
 
   if (chars.length === 0) {
-    alert('You must create at least one character!');
+    alert('You must create at least one character with a name, race, and class!');
     return;
   }
 
