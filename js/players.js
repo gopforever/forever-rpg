@@ -15,8 +15,8 @@ const MAX_OFFLINE_TICKS  = 8640;
 const MARKET_TRICKLE_MS  = 150000;
 const CHAT_MAX_MESSAGES  = 30;
 const WORLD_FEED_MAX     = 3;
-const WHO_ONLINE_MAX     = 8;
-const WHO_ONLINE_MIN     = 4;
+const WHO_ONLINE_MAX     = 10;
+const WHO_ONLINE_MIN     = 5;
 const CHAT_MIN_DELAY_MS  = 20000;
 const CHAT_DELAY_RANGE_MS = 25000;
 const WORLD_EVENT_MIN_MS = 30000;
@@ -121,8 +121,8 @@ const GHOST_CLASSES = [
 const HEALER_CLASSES = ['cleric','druid','shaman'];
 const TANK_CLASSES   = ['warrior','paladin','shadowknight'];
 
-const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands'];
-const COMBAT_ZONES = ['qeynos_hills','blackburrow','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands'];
+const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands','plane_of_fear','lake_of_ill_omen'];
+const COMBAT_ZONES = ['qeynos_hills','blackburrow','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands','plane_of_fear','lake_of_ill_omen'];
 
 const ZONE_ENEMIES = {
   qeynos_hills: ['a Gnoll Scout','a Gray Wolf','a Brown Bear','a Giant Rat','a Bandit','Varsoon the Undying','a Fire Beetle','a Decaying Skeleton'],
@@ -132,6 +132,8 @@ const ZONE_ENEMIES = {
   highpass_hold: ['a Highpass Guard','a Pass Bandit','a Mountain Bear','a Highpass Skeleton','a Rock Troll','a Gnoll War Chief'],
   kithicor_forest: ['a Kithicor Skeleton','a Kithicor Zombie','a Warrior Spirit','a Corrupted Treant','a Kithicor Dark Elf','General Kill-Anaz'],
   commonlands:  ['an Orc Warrior','an Orc Shaman','an Orc Captain','a Commonlands Lion','a Dark Elf Ranger','Crushbone Warlord','a Plague Spectre'],
+  plane_of_fear: ['a Fear Golem','a Thought Horror','a Dracoliche','a Frenzied Puma','an Amygdalan Warrior','Cazic-Thule'],
+  lake_of_ill_omen: ['a Sarnak Warrior','a Sarnak Shaman','a Sarnak Berserker','a Froglok Tad','a Lake Goblin','a Goblin Shaman','a Giant Crab','an Iksar Bandit','the Emissary'],
 };
 
 const VETERAN_WARNINGS = [
@@ -214,6 +216,8 @@ const ZONE_LOCS = {
   highpass_hold: ['the mountain pass','the guard post','the bandit hideout','the troll cave','the gnoll war camp','the cliffside'],
   kithicor_forest: ['the dark grove','the haunted clearing','the old battlefield','the treant grove','the dark elf camp','the general\'s tomb'],
   commonlands:  ['the orc camp','the dark elf outpost','the lion plains','the road south','the warlord\'s fortress','the plagued gully'],
+  plane_of_fear: ['the altar','the spire','the lava pit','Cazic\'s throne','the golem forge'],
+  lake_of_ill_omen: ['the eastern docks','the sarnak encampment','the goblin village','the sunken ruins','the deep water','the lake shore'],
 };
 
 const PERSONALITY_STATUSES = {
@@ -370,6 +374,8 @@ function createSingleGhost(id, name, isNew) {
     id, name, classId, level: 1, zone, kills: 0, totalXP: 0, gold: 0,
     xpRate, personality, inventory: [], equipment: {},
     lastActive: Date.now(),
+    lastZoneChange: 0,
+    ticksInZone: 0,
     party: createGhostParty(name, classId),
   };
   if (isNew) {
@@ -993,7 +999,7 @@ function setMarketListings(listings) {
 }
 
 function trickleMarketListing() {
-  if (_marketListings.length >= 20) {
+  if (_marketListings.length >= 30) {
     _marketListings.shift();
   }
   const [newListing] = generateMarketListings(1);
@@ -1016,7 +1022,7 @@ function ghostSellItemToMarket(ghost) {
   else if (p === 'newbie')  price = Math.round(base * 0.75);
   else                      price = Math.round(base * (0.7 + Math.random() * 0.6));
   price = Math.max(1, price);
-  if (_marketListings.length >= 20) _marketListings.shift();
+  if (_marketListings.length >= 30) _marketListings.shift();
   _marketListings.push({
     id: `${Date.now()}_${Math.random()}`,
     itemId: item.id, itemName: item.name,
@@ -1065,6 +1071,25 @@ function simulateGhostTick(ghost) {
   ghost.totalXP += xpPerTick;
   ghost.kills   += killsPerTick;
   ghost.gold    += goldPerTick;
+
+  // Track ticks spent in current zone; move to a new zone occasionally
+  if (!ghost.lastZoneChange) ghost.lastZoneChange = 0;
+  if (!ghost.ticksInZone) ghost.ticksInZone = 0;
+  ghost.ticksInZone++;
+  if (ghost.ticksInZone >= 10 && Math.random() < 0.10) {
+    const suitableZones = COMBAT_ZONES.filter(zid => {
+      const z = typeof ZONES !== 'undefined' ? ZONES[zid] : null;
+      if (!z || zid === ghost.zone) return false;
+      if (!z.levelRange) return true;
+      const [lo, hi] = z.levelRange;
+      return ghost.level >= lo - 5 && ghost.level <= hi + 5;
+    });
+    if (suitableZones.length) {
+      ghost.zone = suitableZones[Math.floor(Math.random() * suitableZones.length)];
+      ghost.lastZoneChange = Date.now();
+      ghost.ticksInZone = 0;
+    }
+  }
 
   // Initialize visitedZones tracking
   if (!ghost.visitedZones) ghost.visitedZones = [];

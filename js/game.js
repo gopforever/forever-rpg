@@ -105,6 +105,13 @@ function gameTick() {
     if (typeof tickManaRegen === 'function') tickManaRegen(GameState.party);
   }
 
+  // Detect zone changes and refresh the Who's Online panel accordingly
+  if (!GameState._lastTickZone) GameState._lastTickZone = GameState.zone;
+  if (GameState._lastTickZone !== GameState.zone) {
+    GameState._lastTickZone = GameState.zone;
+    if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
+  }
+
   // Out-of-combat only ticks
   if (!GameState.combatActive && GameState.party.length > 0) {
 

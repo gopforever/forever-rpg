@@ -2945,3 +2945,33 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   background: rgba(255,255,255,0.05);
   border-radius: 2px;
 }
+
+/* ─── Zone Ambient Classes ─────────────────────────────────────────────────── */
+
+.zone-plane-of-fear {
+  background: radial-gradient(ellipse at center, #1a0014 0%, #0d000d 60%, #050005 100%);
+}
+
+.zone-lake-of-ill-omen {
+  background: radial-gradient(ellipse at center, #061410 0%, #040e0a 60%, #020608 100%);
+}
+
+/* ─── Rarity Color Classes ─────────────────────────────────────────────────── */
+
+.legendary {
+  color: #ff9f00;
+  text-shadow: 0 0 6px #ff9f0088;
+}
+
+.named {
+  color: #ff6600;
+  text-shadow: 0 0 5px #ff660066;
+}
+
+/* ─── World Event Variants ─────────────────────────────────────────────────── */
+
+.world-event.fear {
+  border: 1px solid #660033;
+  background: rgba(40, 0, 30, 0.6);
+  color: #cc88cc;
+}

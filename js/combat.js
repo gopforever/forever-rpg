@@ -1384,9 +1384,16 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       if (!enemy) break;
       const stat = effect.stat;
       const value = effect.value || 0;
-      enemy.debuffs = enemy.debuffs || {};
-      enemy.debuffs[stat] = (enemy.debuffs[stat] || 0) + value;
-      addCombatLog(`${caster.name} weakens ${enemy.name} (${stat} -${value})!`, 'debuff');
+      // Handle slow as a status effect rather than a stat debuff
+      if (stat === 'slow' || effect.type === 'slow') {
+        const dur = effect.duration || 8000;
+        applyStatusEffect(enemy, { type: 'slow', endTime: Date.now() + dur });
+        addCombatLog(`${caster.name} slows ${enemy.name}!`, 'debuff');
+      } else {
+        enemy.debuffs = enemy.debuffs || {};
+        enemy.debuffs[stat] = (enemy.debuffs[stat] || 0) + value;
+        addCombatLog(`${caster.name} weakens ${enemy.name} (${stat} -${value})!`, 'debuff');
+      }
       if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
       break;
     }
