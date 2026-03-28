@@ -20,13 +20,30 @@ const EQUIPMENT_SLOTS = [
  * @param {string} name    - The character's display name.
  * @param {string} classId - The class identifier (e.g. 'warrior', 'cleric').
  * @param {number} level   - Starting level (defaults to 1).
+ * @param {string} [raceId] - Optional race identifier (e.g. 'human'). Defaults to 'human'.
  * @returns {object} Fully initialized character object.
  */
-function createCharacter(name, classId, level = 1) {
+function createCharacter(name, classId, level = 1, raceId = 'human') {
   const cls = CLASSES[classId];
   if (!cls) throw new Error(`Unknown classId: ${classId}`);
 
   const base = cls.baseStats || {};
+
+  // Blend racial base stats with class base stats.
+  // Using an average of class+race keeps final numbers in a reasonable range while
+  // still giving racial flavour (e.g. Ogre warriors are much stronger than Human warriors).
+  // Pure addition would produce excessively high stats at creation.
+  const racialBase = (typeof RACES !== 'undefined' && RACES[raceId] && RACES[raceId].baseStats)
+    ? RACES[raceId].baseStats
+    : {};
+  const STAT_KEYS = ['STR', 'DEX', 'AGI', 'STA', 'WIS', 'INT', 'CHA'];
+  const blendedStats = {};
+  for (const stat of STAT_KEYS) {
+    const classStat = base[stat] || 10;
+    const raceStat = racialBase[stat] || classStat;
+    blendedStats[stat] = Math.round((classStat + raceStat) / 2);
+  }
+
   const equipment = {};
   for (const slot of EQUIPMENT_SLOTS) equipment[slot] = null;
 
@@ -34,16 +51,17 @@ function createCharacter(name, classId, level = 1) {
     id: 'char_' + Date.now() + '_' + (++_charIdCounter),
     name,
     classId,
+    race: raceId || 'human',
     level,
     xp: xpForLevel(level),
     xpToNext: xpToNextLevel(level),
-    STR: base.STR || 10,
-    DEX: base.DEX || 10,
-    AGI: base.AGI || 10,
-    STA: base.STA || 10,
-    WIS: base.WIS || 10,
-    INT: base.INT || 10,
-    CHA: base.CHA || 10,
+    STR: blendedStats.STR,
+    DEX: blendedStats.DEX,
+    AGI: blendedStats.AGI,
+    STA: blendedStats.STA,
+    WIS: blendedStats.WIS,
+    INT: blendedStats.INT,
+    CHA: blendedStats.CHA,
     hp: undefined,
     maxHP: 0,
     mana: undefined,
@@ -81,12 +99,12 @@ function createCharacter(name, classId, level = 1) {
 
 /**
  * Creates up to 5 characters from an array of character definition objects.
- * @param {Array<object>} characterDefinitions - Array of { name, classId, level } objects.
+ * @param {Array<object>} characterDefinitions - Array of { name, classId, raceId, level } objects.
  * @returns {Array<object>} Array of initialized character objects.
  */
 function createParty(characterDefinitions) {
   const defs = characterDefinitions.slice(0, 5);
-  return defs.map(def => createCharacter(def.name, def.classId, def.level || 1));
+  return defs.map(def => createCharacter(def.name, def.classId, def.level || 1, def.raceId || 'human'));
 }
 
 /**

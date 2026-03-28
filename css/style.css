@@ -3069,3 +3069,66 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   border: none;
   padding: 0;
 }
+
+/* ─── Race Selector in Character Creation ───────────────────────────────────── */
+
+.char-race-select {
+  width: 100%;
+  margin-bottom: 6px;
+  background: var(--panel-bg, #1a1410);
+  color: var(--text-primary, #e8d5a0);
+  border: 1px solid var(--border-color, #5c4a2a);
+  padding: 4px 6px;
+  font-size: 13px;
+  border-radius: 3px;
+}
+
+.race-preview {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #3a2e1a;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-secondary, #c4a96a);
+}
+
+.race-preview .preview-icon {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.race-preview .preview-name {
+  font-weight: bold;
+  color: var(--text-primary, #e8d5a0);
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.race-preview .preview-desc {
+  font-size: 11px;
+  color: var(--text-dim, #8a7050);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.race-preview .preview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.race-preview .preview-stats span {
+  background: rgba(255,255,255,0.05);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.race-preview .preview-zone {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #7a9a6a;
+  font-style: italic;
+}
