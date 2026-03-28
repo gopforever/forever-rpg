@@ -1104,7 +1104,6 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 
 /* ─── Bard Song Log Classes ───────────────────────────────────────────────── */
 
-.log-buff { color: #88ccff; }
 .log-song { color: #ff9944; font-style: italic; }
 
 /* ─── Inventory Panel ─────────────────────────────────────────────────────── */

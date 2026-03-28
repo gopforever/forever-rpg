@@ -3,7 +3,7 @@
    applyACMitigation, computeDerivedStats, gainXP,
    getPartyTank, getLowestHPMember, getHealerInParty,
    applyStatusEffect, tickStatusEffects, isStunned, isMezzed, isSlowed,
-   rollLoot, addCombatLog, addLoot, showDamageNumber, getSprite,
+   rollLoot, addCombatLog, addLoot, clearLootDisplay, showDamageNumber, getSprite,
    updateCombatUI, updatePartyUI, updateInventoryUI, updateKillCountUI,
    showLevelUpEffect,
    trySkillGain, hasSkill, SKILL_DISPLAY_NAMES,
@@ -99,6 +99,8 @@ function startCombat(enemyId) {
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
 
+  if (typeof clearLootDisplay === 'function') clearLootDisplay();
+
   // Reset per-character swing timers for the new encounter
   if (GameState.party) {
     for (const member of GameState.party) {
@@ -134,6 +136,8 @@ function startGroupCombat(enemyIds) {
   GameState.threatTable = {};
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
+
+  if (typeof clearLootDisplay === 'function') clearLootDisplay();
 
   // Reset per-character swing timers for the new encounter
   if (GameState.party) {
@@ -427,6 +431,7 @@ function combatTick() {
 function getWeaponSkillName(weapon) {
   if (!weapon) return 'oneHandBlunt';
   const t = weapon.weaponType || weapon.slot || '';
+  if (t === 'hand_to_hand') return 'oneHandBlunt';
   if (t === 'piercing' || t === 'dagger') return 'piercing';
   if (t === 'twoHandSlash' || t === '2hslash') return 'twoHandSlash';
   if (t === 'twoHandBlunt' || t === '2hblunt') return 'twoHandBlunt';
@@ -821,14 +826,15 @@ function handleEnemyDeath(enemy) {
 
   const lootDrops = rollLoot(ENEMIES[enemy.id]);
   for (const drop of lootDrops) {
+    const item = ITEMS[drop.itemId];
+    if (!item) continue;
     if (GameState.settings && GameState.settings.autoLoot) {
       addToInventory(drop.itemId, drop.quantity);
-      const item = ITEMS[drop.itemId];
-      if (item) {
-        addCombatLog(`You receive: ${item.name} x${drop.quantity}`, 'loot');
-        addLoot(drop.itemId, drop.quantity);
-      }
+      addCombatLog(`You receive: ${item.name} x${drop.quantity}`, 'loot');
+    } else {
+      addCombatLog(`${item.name} x${drop.quantity} — on the ground.`, 'loot');
     }
+    addLoot(drop.itemId, drop.quantity);
   }
 
   if (remaining > 0) {

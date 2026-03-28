@@ -220,7 +220,7 @@ const ITEMS = {
     dmg: 4,
     delay: 27,
     weaponType: 'slash',
-    stats: {},
+    stats: { STR: 2, DEX: 1 },
   },
 
   // ─── SHIELDS / OFFHAND ──────────────────────────────────────────────────────

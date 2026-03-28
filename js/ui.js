@@ -905,6 +905,12 @@ function addLoot(itemId, quantity) {
   renderLootPanel([{ itemId, quantity }]);
 }
 
+function clearLootDisplay() {
+  GameState.recentLoot = [];
+  const lootEl = document.getElementById('loot-display');
+  if (lootEl) lootEl.innerHTML = '';
+}
+
 // ─── Game Clock ───────────────────────────────────────────────────────────────
 
 function updateGameClock() {
@@ -1679,6 +1685,7 @@ if (typeof module !== 'undefined') module.exports = {
   updateKillCountUI,
   addCombatLog,
   addLoot,
+  clearLootDisplay,
   showDamageNumber,
   showLevelUpEffect,
   renderEnemySelector,
