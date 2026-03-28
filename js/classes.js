@@ -245,7 +245,8 @@ const CLASSES = {
     manaStat: 'INT',
     hpPerSTA_l50: 2.0,
     hpPerSTA_l60: 2.4,
-
+    primaryStats: ['INT', 'STA'],
+    baseStats: { STR: 60, DEX: 70, AGI: 70, STA: 65, WIS: 75, INT: 120, CHA: 65 },
     description: 'Wizards are the supreme masters of elemental destructive magic in Norrath, capable of unleashing blasts of fire, ice, and lightning that devastate single targets and groups of enemies alike. Blessed with the highest raw magical damage output of any class, a Wizard\'s spells can obliterate powerful enemies in seconds, but this comes at the cost of paper-thin physical defenses and a vast mana pool that drains quickly. Wizards are famous for their Gate and Teleport spells, which allow them to instantly travel across vast distances and bind themselves to safe locations for emergency escape. Intellectually driven and often eccentric, Wizards are students of pure arcane theory who push the limits of magical destruction.',
     abilities: [
       { name: 'Shock of Ice', description: 'Hurl a concentrated bolt of glacial energy at your target, encasing them in a burst of extreme cold that deals massive ice damage.', manaCost: 110, castTime: 3000, recastTime: 6000, effect: { type: 'damage', value: 200 } },
@@ -266,7 +267,8 @@ const CLASSES = {
     manaStat: 'INT',
     hpPerSTA_l50: 2.0,
     hpPerSTA_l60: 2.4,
-
+    primaryStats: ['INT', 'STA'],
+    baseStats: { STR: 65, DEX: 70, AGI: 70, STA: 70, WIS: 75, INT: 115, CHA: 70 },
     description: 'Magicians are conjurers who specialize in summoning and commanding elemental beings from the planes of Fire, Water, Earth, and Air. Unlike Necromancers who raise the dead, Magicians forge pacts with elemental forces and call these powerful beings into service. Their elemental pets are among the most powerful summoned companions in Norrath, capable of tanking significant damage while the Magician supports them with damaging spells and pet-enhancing buffs like Burnout. Magicians can also conjure food, water, weapons, and magical items from thin air, making them uniquely self-sufficient. In groups they provide a powerful damage-dealing pet, solid nuking spells, and the invaluable ability to summon gear to replace what has been lost.',
     abilities: [
       { name: 'Summon Companion', description: 'Open a rift to the elemental planes and call forth a powerful elemental servant to fight by your side and obey your commands.', manaCost: 100, castTime: 8000, recastTime: 30000, effect: { type: 'summon_pet', value: 1 } },
@@ -287,7 +289,8 @@ const CLASSES = {
     manaStat: 'INT',
     hpPerSTA_l50: 2.0,
     hpPerSTA_l60: 2.4,
-
+    primaryStats: ['INT', 'STA'],
+    baseStats: { STR: 60, DEX: 75, AGI: 75, STA: 70, WIS: 75, INT: 115, CHA: 60 },
     description: 'Necromancers are dark scholars who study the boundary between life and death, wielding the forbidden magic of mortality itself. Shunned by most societies and feared by the living, Necromancers drain life energy from their foes, reanimate corpses as undead servants, and drain the life force of enemies with devastating damage-over-time spells. Their ability to Feign Death rivals the Monk\'s, allowing them to escape dangerous situations by collapsing and appearing dead. The infamous Lich form allows powerful Necromancers to sustain themselves on necrotic energy alone. Feared and distrusted, Necromancers bring incredible sustained damage, powerful pets, and mana-sustaining abilities that make them sought after despite their dark reputation.',
     abilities: [
       { name: 'Lifetap', description: 'Drain the very life essence from your target, dealing necrotic damage while simultaneously channeling a portion of that stolen energy to restore your own hit points.', manaCost: 50, castTime: 2500, recastTime: 8000, effect: { type: 'lifetap', value: 100 } },
