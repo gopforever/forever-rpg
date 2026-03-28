@@ -1,6 +1,19 @@
+/**
+ * LocalStorage key for the main game save data.
+ * @type {string}
+ */
 const SAVE_KEY = 'foreverRPG_save';
+
+/**
+ * Current save data schema version number.
+ * @type {number}
+ */
 const SAVE_VERSION = 1;
 
+/**
+ * Serializes the current GameState to localStorage as a versioned JSON object.
+ * @returns {boolean} True if the save succeeded, false on error.
+ */
 function saveGame() {
   const saveData = {
     version: SAVE_VERSION,
@@ -31,6 +44,10 @@ function saveGame() {
   }
 }
 
+/**
+ * Deserializes the saved game data from localStorage and returns the parsed object.
+ * @returns {object|null} The parsed save data object, or null if no valid save exists.
+ */
 function loadGame() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -44,21 +61,39 @@ function loadGame() {
   }
 }
 
+/**
+ * Returns true if a valid save entry exists in localStorage.
+ * @returns {boolean} True if a save is present, false otherwise.
+ */
 function hasSave() {
   return localStorage.getItem(SAVE_KEY) !== null;
 }
 
+/**
+ * Removes all save-related keys from localStorage.
+ * @returns {void}
+ */
 function deleteSave() {
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem('foreverRPG_panels');
 }
 
+/**
+ * Returns a base64-encoded string of the current save data for export.
+ * @returns {string|null} Base64-encoded save string, or null if no save exists.
+ */
 function exportSave() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return null;
   return btoa(raw);
 }
 
+/**
+ * Decodes a base64-encoded save string and installs it into localStorage.
+ * @param {string} encoded - The base64-encoded save string to import.
+ * @returns {boolean} True if the import succeeded.
+ * @throws {Error} If the encoded data is invalid or cannot be parsed.
+ */
 function importSave(encoded) {
   try {
     const raw = atob(encoded.trim());
@@ -73,6 +108,11 @@ function importSave(encoded) {
   }
 }
 
+/**
+ * Hydrates the GameState from a loaded save data object, migrating older saves as needed.
+ * @param {object} data - The parsed save data object returned by loadGame.
+ * @returns {void}
+ */
 function applyLoadedSave(data) {
   GameState.party = data.party.map(charData => {
     computeDerivedStats(charData);
@@ -104,6 +144,10 @@ function applyLoadedSave(data) {
   GameState.gameTime = data.gameTime || { day: 1, hour: 6 };
 }
 
+/**
+ * Calculates XP earned while the game was offline, capped at 8 hours of progress.
+ * @returns {object|null} Offline progress summary object, or null if progress is negligible.
+ */
 function checkOfflineProgress() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return null;
@@ -131,12 +175,21 @@ function checkOfflineProgress() {
   }
 }
 
+/**
+ * Applies offline-earned XP to all party members and returns any level-up results.
+ * @param {object} offlineData - The offline progress object returned by checkOfflineProgress.
+ * @returns {Array<object>} Array of level-up result objects.
+ */
 function applyOfflineProgress(offlineData) {
   if (!offlineData || !GameState.party.length) return;
   const levelUps = gainXP(GameState.party, offlineData.xpEarned);
   return levelUps;
 }
 
+/**
+ * Returns saved UI panel positions from localStorage as a key-value object.
+ * @returns {object} Map of panel IDs to their saved position and state.
+ */
 function getPanelPositions() {
   try {
     return JSON.parse(localStorage.getItem('foreverRPG_panels') || '{}');
@@ -145,12 +198,24 @@ function getPanelPositions() {
   }
 }
 
+/**
+ * Persists a panel's position and collapsed state to localStorage.
+ * @param {string}  panelId   - The unique identifier of the panel.
+ * @param {number}  x         - The panel's X position in pixels.
+ * @param {number}  y         - The panel's Y position in pixels.
+ * @param {boolean} collapsed - Whether the panel is currently collapsed.
+ * @returns {void}
+ */
 function savePanelPosition(panelId, x, y, collapsed) {
   const positions = getPanelPositions();
   positions[panelId] = { x, y, collapsed };
   localStorage.setItem('foreverRPG_panels', JSON.stringify(positions));
 }
 
+/**
+ * Double-confirms with the user then clears all localStorage data and reloads the page.
+ * @returns {void}
+ */
 function hardReset() {
   const first = confirm(
     '⚠ HARD RESET — This will wipe ALL progress including ghost players and start completely fresh.\n\nThis is a BETA testing tool. Are you sure?'
