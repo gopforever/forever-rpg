@@ -13,9 +13,134 @@
    startGroupCombat, tryCallForHelp, makeLiveEnemy, rollWeightedGroup,
    xpForLevel, xpToNextLevel, MAX_LEVEL */
 
+// ─── COMBAT SYSTEM REFERENCE ─────────────────────────────────────────────────
+//
+// COMBAT LOOP
+//   combatTick() is the master game loop called every 2000ms (default) by the
+//   setInterval in game.js. Each tick executes in this order:
+//     1. Mana regen (tickManaRegen) + HP regen (tickHPRegen) — always runs
+//     2. Threat decay — all threat values reduced by 1% per tick
+//     3. Bard song auras applied (tickBardSongs)
+//     4. Ability cast resolution (tickAbilityCasts) — fizzle check + dispatch
+//     5. Enemy DoT ticks
+//     6. Party member attacks (memberAttack + selectAbilityForMember per member)
+//     7. Enrage and flee checks on injured enemies
+//     8. Healer auto-heal (performHeal)
+//     9. Pet attacks (tickPets)
+//    10. Each enemy attacks the highest-threat target (enemyAttack / enemyAttackAoe)
+//    11. Status effect ticks on party members (tickStatusEffects)
+//    12. Monk mend passive regen check
+//    13. UI update (updateCombatUI)
+//
+// DAMAGE PIPELINE — memberAttack()
+//   miss check (getMissChance vs defender AGI-proxy) →
+//   base damage (getMeleeDamage: STR + weaponDmg + level + offenseSkill + random) →
+//   crit check (getCritChance: DEX/1000; doubles damage on success) →
+//   damage buff (statusEffectMap buff_damage: flat % multiplier) →
+//   attack buff (buff_attack: % multiplier from e.g. Bard Anthem de Arms) →
+//   AC mitigation (applyACMitigation: dmg - floor(AC/5), min 1) →
+//   dual wield second swing (dualWield skill / 400 proc; 50% damage, same pipeline) →
+//   double attack extra hit (doubleAttack skill / 500 proc; full damage) →
+//   class proc (procClassAbility)
+//
+// DAMAGE PIPELINE — enemyAttack()
+//   dodge check (target dodge skill / 600; grants trySkillGain on success) →
+//   parry check (target parry skill / 700; may trigger riposte counter-hit) →
+//   miss check (getMissChance with flat DEX 75 attacker proxy) →
+//   STR debuff reduction (enemy.debuffs.STR reduces effectiveAtk) →
+//   debuff_atk check (Bard screech: reduces raw damage by %) →
+//   AC mitigation (applyACMitigation on target) →
+//   buff_ac check (target AC buff reduces damage by value/200) →
+//   invulnerability check (Divine Aura; attack fully negated) →
+//   enemy crit (3% base + 0.5% per level above 1, max 8%; doubles damage) →
+//   interrupt cast (channeling skill / 300 resist; enemy hit can interrupt spellcasters) →
+//   status procs (on-hit proc list from enemy template, e.g. poison/disease)
+//
+// ABILITY SYSTEM (3-phase pipeline)
+//   Phase 1 — Selection: selectAbilityForMember(member, enemy, party)
+//     Runs each tick per living member. Filters class abilities to those off
+//     cooldown and affordable (mana). Priority order:
+//       resurrect (if ally dead) → heal (if party HP < 60%) →
+//       damage/debuff/lifetap/stun/fear/taunt (vs enemy) →
+//       buffs/utility → first available fallback
+//     Instant abilities (castTime ≤ 0) fire immediately via dispatchAbilityEffect.
+//     Timed abilities set member.isCasting = true and schedule via castEndTime.
+//   Phase 2 — Cast resolution: tickAbilityCasts(party, enemy)
+//     Checks each casting member's castEndTime. On completion:
+//       Fizzle check: isMagicAbility && random < (0.35 - channelingSkill/720)
+//       On fizzle: logs fizzle, sets 2s cooldown, gains channeling skill.
+//       On success: calls dispatchAbilityEffect.
+//   Phase 3 — Effect dispatch: dispatchAbilityEffect(caster, ability, enemy, party)
+//     Large switch on ability.effect.type. Cases:
+//       damage, damage_aoe, damage_undead — magic damage with magic-resist reduction
+//       heal, heal_pet — heals lowest-HP living member
+//       lifetap — damages enemy, restores caster HP
+//       buff — applies statusEffect to caster or lowest-HP member
+//       debuff — reduces enemy.debuffs stat
+//       stun — sets enemy.stunUntil timestamp
+//       fear, aoe_fear — sets enemy.fearedUntil timestamp
+//       taunt — sets caster threat to maxThreat + 500
+//       mez — sets enemy.mezzedUntil timestamp
+//       dot — pushes a damage-over-time entry to enemy.dots[]
+//       invulnerability — applies invulnerable statusEffect to caster
+//       turn_undead — holy damage vs undead only
+//       resurrect — revives first dead party member at 20% HP
+//       summon_pet, pet_attack, pet_buff — delegates to pets.js functions
+//
+// THREAT SYSTEM
+//   addThreat(member, amount) — adds `amount` to GameState.threatTable[member.id].
+//     Called on every melee hit, spell hit, heal, and taunt.
+//     Healing generates 0.5× aggro. Taunts set caster to maxThreat + 500.
+//   getCurrentTarget(party) — returns the living party member with highest threat.
+//     Falls back to getPartyTank(), then first living member, if table is empty.
+//   Threat decay — applied at the start of each combatTick():
+//     GameState.threatTable[id] *= 0.99 (1% reduction per tick, floor 0).
+//
+// CON COLOR / XP SCALING — getConColor(partyLevel, enemyLevel)
+//   diff = enemyLevel - partyLevel:
+//     diff ≥ 4  → Red     (⚔ Red)        × 1.25 XP — very dangerous
+//     diff 1–3  → Yellow  (◆ Yellow)     × 1.00 XP
+//     diff  0   → White   (● White)      × 1.00 XP
+//     diff -1   → Blue    (● Blue)       × 0.80 XP
+//     diff -2   → Blue    (● Blue)       × 0.65 XP
+//     diff -3   → Blue    (● Blue)       × 0.50 XP
+//     diff -4→-6→ LtBlue  (● Light Blue) × 0.25 XP
+//     diff ≤ -7 → Green   (● Green)      × 0.00 XP — trivial, no experience
+//
+// GROUP COMBAT
+//   startGroupCombat(enemyIds) — initializes combat with multiple enemies at once
+//     (e.g. zone group spawn). Enemies are capped at MAX_ENCOUNTER_ENEMIES (3).
+//   tryCallForHelp(enemy) — checks enemy template's callsForHelp config and may
+//     add a new enemy to GameState.enemies (also capped at MAX_ENCOUNTER_ENEMIES).
+//   tryPullAdd(fleeingEnemy) — when an enemy flees at <15% HP, 40% chance to
+//     pull a random same-type zone enemy into the encounter.
+//   MAX_ENCOUNTER_ENEMIES = 3 — hard cap on simultaneous enemies.
+//
+// LOOT & INVENTORY
+//   addToInventory(itemId, quantity) — stacks item into GameState.inventory (max
+//     MAX_CARRY_SLOTS = 30 slots). If full, attempts addToBag() for each equipped
+//     bag. If all full, item is lost and a warning is logged.
+//   addToBag(bagIndex, itemId, quantity) — stacks item into a specific bag slot
+//     (capacity defined by the bag item). Returns false if bag is full.
+//   addToBank(itemId, quantity) — stacks item into GameState.bank (max 100 slots).
+//     Returns false if bank is full.
+//   depositAllToBank() — moves all non-nodrop inventory items to the bank,
+//     calling addToBank() for each. Items that can't fit are left in inventory.
+//
+// PARTY WIPE
+//   handlePartyWipe() — triggered when all party members reach 0 HP.
+//     XP penalty: each member loses 7% of their current level's XP range
+//       (penalty = floor(xpToNextLevel(level) * 0.07)), clamped so they cannot
+//       de-level below the level's base XP.
+//     After 5000ms: all members are revived with hp = 10% of maxHP,
+//       mana = 10% of maxMana, all status effects cleared. Combat is ended.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Maximum number of base inventory slots (before bags) a player can carry. */
 const MAX_CARRY_SLOTS = 30;
 
-// Maximum number of enemies allowed in a single encounter
+/** Hard cap on simultaneous enemies in a single encounter. */
 const MAX_ENCOUNTER_ENEMIES = 3;
 
 /**
@@ -68,6 +193,12 @@ function rollWeightedGroup(groups) {
   return groups[groups.length - 1];
 }
 
+/**
+ * Starts single-enemy combat. If the current zone has a group-spawn table and
+ * the roll succeeds, delegates to startGroupCombat() instead.
+ * @param {string} enemyId - The ENEMIES template key to fight
+ * @returns {void}
+ */
 function startCombat(enemyId) {
   const template = ENEMIES[enemyId];
   if (!template) {
@@ -195,6 +326,11 @@ function tryCallForHelp(enemy) {
   addCombatLog(msg, 'system');
 }
 
+/**
+ * Sets the selected enemy ID and immediately starts combat against it.
+ * @param {string} enemyId - The ENEMIES template key to select and fight
+ * @returns {void}
+ */
 function selectEnemy(enemyId) {
   GameState.selectedEnemyId = enemyId;
   startCombat(enemyId);
@@ -235,6 +371,10 @@ function tryPullAdd(fleeingEnemy) {
   }
 }
 
+/**
+ * Cancels active combat and clears all enemy state. Safe to call at any time.
+ * @returns {void}
+ */
 function stopCombat() {
   GameState.combatActive = false;
   GameState.inCombat = false;
@@ -245,6 +385,13 @@ function stopCombat() {
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
+/**
+ * Master combat loop tick — called every ~2000 ms by the setInterval in game.js.
+ * Runs mana/HP regen, threat decay, bard songs, ability casts, DoT ticks,
+ * party attacks, enrage/flee checks, healer auto-heal, pet attacks, enemy
+ * attacks, status-effect ticks, and a final UI update.
+ * @returns {void}
+ */
 function combatTick() {
   // Always tick regen regardless of combat state
   if (GameState.party && GameState.party.length > 0) {
@@ -428,6 +575,12 @@ function combatTick() {
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
+/**
+ * Maps a weapon object's type/slot field to the corresponding skill name used
+ * for trySkillGain calls on a successful melee hit.
+ * @param {object|null} weapon - Item object from ITEMS, or null for unarmed
+ * @returns {string} Skill name (e.g. 'oneHandBlunt', 'piercing', 'twoHandSlash')
+ */
 function getWeaponSkillName(weapon) {
   if (!weapon) return 'oneHandBlunt';
   const t = weapon.weaponType || weapon.slot || '';
@@ -440,6 +593,15 @@ function getWeaponSkillName(weapon) {
   return 'oneHandSlash';
 }
 
+/**
+ * Resolves one full melee swing for a party member against an enemy, including
+ * miss check, base damage, crits, damage/attack buffs, AC mitigation, dual
+ * wield offhand swing, double attack extra hit, and class proc.
+ * Respects the per-member nextSwingAt delay timer.
+ * @param {object} member - Living party member performing the attack
+ * @param {object} enemy  - Live enemy object being attacked
+ * @returns {void}
+ */
 function memberAttack(member, enemy) {
   const now = Date.now();
   if (member.nextSwingAt && now < member.nextSwingAt) return; // not ready to swing yet
@@ -537,6 +699,16 @@ function memberAttack(member, enemy) {
   }
 }
 
+/**
+ * Resolves one enemy attack on a single party target. Runs the full defensive
+ * pipeline: dodge → parry (with riposte) → miss → STR-debuff reduction →
+ * debuff_atk → AC mitigation → buff_ac → invulnerability → enemy crit →
+ * cast interrupt → status procs.
+ * @param {object} enemy  - Live enemy object attacking
+ * @param {object} target - Living party member being attacked
+ * @param {object[]} party - Full party array (used for wipe detection)
+ * @returns {void}
+ */
 function enemyAttack(enemy, target, party) {
   // Dodge check
   if (typeof hasSkill === 'function' && hasSkill(target, 'dodge')) {
@@ -667,6 +839,16 @@ function enemyAttack(enemy, target, party) {
   }
 }
 
+/**
+ * Applies AoE splash damage from an enemy to a non-primary target. Skips the
+ * dodge/parry/riposte pipeline; uses halved miss chance, reduced damage
+ * (scaled by multiplier), and halved status-proc chance.
+ * @param {object} enemy      - Live enemy object performing the AoE
+ * @param {object} target     - Living party member receiving splash damage
+ * @param {object[]} party    - Full party array (used for wipe detection)
+ * @param {number} multiplier - Damage multiplier applied to raw enemy atk (e.g. 0.6)
+ * @returns {void}
+ */
 function enemyAttackAoe(enemy, target, party, multiplier) {
   // AoE splash: no dodge/parry/riposte, reduced damage
   const missChance = getMissChance({ DEX: 75, statBonuses: {} }, target);
@@ -724,6 +906,15 @@ function enemyAttackAoe(enemy, target, party, multiplier) {
   }
 }
 
+/**
+ * Auto-healer logic: casts a mana-based heal on the lowest-HP living party
+ * member if they are below 90% HP and the healer has enough mana.
+ * Heal amount scales with healer WIS and level. Grants channeling/alteration
+ * skill on success.
+ * @param {object}   healer - Party member with healer role
+ * @param {object[]} party  - Full party array
+ * @returns {void}
+ */
 function performHeal(healer, party) {
   const target = getLowestHPMember(party);
   if (!target) return;
@@ -767,6 +958,12 @@ function getConColor(partyLevel, enemyLevel) {
   return               { color: 'green',       label: '● Green',      multiplier: 0    };
 }
 
+/**
+ * Returns the GameState.monsterLog entry for the given enemy ID, creating it
+ * with zero counts if it does not yet exist.
+ * @param {string} enemyId - The ENEMIES template key
+ * @returns {object} Monster log entry: { kills, deaths, firstSeen, lastKill }
+ */
 function ensureMonsterLogEntry(enemyId) {
   if (!GameState.monsterLog) GameState.monsterLog = {};
   if (!GameState.monsterLog[enemyId]) {
@@ -775,6 +972,15 @@ function ensureMonsterLogEntry(enemyId) {
   return GameState.monsterLog[enemyId];
 }
 
+/**
+ * Handles all post-death processing after an enemy reaches 0 HP: removes it
+ * from the active enemies list, awards con-color–scaled XP to the party,
+ * records the kill in killCounts and monsterLog, rolls and distributes loot,
+ * and either continues the encounter (if enemies remain) or ends combat and
+ * schedules the next respawn.
+ * @param {object} enemy - The live enemy object that just died
+ * @returns {void}
+ */
 function handleEnemyDeath(enemy) {
   // Remove from active enemies array first
   GameState.enemies = (GameState.enemies || []).filter(e => e !== enemy);
@@ -874,6 +1080,13 @@ function handleEnemyDeath(enemy) {
   if (typeof updateKillCountUI === 'function') updateKillCountUI();
 }
 
+/**
+ * Triggered when all party members are dead. Applies a 7% XP penalty
+ * (clamped to the current level's base XP so members cannot de-level), then
+ * after 5000 ms revives all members at 10% HP / 10% mana with status effects
+ * cleared and combat ended.
+ * @returns {void}
+ */
 function handlePartyWipe() {
   addCombatLog('--- PARTY HAS BEEN DEFEATED ---', 'death');
   GameState.combatActive = false;
@@ -915,11 +1128,25 @@ function handlePartyWipe() {
 
 // ── System 3: Threat Table ────────────────────────────────────────────────────
 
+/**
+ * Adds the given amount to a party member's entry in the threat table.
+ * Initializes the table entry to 0 if absent.
+ * @param {object} member - Party member generating threat
+ * @param {number} amount - Threat value to add (healing uses 0.5×, spells 1.5×)
+ * @returns {void}
+ */
 function addThreat(member, amount) {
   if (!GameState.threatTable) GameState.threatTable = {};
   GameState.threatTable[member.id] = (GameState.threatTable[member.id] || 0) + amount;
 }
 
+/**
+ * Returns the living party member with the highest value in the threat table.
+ * Falls back to getPartyTank(), then the first living member, when the table
+ * is empty or all entries belong to dead members.
+ * @param {object[]} party - Full party array
+ * @returns {object|null} The highest-threat living member, or null if none alive
+ */
 function getCurrentTarget(party) {
   const living = party.filter(m => m.isAlive);
   if (living.length === 0) return null;
@@ -940,6 +1167,15 @@ function getCurrentTarget(party) {
 
 // ── System 1: Ability Cast Pipeline ──────────────────────────────────────────
 
+/**
+ * Resolves all in-flight ability casts for the party on the current tick.
+ * For each member whose castEndTime has elapsed: runs a fizzle check for magic
+ * abilities (based on channeling skill), logs and short-cooldowns on fizzle,
+ * or calls dispatchAbilityEffect on success.
+ * @param {object[]} party - Array of living party members that may be casting
+ * @param {object}   enemy - The primary enemy target for offensive casts
+ * @returns {void}
+ */
 function tickAbilityCasts(party, enemy) {
   const now = Date.now();
   for (const member of party) {
@@ -979,6 +1215,12 @@ function tickAbilityCasts(party, enemy) {
   }
 }
 
+/**
+ * Immediately cancels a member's in-progress cast, logging an interrupt
+ * message. Called when an enemy hit passes the channeling resist check.
+ * @param {object} member - Party member whose cast is being interrupted
+ * @returns {void}
+ */
 function interruptCast(member) {
   if (!member.isCasting) return;
   addCombatLog(`${member.name}'s cast is interrupted!`, 'system');
@@ -986,6 +1228,18 @@ function interruptCast(member) {
   member.isCasting = false;
 }
 
+/**
+ * Executes the resolved effect of an ability after its cast time completes (or
+ * immediately for instant casts). Dispatches on ability.effect.type:
+ * damage / damage_aoe / damage_undead / heal / heal_pet / lifetap / buff /
+ * debuff / stun / fear / aoe_fear / taunt / mez / dot / invulnerability /
+ * turn_undead / resurrect / summon_pet / pet_attack / pet_buff.
+ * @param {object}   caster  - Party member using the ability
+ * @param {object}   ability - Ability definition from CLASSES[classId].abilities
+ * @param {object}   enemy   - Primary enemy target (may be null for non-combat effects)
+ * @param {object[]} party   - Full party array
+ * @returns {void}
+ */
 function dispatchAbilityEffect(caster, ability, enemy, party) {
   const effect = ability.effect;
   if (!effect) return;
@@ -1223,6 +1477,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
   }
 }
 
+/**
+ * Selects and begins (or instantly fires) the best available ability for a
+ * party member on this tick. Filters to abilities that are off cooldown and
+ * affordable, then prioritises: resurrect → heal → damage/debuff → utility →
+ * first available fallback. Instant abilities (castTime ≤ 0) are dispatched
+ * immediately; timed abilities set member.isCasting and record castEndTime.
+ * @param {object}   member - Living party member selecting an ability
+ * @param {object}   enemy  - Current primary enemy target
+ * @param {object[]} party  - Full party array
+ * @returns {void}
+ */
 function selectAbilityForMember(member, enemy, party) {
   if (member.isCasting) return; // already casting
   const cls = CLASSES[member.classId];
@@ -1288,6 +1553,17 @@ function selectAbilityForMember(member, enemy, party) {
   }
 }
 
+/**
+ * Rolls class-specific on-hit combat procs for a party member after a
+ * successful melee hit. Each class has unique proc effects (e.g. Rogue
+ * backstab, Monk flying kick, Berserker frenzy, Paladin/Cleric holy strike,
+ * Shadow Knight/Necromancer lifetap, Wizard/Magician spell burst, Enchanter/
+ * Shaman/Druid slow, Ranger arrow, Beastlord warder).
+ * @param {object} member - Party member who landed the hit
+ * @param {object} enemy  - Live enemy that was hit
+ * @param {number} damage - Base melee damage dealt on this swing
+ * @returns {void}
+ */
 function procClassAbility(member, enemy, damage) {
   const classId = member.classId;
   const procRoll = Math.random();
@@ -1371,6 +1647,15 @@ function procClassAbility(member, enemy, damage) {
   }
 }
 
+/**
+ * Adds an item to the player's main inventory, stacking on an existing slot
+ * when possible. If the main inventory is full (MAX_CARRY_SLOTS), attempts to
+ * overflow into each equipped bag via addToBag(). Logs a warning and returns
+ * false if no space is found anywhere.
+ * @param {string} itemId   - The ITEMS key to add
+ * @param {number} quantity - Stack quantity to add
+ * @returns {boolean} true if the item was stored, false if lost due to no space
+ */
 function addToInventory(itemId, quantity) {
   if (!GameState.inventory) GameState.inventory = [];
 
@@ -1401,6 +1686,14 @@ function addToInventory(itemId, quantity) {
   return true;
 }
 
+/**
+ * Adds an item to a specific equipped bag slot, stacking on an existing entry
+ * when possible. The bag's capacity is defined by its item definition.
+ * @param {number} bagIndex - Index (0–3) of the bag in GameState.bags
+ * @param {string} itemId   - The ITEMS key to add
+ * @param {number} quantity - Stack quantity to add
+ * @returns {boolean} true if stored successfully, false if the bag is full or missing
+ */
 function addToBag(bagIndex, itemId, quantity) {
   if (!GameState.bags || !GameState.bags[bagIndex]) return false;
   const bag = ITEMS[GameState.bags[bagIndex]];
@@ -1425,6 +1718,13 @@ function addToBag(bagIndex, itemId, quantity) {
   return false; // Bag full
 }
 
+/**
+ * Adds an item to the player's bank (max 100 slots), stacking on an existing
+ * entry when possible.
+ * @param {string} itemId   - The ITEMS key to deposit
+ * @param {number} quantity - Stack quantity to deposit
+ * @returns {boolean} true if deposited, false if bank is full
+ */
 function addToBank(itemId, quantity) {
   if (!GameState.bank) GameState.bank = [];
   const existing = GameState.bank.find(s => s && s.itemId === itemId);
@@ -1437,6 +1737,12 @@ function addToBank(itemId, quantity) {
   return true;
 }
 
+/**
+ * Moves all non-nodrop items from the main inventory to the bank, calling
+ * addToBank() for each stack. Items that cannot fit in the bank are left in
+ * inventory. Refreshes inventory and bank UI panels on completion.
+ * @returns {void}
+ */
 function depositAllToBank() {
   if (!GameState.inventory) return;
   const keep = [];
@@ -1465,6 +1771,15 @@ function depositAllToBank() {
   if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
 }
 
+/**
+ * Ticks mana regeneration for all living party members with a mana pool.
+ * Regen rate depends on sit/combat state:
+ *   sitting (out of combat): 3 + level×0.5 + meditationSkill/25 (gains meditation)
+ *   standing out of combat:  level×0.5 + 2
+ *   in combat:               level×0.5 + 1
+ * @param {object[]} party - Full party array
+ * @returns {void}
+ */
 function tickManaRegen(party) {
   const sitting = !GameState.inCombat && GameState.isSitting;
   for (const member of party) {
@@ -1483,6 +1798,15 @@ function tickManaRegen(party) {
   }
 }
 
+/**
+ * Ticks HP regeneration for all living party members who are below max HP.
+ * Regen rate depends on sit/combat state and STA stat:
+ *   sitting (out of combat): 2 + STA/20 + level×0.3
+ *   standing out of combat:  1 + STA/40 + level×0.15
+ *   in combat:               STA/60 (very slow)
+ * @param {object[]} party - Full party array
+ * @returns {void}
+ */
 function tickHPRegen(party) {
   const sitting = !GameState.inCombat && GameState.isSitting;
   for (const member of party) {
@@ -1509,6 +1833,11 @@ function tickHPRegen(party) {
   }
 }
 
+/**
+ * Sets the party to a sitting/meditating state outside of combat, enabling
+ * accelerated mana and HP regeneration. No-ops if combat is active.
+ * @returns {void}
+ */
 function sitDown() {
   if (GameState.inCombat) return;
   GameState.isSitting = true;
