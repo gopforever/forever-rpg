@@ -3043,6 +3043,7 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   padding: 2px 6px;
   font-size: 0.72rem;
   font-family: 'Share Tech Mono', monospace;
+  width: 110px;
 }
 
 /* ─── Examine Modal ──────────────────────────────────────────────────────────── */

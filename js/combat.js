@@ -1294,6 +1294,26 @@ function interruptCast(member) {
  * @param {object[]} party   - Full party array
  * @returns {void}
  */
+/**
+ * Returns the damage value from a spell effect, supporting both the
+ * canonical `effect.value` field and the legacy `effect.dmg` shorthand.
+ * @param {object} effect - The ability effect object.
+ * @returns {number} The damage value (defaults to 0).
+ */
+function getEffectDamageValue(effect) {
+  return effect.value || effect.dmg || 0;
+}
+
+/**
+ * Returns the heal amount from a spell effect, supporting both
+ * `effect.healAmount` (legacy guild spell field) and `effect.value`.
+ * @param {object} effect - The ability effect object.
+ * @returns {number} The heal amount (defaults to 0).
+ */
+function getEffectHealValue(effect) {
+  return effect.healAmount || effect.value || 0;
+}
+
 function dispatchAbilityEffect(caster, ability, enemy, party) {
   const effect = ability.effect;
   if (!effect) return;
@@ -1302,7 +1322,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     // ── Damage ──────────────────────────────────
     case 'damage': {
       if (!enemy) break;
-      let dmg = effect.value || effect.dmg || 0;
+      let dmg = getEffectDamageValue(effect);
       const resistPct = (enemy.magicResist || 0) / 100;
       dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
       if (caster.skills) {
@@ -1327,7 +1347,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
 
     case 'damage_aoe': {
       if (!enemy) break;
-      let dmg = effect.value || effect.dmg || 0;
+      let dmg = getEffectDamageValue(effect);
       const resistPct = (enemy.magicResist || 0) / 100;
       dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
       enemy.hp = Math.max(0, enemy.hp - dmg);
@@ -1355,7 +1375,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     case 'heal_pet': {
       const healTarget = getLowestHPMember(party) || caster;
       if (!healTarget || !healTarget.isAlive) break;
-      const healAmt = Math.min(effect.healAmount || effect.value || 0, Math.max(0, healTarget.maxHP - healTarget.hp));
+      const healAmt = Math.min(getEffectHealValue(effect), Math.max(0, healTarget.maxHP - healTarget.hp));
       healTarget.hp = Math.min(healTarget.maxHP, healTarget.hp + healAmt);
       addCombatLog(`${caster.name} heals ${healTarget.name} for ${healAmt} HP.`, 'heal');
       // Healing generates aggro
@@ -1371,7 +1391,7 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     case 'lifetap': {
       if (!enemy) break;
       const resistPct = (enemy.magicResist || 0) / 100;
-      let dmg = Math.max(1, Math.floor((effect.value || effect.dmg || 0) * (1 - resistPct)));
+      let dmg = Math.max(1, Math.floor(getEffectDamageValue(effect) * (1 - resistPct)));
       enemy.hp = Math.max(0, enemy.hp - dmg);
       caster.hp = Math.min(caster.maxHP, caster.hp + dmg);
       addCombatLog(`${caster.name} lifetaps ${enemy.name} for ${dmg}!`, 'spell');

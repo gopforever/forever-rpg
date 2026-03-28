@@ -1596,16 +1596,19 @@ function renderDPSMeter() {
   }).join('');
 
   el.innerHTML = `
-    <div class="dps-header">⚔ DPS Meter <button class="dps-reset-btn" id="dps-reset">Reset</button></div>
+    <div class="dps-header">⚔ DPS Meter <button class="dps-reset-btn" id="dps-reset-btn">Reset</button></div>
     ${rows}
   `;
 
-  el.querySelector('#dps-reset').addEventListener('click', () => {
-    if (typeof GameState !== 'undefined') {
-      GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: Date.now() };
-    }
-    renderDPSMeter();
-  });
+  const resetBtn = el.querySelector('#dps-reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (typeof GameState !== 'undefined') {
+        GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: Date.now() };
+      }
+      renderDPSMeter();
+    }, { once: true });
+  }
 }
 
 /**
@@ -2494,7 +2497,7 @@ function renderCityTabContent(tab) {
       return `
         <div class="vendor-row market-list-row">
           <span class="vendor-item-name">${icon} ${it.name}${stack.quantity > 1 ? ` x${stack.quantity}` : ''}</span>
-          <input class="market-price-input" type="number" min="1" placeholder="Price (copper)" data-list-item="${stack.itemId}" style="width:110px" value="${Math.round(base * 1.1)}">
+          <input class="market-price-input" type="number" min="1" placeholder="Price (copper)" data-list-item="${stack.itemId}" value="${Math.round(base * 1.1)}">
           <button class="city-btn market-list-btn" data-list-item="${stack.itemId}">List</button>
         </div>
       `;
