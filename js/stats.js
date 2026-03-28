@@ -101,14 +101,14 @@ function getMissChance(attacker, defender) {
 }
 
 /**
- * Reduces damage by AC / 5, with a minimum of 1.
+ * Reduces damage by AC / 8, with a minimum of 1.
  * @param {number} damage - The incoming damage value before mitigation.
  * @param {object} defender - The defending character; uses currentAC or computes via getAC.
  * @returns {number} The mitigated damage value (minimum 1).
  */
 function applyACMitigation(damage, defender) {
   const ac = (defender.currentAC !== undefined) ? defender.currentAC : getAC(defender);
-  return Math.max(1, damage - Math.floor(ac / 5));
+  return Math.max(1, damage - Math.floor(ac / 8));
 }
 
 /**

@@ -129,11 +129,11 @@
 //
 // PARTY WIPE
 //   handlePartyWipe() — triggered when all party members reach 0 HP.
-//     XP penalty: each member loses 7% of their current level's XP range
-//       (penalty = floor(xpToNextLevel(level) * 0.07)), clamped so they cannot
+//     XP penalty: each member loses 20% of their current level's XP range
+//       (penalty = floor(xpToNextLevel(level) * 0.20)), clamped so they cannot
 //       de-level below the level's base XP.
-//     After 5000ms: all members are revived with hp = 10% of maxHP,
-//       mana = 10% of maxMana, all status effects cleared. Combat is ended.
+//     After 30000ms: all members are revived with hp = 5% of maxHP,
+//       mana = 0, all status effects cleared. Combat is ended.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -157,7 +157,7 @@ function makeLiveEnemy(enemyId) {
     level: template.level,
     hp: template.hp,
     maxHP: template.hp,
-    atk: template.atk,
+    atk: Math.floor(template.atk * 1.4),
     ac: template.ac,
     xp: template.xp,
     isUndead: template.isUndead || false,
@@ -362,7 +362,7 @@ function tryPullAdd(fleeingEnemy) {
   const addId = poolToUse[Math.floor(Math.random() * poolToUse.length)];
   if (!addId) return;
 
-  if (Math.random() < 0.4) {
+  if (Math.random() < 0.7) {
     const add = makeLiveEnemy(addId);
     if (!add) return;
     GameState.enemies.push(add);
@@ -534,7 +534,7 @@ function combatTick() {
         }
         const splashTargets = party.filter(m => m.isAlive && m !== primaryTarget);
         for (const splashTarget of splashTargets) {
-          enemyAttackAoe(enemy, splashTarget, party, 0.6);
+          enemyAttackAoe(enemy, splashTarget, party, 0.85);
         }
       } else {
         const target = getCurrentTarget(party);
@@ -742,7 +742,7 @@ function enemyAttack(enemy, target, party) {
   }
 
   const missChance = getMissChance(
-    { DEX: 75, statBonuses: {} },
+    { DEX: enemy.level * 5 + 30, statBonuses: {} },
     target
   );
 
@@ -780,7 +780,7 @@ function enemyAttack(enemy, target, party) {
   }
 
   // Enemy crit check
-  const enemyCritChance = Math.min(0.08, 0.03 + (enemy.level - 1) * 0.005);
+  const enemyCritChance = Math.min(0.20, 0.03 + (enemy.level - 1) * 0.005);
   const enemyIsCrit = Math.random() < enemyCritChance;
   if (enemyIsCrit) damage = Math.floor(damage * 2);
 
@@ -793,7 +793,7 @@ function enemyAttack(enemy, target, party) {
   // Interrupt casting if the target is a caster mid-cast
   if (target.isCasting) {
     const channelingSkill = target.skills ? (target.skills['channeling'] || 0) : 0;
-    const interruptResist = channelingSkill / 300; // max ~84% at 252 skill
+    const interruptResist = channelingSkill / 500; // max ~50% at 252 skill
     if (Math.random() > interruptResist) {
       interruptCast(target);
     }
@@ -851,7 +851,7 @@ function enemyAttack(enemy, target, party) {
  */
 function enemyAttackAoe(enemy, target, party, multiplier) {
   // AoE splash: no dodge/parry/riposte, reduced damage
-  const missChance = getMissChance({ DEX: 75, statBonuses: {} }, target);
+  const missChance = getMissChance({ DEX: enemy.level * 5 + 30, statBonuses: {} }, target);
   if (Math.random() < missChance * 0.5) return; // halved miss chance for AoE
 
   // Check if target is invulnerable
@@ -862,7 +862,7 @@ function enemyAttackAoe(enemy, target, party, multiplier) {
   }
 
   const effectiveAtk = Math.max(1, enemy.atk - (enemy.debuffs && enemy.debuffs.STR ? Math.floor(enemy.debuffs.STR / 5) : 0));
-  let damage = Math.max(1, Math.floor((effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5))) * (multiplier || 0.6)));
+  let damage = Math.max(1, Math.floor((effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5))) * (multiplier || 0.85)));
   damage = applyACMitigation(damage, target);
   damage = Math.max(1, damage);
 
@@ -916,17 +916,24 @@ function enemyAttackAoe(enemy, target, party, multiplier) {
  * @returns {void}
  */
 function performHeal(healer, party) {
+  // Heal cooldown: healer can only fire once every 3 combat ticks
+  if (healer._healCooldown && healer._healCooldown > 0) {
+    healer._healCooldown--;
+    return;
+  }
+
   const target = getLowestHPMember(party);
   if (!target) return;
 
   const hpPercent = target.hp / target.maxHP;
-  if (hpPercent >= 0.9) return;
+  if (hpPercent >= 0.75) return;
 
-  const healAmount = Math.floor(20 + (healer.WIS * 0.3) + (healer.level * 5));
-  const manaCost = Math.floor(healAmount * 0.4);
+  const healAmount = Math.floor(8 + (healer.WIS * 0.2) + (healer.level * 3));
+  const manaCost = Math.floor(healAmount * 0.65);
 
   if (healer.mana < manaCost) return;
 
+  healer._healCooldown = 3; // heals once every 3 ticks
   healer.mana = Math.max(0, healer.mana - manaCost);
   target.hp = Math.min(target.maxHP, target.hp + healAmount);
 
@@ -1099,7 +1106,7 @@ function handlePartyWipe() {
     if (typeof xpForLevel === 'function' && typeof xpToNextLevel === 'function') {
       const levelBase = xpForLevel(member.level);
       const levelRange = xpToNextLevel(member.level);
-      const penalty = Math.floor(levelRange * 0.07);
+      const penalty = Math.floor(levelRange * 0.20);
       const newXP = Math.max(levelBase, member.xp - penalty);
       const lost = member.xp - newXP;
       member.xp = newXP;
@@ -1112,8 +1119,8 @@ function handlePartyWipe() {
   setTimeout(() => {
     for (const member of GameState.party) {
       member.isAlive = true;
-      member.hp = Math.max(1, Math.floor(member.maxHP * 0.1));
-      member.mana = Math.max(0, Math.floor(member.maxMana * 0.1));
+      member.hp = Math.max(1, Math.floor(member.maxHP * 0.05));
+      member.mana = 0;
       member.statusEffects = [];
       if (member.statusEffectMap) member.statusEffectMap = {};
       member.castingAbility = null;
@@ -1123,7 +1130,7 @@ function handlePartyWipe() {
     addCombatLog('Party recovers... ready to fight again.', 'system');
     if (typeof updateCombatUI === 'function') updateCombatUI();
     if (typeof updatePartyUI === 'function') updatePartyUI();
-  }, 5000);
+  }, 30000);
 }
 
 // ── System 3: Threat Table ────────────────────────────────────────────────────
@@ -1792,7 +1799,7 @@ function tickManaRegen(party) {
     } else if (!GameState.inCombat) {
       regenRate = Math.floor(member.level * 0.5 + 2);
     } else {
-      regenRate = Math.floor(member.level * 0.5 + 1);
+      regenRate = Math.floor(member.level * 0.2);
     }
     member.mana = Math.min(member.maxMana, member.mana + regenRate);
   }
@@ -1803,7 +1810,7 @@ function tickManaRegen(party) {
  * Regen rate depends on sit/combat state and STA stat:
  *   sitting (out of combat): 2 + STA/20 + level×0.3
  *   standing out of combat:  1 + STA/40 + level×0.15
- *   in combat:               STA/60 (very slow)
+ *   in combat:               0 (no regen — classic EQ behaviour)
  * @param {object[]} party - Full party array
  * @returns {void}
  */
@@ -1823,8 +1830,8 @@ function tickHPRegen(party) {
       // Standing out of combat: moderate regen
       regenRate = Math.floor(1 + sta / 40 + member.level * 0.15);
     } else {
-      // In combat: very slow STA-based tick
-      regenRate = Math.floor(sta / 60);
+      // In combat: no HP regen (classic EQ behaviour)
+      regenRate = 0;
     }
 
     if (regenRate > 0) {
