@@ -34,13 +34,14 @@
 //
 // DAMAGE PIPELINE — memberAttack()
 //   miss check (getMissChance vs defender AGI-proxy) →
-//   base damage (getMeleeDamage: STR + weaponDmg + level + offenseSkill + random) →
-//   crit check (getCritChance: DEX/1000; doubles damage on success) →
+//   base damage (getMeleeDamage: P99 Wrath→weighted D20→extra bonus→main-hand bonus) →
+//   crit check (getCritChance: warrior/berserker only; (dmg+5)*1.7 formula) →
 //   damage buff (statusEffectMap buff_damage: flat % multiplier) →
 //   attack buff (buff_attack: % multiplier from e.g. Bard Anthem de Arms) →
 //   AC mitigation (applyACMitigation: dmg - floor(AC/5), min 1) →
 //   dual wield second swing (dualWield skill / 400 proc; 50% damage, same pipeline) →
 //   double attack extra hit (doubleAttack skill / 500 proc; full damage) →
+//   triple attack extra hit (half doubleAttack skill / 500 proc; full damage) →
 //   class proc (procClassAbility)
 //
 // DAMAGE PIPELINE — enemyAttack()
@@ -628,10 +629,19 @@ function memberAttack(member, enemy) {
     return;
   }
 
-  let damage = getMeleeDamage(member, weapon);
+  let damage = getMeleeDamage(member, weapon, enemy);
 
   const isCrit = Math.random() < getCritChance(member);
-  if (isCrit) damage = Math.floor(damage * 2);
+  if (isCrit) {
+    // P99 crit formula: (damage + 5) * 1.7
+    damage = Math.floor((damage + 5) * 1.7);
+    // Berserker Berserk bonus: additional damage when in berserk state
+    const isBerserk = member.statusEffectMap && member.statusEffectMap['berserk'];
+    if (member.classId === 'berserker' && isBerserk) {
+      const preCritBase = Math.floor(damage / 1.7) - 5;
+      damage = Math.floor(damage + (preCritBase * 1.19));
+    }
+  }
 
   // Check for active buff_damage on the member (e.g. Berserker's Berserk)
   const damageBuff = member.statusEffectMap && member.statusEffectMap['buff_damage'];
@@ -675,11 +685,23 @@ function memberAttack(member, enemy) {
     if (typeof hasSkill === 'function' && hasSkill(member, 'doubleAttack')) {
       const doubleChance = (member.skills['doubleAttack'] || 0) / 500;
       if (Math.random() < doubleChance) {
-        let dmg2 = getMeleeDamage(member, weapon);
+        let dmg2 = getMeleeDamage(member, weapon, enemy);
         dmg2 = applyACMitigation(dmg2, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
         dmg2 = Math.max(1, dmg2);
         enemy.hp = Math.max(0, enemy.hp - dmg2);
         addCombatLog(`${member.name} hits ${enemy.name} again for ${dmg2} (Double Attack)!`, 'hit');
+        if (typeof addThreat === 'function') addThreat(member, dmg2);
+        trySkillGain(member, 'doubleAttack');
+      }
+      // Triple attack: same formula using half doubleAttack skill
+      const tripleChance = ((member.skills['doubleAttack'] || 0) / 2) / 500;
+      if (Math.random() < tripleChance) {
+        let dmg3 = getMeleeDamage(member, weapon, enemy);
+        dmg3 = applyACMitigation(dmg3, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
+        dmg3 = Math.max(1, dmg3);
+        enemy.hp = Math.max(0, enemy.hp - dmg3);
+        addCombatLog(`${member.name} hits ${enemy.name} again for ${dmg3} (Triple Attack)!`, 'hit');
+        if (typeof addThreat === 'function') addThreat(member, dmg3);
         trySkillGain(member, 'doubleAttack');
       }
     }
@@ -697,7 +719,7 @@ function memberAttack(member, enemy) {
     const dualChance = (member.skills['dualWield'] || 0) / 400;
     if (Math.random() < dualChance) {
       const offhandWeapon = ITEMS[member.equipment.secondary];
-      let dmgOff = Math.floor(getMeleeDamage(member, offhandWeapon) * 0.5);
+      let dmgOff = Math.floor(getMeleeDamage(member, offhandWeapon, enemy, false) * 0.5);
       // Apply active damage buff to offhand as well
       if (damageBuff && Date.now() < damageBuff.endTime) {
         dmgOff = Math.floor(dmgOff * (1 + (damageBuff.value || 0) / 100));
@@ -744,7 +766,7 @@ function enemyAttack(enemy, target, party) {
       if (typeof hasSkill === 'function' && hasSkill(target, 'riposte')) {
         const riposteChance = (target.skills['riposte'] || 0) / 800;
         if (Math.random() < riposteChance) {
-          const riposteDmg = Math.max(1, Math.floor(getMeleeDamage(target, null) * 0.7));
+          const riposteDmg = Math.max(1, Math.floor(getMeleeDamage(target, null, enemy, false) * 0.7));
           enemy.hp = Math.max(0, enemy.hp - riposteDmg);
           addCombatLog(`${target.name} ripostes for ${riposteDmg} damage!`, 'hit');
           if (typeof trySkillGain === 'function') trySkillGain(target, 'riposte');
@@ -1319,6 +1341,28 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
   if (!effect) return;
 
   switch (effect.type) {
+    // ── Backstab ─────────────────────────────────
+    case 'backstab': {
+      if (!enemy) break;
+      const bsWeaponId = caster.equipment && caster.equipment.primary ? caster.equipment.primary : null;
+      const bsWeapon = bsWeaponId && ITEMS[bsWeaponId] ? ITEMS[bsWeaponId] : null;
+      const bsWeaponDmg = bsWeapon ? bsWeapon.dmg : 2;
+      const backstabSkill = (caster.skills && caster.skills['backstab']) || 0;
+      const bsLvl = caster.level;
+      const bsMaxExtra = bsLvl >= 60 ? 2.85 : bsLvl >= 56 ? 2.65 : bsLvl >= 51 ? 2.45 : 2.10;
+      const backstabDmg = Math.floor(bsWeaponDmg * ((backstabSkill * 0.02) + 2) * 2 * bsMaxExtra);
+      enemy.hp = Math.max(0, enemy.hp - backstabDmg);
+      addCombatLog(`${caster.name} BACKSTABS ${enemy.name} for ${backstabDmg} damage!`, 'crit');
+      if (typeof addThreat === 'function') addThreat(caster, backstabDmg);
+      if (typeof GameState !== 'undefined') {
+        if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+        GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+        GameState.combatDPS.damageByMember[caster.name] = (GameState.combatDPS.damageByMember[caster.name] || 0) + backstabDmg;
+      }
+      if (typeof trySkillGain === 'function') trySkillGain(caster, 'backstab');
+      break;
+    }
+
     // ── Damage ──────────────────────────────────
     case 'damage': {
       if (!enemy) break;
@@ -1615,7 +1659,7 @@ function selectAbilityForMember(member, enemy, party) {
   const candidates = allAbilities.filter(ab => {
     if (member.abilityCooldowns[ab.name] && now < member.abilityCooldowns[ab.name]) return false;
     if ((ab.manaCost || 0) > (member.mana || 0)) return false;
-    if (!enemy && ab.effect && ['damage', 'damage_aoe', 'damage_undead', 'stun', 'fear', 'aoe_fear', 'mez', 'dot', 'lifetap', 'taunt'].includes(ab.effect.type)) return false;
+    if (!enemy && ab.effect && ['damage', 'damage_aoe', 'damage_undead', 'stun', 'fear', 'aoe_fear', 'mez', 'dot', 'lifetap', 'taunt', 'backstab'].includes(ab.effect.type)) return false;
     return true;
   });
 
@@ -1642,9 +1686,9 @@ function selectAbilityForMember(member, enemy, party) {
     chosen = candidates.find(ab => ab.effect && ['damage', 'damage_aoe', 'lifetap', 'dot'].includes(ab.effect.type));
   }
 
-  // Hybrids: use damage if enemy alive, heal if party hurt
+  // Hybrids/melee DPS: use damage/backstab if enemy alive, heal if party hurt
   if (!chosen && enemy) {
-    chosen = candidates.find(ab => ab.effect && ['damage', 'damage_undead', 'lifetap', 'stun', 'fear', 'aoe_fear', 'taunt'].includes(ab.effect.type));
+    chosen = candidates.find(ab => ab.effect && ['damage', 'damage_undead', 'lifetap', 'stun', 'fear', 'aoe_fear', 'taunt', 'backstab'].includes(ab.effect.type));
   }
 
   // Fallback: any usable ability
@@ -1673,10 +1717,10 @@ function selectAbilityForMember(member, enemy, party) {
 
 /**
  * Rolls class-specific on-hit combat procs for a party member after a
- * successful melee hit. Each class has unique proc effects (e.g. Rogue
- * backstab, Monk flying kick, Berserker frenzy, Paladin/Cleric holy strike,
- * Shadow Knight/Necromancer lifetap, Wizard/Magician spell burst, Enchanter/
- * Shaman/Druid slow, Ranger arrow, Beastlord warder).
+ * successful melee hit. Each class has unique proc effects (e.g. Monk flying kick,
+ * Berserker frenzy, Paladin/Cleric holy strike, Shadow Knight/Necromancer lifetap,
+ * Wizard/Magician spell burst, Enchanter/Shaman/Druid slow, Ranger arrow, Beastlord warder).
+ * Rogue Backstab is handled via dispatchAbilityEffect (effect.type === 'backstab').
  * @param {object} member - Party member who landed the hit
  * @param {object} enemy  - Live enemy that was hit
  * @param {number} damage - Base melee damage dealt on this swing
@@ -1686,13 +1730,7 @@ function procClassAbility(member, enemy, damage) {
   const classId = member.classId;
   const procRoll = Math.random();
 
-  if (classId === 'rogue' && member.equipment && member.equipment.primary) {
-    if (procRoll < 0.15) {
-      const backstabDmg = Math.floor(damage * 1.5);
-      enemy.hp = Math.max(0, enemy.hp - backstabDmg);
-      addCombatLog(`${member.name} BACKSTABS for ${backstabDmg} extra damage!`, 'crit');
-    }
-  } else if (classId === 'monk') {
+  if (classId === 'monk') {
     if (procRoll < 0.1) {
       const kickDmg = Math.floor(member.level * 2 + (member.STR || 0) * 0.1);
       enemy.hp = Math.max(0, enemy.hp - kickDmg);
