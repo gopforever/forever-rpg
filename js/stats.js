@@ -37,7 +37,15 @@ function getMaxMana(char) {
   if (!cls || !cls.manaStat) return 0;
   const manaStat = cls.manaStat;
   const statVal = char[manaStat] + (char.statBonuses ? char.statBonuses[manaStat] || 0 : 0);
-  return Math.floor(20 + (statVal * 12 * 0.3) + (char.level * 15));
+  const level = char.level || 1;
+  let mana;
+  if (statVal <= 200) {
+    mana = (80 * level / 425) * statVal;
+  } else {
+    // Up to 200 at full rate, above 200 at half rate (P99 soft-cap at 200)
+    mana = (80 * level / 425) * 200 + (40 * level / 425) * (statVal - 200);
+  }
+  return Math.max(0, Math.floor(mana));
 }
 
 /**
@@ -59,6 +67,11 @@ function getAC(char) {
   let agi = char.AGI + (char.statBonuses ? char.statBonuses.AGI || 0 : 0);
   const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(char) : { str: 0, agi: 0 };
   agi = Math.max(0, agi + penalty.agi);
+  // Apply P99 worn AC soft cap for level <= 50
+  if ((char.level || 1) <= 50) {
+    const wornACCap = ((char.level || 1) * 6) + 25;
+    baseAC = Math.min(baseAC, wornACCap);
+  }
   let agiBonus = Math.floor((agi - 75) * 0.5);
   if (agi < 75) agiBonus = -((75 - agi) * 2);
   const defenseSkill = char.skills ? (char.skills['defense'] || 0) : 0;
@@ -156,8 +169,7 @@ function getMeleeDamage(attacker, weapon, defender = null, isMainHand = true) {
 
   // Step 4: Main Hand Damage Bonus (main-hand only, not offhand or throwing)
   if (isMainHand) {
-    const delay = weapon ? (weapon.delay || 28) : 28;
-    const mainHandBonus = Math.floor((delay / 10) * (level / 30));
+    const mainHandBonus = getDamageBonus(weapon, level);
     damageDone = Math.floor(damageDone) + mainHandBonus;
   }
 
@@ -240,8 +252,10 @@ function computeDerivedStats(char) {
   char.maxHP = getMaxHP(char);
   char.maxMana = getMaxMana(char);
   char.currentAC = getAC(char);
+  char.maxEndurance = getMaxEndurance(char);
   if (char.hp === undefined || char.hp > char.maxHP) char.hp = char.maxHP;
   if (char.mana === undefined || char.mana > char.maxMana) char.mana = char.maxMana;
+  if (char.endurance === undefined || char.endurance > char.maxEndurance) char.endurance = char.maxEndurance;
   return char;
 }
 
@@ -365,15 +379,15 @@ function xpToNextLevel(level) {
 }
 
 /**
- * CHA-based price multiplier with a soft cap at 115.
+ * CHA-based price multiplier with a soft cap at 200 (P99 documentation, same as WIS/INT).
  * @param {object} char - The character object used to compute effective CHA.
  * @returns {number} A price multiplier (>1 means worse prices, <1 means better prices).
  */
-// CHA soft cap 115: below = worse merchant prices, above = diminishing returns
+// CHA soft cap 200 per P99 documentation (same as WIS/INT)
 function getMerchantPriceMultiplier(char) {
   const cha = getEffectiveStat(char, 'CHA');
-  if (cha >= 115) return 1.0 - ((cha - 115) * 0.001);
-  return 1.0 + ((115 - cha) * 0.005);
+  if (cha >= 200) return 1.0 - ((cha - 200) * 0.0005);
+  return 1.0 + ((200 - cha) * 0.002);
 }
 
 /**
@@ -385,6 +399,63 @@ function getSaveVsMagic(char) {
   const wis = getEffectiveStat(char, 'WIS');
   const bonus = char.statBonuses ? (char.statBonuses.resists ? char.statBonuses.resists.magic || 0 : 0) : 0;
   return Math.min(85, Math.floor(wis / 5) + bonus);
+}
+
+/**
+ * Computes the probability (0.05–0.95) that char fully resists a spell of the given type.
+ * Implements the P99 formula: 6 resist points = 1%, with a level-difference curve.
+ * @param {object} char - The defending character.
+ * @param {string} resistType - One of: 'magic','fire','cold','poison','disease'.
+ * @param {number} attackerLevel - The attacking caster's level.
+ * @returns {number} Resist chance as a decimal fraction (0.05 to 0.95).
+ */
+function getResistChance(char, resistType, attackerLevel) {
+  const resistVal = char.statBonuses && char.statBonuses.resists
+    ? (char.statBonuses.resists[resistType] || 0)
+    : 0;
+  // Base chance: every 6 resist points = 1%
+  let chance = resistVal / 6 / 100;
+  // Level difference modifier: ~12% per 7 levels
+  const levelDiff = (char.level || 1) - (attackerLevel || 1);
+  const levelMod = (levelDiff / 7) * 0.12;
+  chance += levelMod;
+  // PvE hard caps: 5% min, 95% max
+  return Math.max(0.05, Math.min(0.95, chance));
+}
+
+/**
+ * Computes max endurance from STA and STR, P99-inspired.
+ * Endurance affects disciplines and strenuous activities.
+ * @param {object} char
+ * @returns {number}
+ */
+function getMaxEndurance(char) {
+  const sta = char.STA + (char.statBonuses ? char.statBonuses.STA || 0 : 0);
+  const str = char.STR + (char.statBonuses ? char.statBonuses.STR || 0 : 0);
+  const level = char.level || 1;
+  return Math.floor(100 + (sta * 0.5) + (str * 0.25) + (level * 5));
+}
+
+/**
+ * Simple weapon ratio: DMG / DLY. Useful for weapon comparison UI.
+ * @param {object} weapon - Weapon item with dmg and delay properties.
+ * @returns {number} Ratio rounded to 3 decimal places.
+ */
+function getWeaponRatio(weapon) {
+  if (!weapon || !weapon.delay || !weapon.dmg) return 0;
+  return parseFloat((weapon.dmg / weapon.delay).toFixed(3));
+}
+
+/**
+ * P99 main-hand damage bonus, awarded starting at level 28.
+ * For one-handed weapons: floor((level - 25) / 3), min 0.
+ * @param {object} weapon - Weapon item object.
+ * @param {number} level - Character level.
+ * @returns {number} Damage bonus integer.
+ */
+function getDamageBonus(weapon, level) {
+  if (!weapon || !level || level < 28) return 0;
+  return Math.max(0, Math.floor((level - 25) / 3));
 }
 
 // ─── Weight & Encumbrance System ──────────────────────────────────────────────
@@ -468,4 +539,4 @@ function getEncumbrancePenalty(character) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, XP_TABLE, MAX_LEVEL, HELL_LEVELS, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };
+if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, XP_TABLE, MAX_LEVEL, HELL_LEVELS, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getResistChance, getMaxEndurance, getWeaponRatio, getDamageBonus, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };

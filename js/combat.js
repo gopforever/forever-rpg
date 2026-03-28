@@ -1366,9 +1366,21 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
     // ── Damage ──────────────────────────────────
     case 'damage': {
       if (!enemy) break;
+      // Full resist check using P99 formula
+      if (typeof getResistChance === 'function') {
+        const resistChance = getResistChance(enemy, 'magic', caster.level);
+        if (Math.random() < resistChance) {
+          addCombatLog(`${enemy.name || 'Enemy'} resisted the spell!`, 'resist');
+          break;
+        }
+      } else {
+        const resistPct = (enemy.magicResist || 0) / 100;
+        if (Math.random() < resistPct) {
+          addCombatLog(`${enemy.name || 'Enemy'} resisted the spell!`, 'resist');
+          break;
+        }
+      }
       let dmg = getEffectDamageValue(effect);
-      const resistPct = (enemy.magicResist || 0) / 100;
-      dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
       if (caster.skills) {
         const spellSkill = caster.skills['evocation'] || caster.skills['conjuration'] || 0;
         dmg = Math.floor(dmg * (1 + spellSkill / 1000));
@@ -1391,9 +1403,21 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
 
     case 'damage_aoe': {
       if (!enemy) break;
-      let dmg = getEffectDamageValue(effect);
-      const resistPct = (enemy.magicResist || 0) / 100;
-      dmg = Math.max(1, Math.floor(dmg * (1 - resistPct)));
+      // Full resist check using P99 formula
+      if (typeof getResistChance === 'function') {
+        const resistChance = getResistChance(enemy, 'magic', caster.level);
+        if (Math.random() < resistChance) {
+          addCombatLog(`${enemy.name || 'Enemy'} resisted the AoE!`, 'resist');
+          break;
+        }
+      } else {
+        const resistPct = (enemy.magicResist || 0) / 100;
+        if (Math.random() < resistPct) {
+          addCombatLog(`${enemy.name || 'Enemy'} resisted the AoE!`, 'resist');
+          break;
+        }
+      }
+      const dmg = Math.max(1, getEffectDamageValue(effect));
       enemy.hp = Math.max(0, enemy.hp - dmg);
       addCombatLog(`${caster.name} detonates an AoE for ${dmg} damage on ${enemy.name}!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg);
