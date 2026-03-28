@@ -2,6 +2,10 @@
 
 // ─── Character Creation UI ────────────────────────────────────────────────────
 
+/**
+ * Shows the character-creation overlay and wires the Begin Adventure button.
+ * @returns {void}
+ */
 function showCharacterCreation() {
   document.getElementById('creation-overlay').style.display = 'flex';
   renderCreationSlots();
@@ -12,10 +16,19 @@ function showCharacterCreation() {
   }
 }
 
+/**
+ * Hides the character-creation overlay.
+ * @returns {void}
+ */
 function hideCharacterCreation() {
   document.getElementById('creation-overlay').style.display = 'none';
 }
 
+/**
+ * Renders the five character-creation slot cards with name inputs, class
+ * selectors, and live class preview sections.
+ * @returns {void}
+ */
 function renderCreationSlots() {
   const container = document.getElementById('creation-slots');
   if (!container) return;
@@ -69,6 +82,13 @@ function renderCreationSlots() {
   }
 }
 
+/**
+ * Updates a class-preview element with the icon, name, role, description
+ * snippet, and base stats for the selected class.
+ * @param {string}      classId   - The class identifier key (e.g. `"warrior"`).
+ * @param {HTMLElement} previewEl - The DOM element to write the preview into.
+ * @returns {void}
+ */
 function updateClassPreview(classId, previewEl) {
   if (!classId || !CLASSES[classId]) {
     previewEl.innerHTML = '';
@@ -94,6 +114,12 @@ function updateClassPreview(classId, previewEl) {
   `;
 }
 
+/**
+ * Reads the character-creation form, validates at least one character was
+ * configured, initialises GameState, then hides the creation overlay and
+ * launches the main game UI.
+ * @returns {void}
+ */
 function handleBeginAdventure() {
   const chars = [];
   for (let i = 0; i < 5; i++) {
@@ -122,6 +148,12 @@ function handleBeginAdventure() {
 
 // ─── Main UI ──────────────────────────────────────────────────────────────────
 
+/**
+ * Initialises the main game UI after loading or creating a save — makes the
+ * game container visible and renders all panels, tooltips, and draggable
+ * panel positions.
+ * @returns {void}
+ */
 function initMainUI() {
   const gameContainer = document.getElementById('game-container');
   if (gameContainer) gameContainer.style.display = 'grid';
@@ -154,6 +186,11 @@ function initMainUI() {
 
 // ─── Panel Rendering ──────────────────────────────────────────────────────────
 
+/**
+ * Renders the top bar with the current wallet (gold/silver/copper) and the
+ * active zone name.
+ * @returns {void}
+ */
 function renderTopBar() {
   const walletEl = document.getElementById('wallet');
   if (walletEl) {
@@ -171,6 +208,12 @@ function renderTopBar() {
   }
 }
 
+/**
+ * Renders the zone panel, including the minimap SVG, zone info, travel buttons,
+ * and toggles visibility of city vs. combat panels based on whether the current
+ * zone is a safe zone.
+ * @returns {void}
+ */
 function renderZonePanel() {
   const minimapEl = document.getElementById('zone-minimap');
   if (minimapEl) {
@@ -226,6 +269,12 @@ function renderZonePanel() {
   }
 }
 
+/**
+ * Moves the party to a new zone, stopping active combat, logging a flavor
+ * message, and refreshing all relevant panels.
+ * @param {string} zoneId - The zone identifier to travel to.
+ * @returns {void}
+ */
 function changeZone(zoneId) {
   const zone = ZONES[zoneId];
   if (!zone) {
@@ -252,6 +301,12 @@ function changeZone(zoneId) {
   if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
 }
 
+/**
+ * Returns an HTML string describing the current action of a party member
+ * (dead, meditating, idle, casting, waiting to swing, or attacking).
+ * @param {object} member - The party member object from GameState.
+ * @returns {string} HTML markup for the member's current action label.
+ */
 function getMemberActionText(member) {
   if (!member.isAlive) return '<span class="action-dead">💀 Dead</span>';
   if (!GameState.combatActive && GameState.isSitting) return '<span class="action-sit">🧘 Medding</span>';
@@ -269,6 +324,12 @@ function getMemberActionText(member) {
   return `<span class="action-attacking">⚔ Attacking</span>`;
 }
 
+/**
+ * Renders the full party roster panel, populating each slot with portrait,
+ * HP/mana bars, status icons, threat indicator, pet row, and click listeners
+ * for character inspection.
+ * @returns {void}
+ */
 function renderPartyPanel() {
   const rosterEl = document.getElementById('party-roster');
   if (!rosterEl) return;
@@ -351,6 +412,11 @@ function renderPartyPanel() {
   }
 }
 
+/**
+ * Builds the HTML tooltip content for a party member showing their key stats.
+ * @param {object} member - The party member object to build the tooltip for.
+ * @returns {string} HTML markup for the member tooltip.
+ */
 function getMemberTooltipHTML(member) {
   const cls = CLASSES[member.classId];
   return `<div class="tt-member">
@@ -365,6 +431,11 @@ function getMemberTooltipHTML(member) {
   </div>`;
 }
 
+/**
+ * Renders the kill-count panel as a sorted table listing the top 15 enemies
+ * by kill count from GameState.
+ * @returns {void}
+ */
 function renderKillCountPanel() {
   const killsEl = document.getElementById('kill-counts');
   if (!killsEl) return;
@@ -391,6 +462,11 @@ function renderKillCountPanel() {
   </table>`;
 }
 
+/**
+ * Renders the monster-log panel for the current zone, showing each enemy's
+ * kill/death counts, completion bar, and ??? placeholder for undiscovered foes.
+ * @returns {void}
+ */
 function renderMonsterLogPanel() {
   const bodyEl = document.getElementById('monster-log-body');
   if (!bodyEl) return;
@@ -468,11 +544,21 @@ function renderMonsterLogPanel() {
   }).join('');
 }
 
+/**
+ * Renders the combat panel by refreshing the combat log and the enemy
+ * display.
+ * @returns {void}
+ */
 function renderCombatPanel() {
   renderCombatLog();
   updateEnemyDisplay();
 }
 
+/**
+ * Renders the last twelve combat-log entries into the combat-log element,
+ * dimming entries older than 30 seconds and auto-scrolling to the bottom.
+ * @returns {void}
+ */
 function renderCombatLog() {
   const logEl = document.getElementById('combat-log');
   if (!logEl) return;
@@ -489,6 +575,11 @@ function renderCombatLog() {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
+/**
+ * Renders the active enemy list with HP bars, con-colour dots, CC tags, and
+ * status/DoT effect labels; clicking a card sets it as the focused enemy.
+ * @returns {void}
+ */
 function updateEnemyDisplay() {
   const listEl = document.getElementById('enemy-list');
   if (!listEl) return;
@@ -562,6 +653,11 @@ function updateEnemyDisplay() {
   };
 }
 
+/**
+ * Renders the clickable enemy-grid for the current zone, showing each enemy's
+ * sprite, name, and con-colour level badge.
+ * @returns {void}
+ */
 function renderEnemySelector() {
   const gridEl = document.getElementById('enemy-grid');
   if (!gridEl) return;
@@ -609,6 +705,11 @@ function renderEnemySelector() {
   }
 }
 
+/**
+ * Renders the character-inspect panel for the currently inspected party
+ * member, displaying portrait, HP/mana/XP bars, role, AC, and status effects.
+ * @returns {void}
+ */
 function renderCharacterInspectPanel() {
   const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
   const member = GameState.party[idx];
@@ -683,6 +784,11 @@ function renderCharacterInspectPanel() {
   }
 }
 
+/**
+ * Renders the stats panel for the currently inspected party member, showing
+ * base and bonus values for all primary stats and grouped skill progress bars.
+ * @returns {void}
+ */
 function renderStatsPanel() {
   const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
   const member = GameState.party[idx];
@@ -769,6 +875,11 @@ function renderStatsPanel() {
   });
 }
 
+/**
+ * Renders the equipment panel for the currently inspected party member,
+ * displaying all equipment slots and the item equipped in each.
+ * @returns {void}
+ */
 function renderEquipmentPanel() {
   const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
   const member = GameState.party[idx];
@@ -803,6 +914,11 @@ function renderEquipmentPanel() {
   });
 }
 
+/**
+ * Renders the spells/abilities panel for the currently inspected party member,
+ * listing each ability with its name and mana cost.
+ * @returns {void}
+ */
 function renderSpellsPanel() {
   const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
   const member = GameState.party[idx];
@@ -830,6 +946,13 @@ function renderSpellsPanel() {
   });
 }
 
+/**
+ * Appends new drops to the recent-loot list and renders up to the last five
+ * loot entries with rarity-coloured text in the loot-display element.
+ * @param {Array.<{itemId: string, quantity: number}>} drops - Array of newly
+ *   dropped item stacks to add to the loot display.
+ * @returns {void}
+ */
 function renderLootPanel(drops) {
   const lootEl = document.getElementById('loot-display');
   if (!lootEl) return;
@@ -854,6 +977,16 @@ function renderLootPanel(drops) {
 
 // ─── Floating Damage Numbers ──────────────────────────────────────────────────
 
+/**
+ * Spawns a floating damage-number element inside the combat area that fades
+ * out after one second.
+ * @param {number|string} value      - The damage value to display.
+ * @param {object}        targetChar - The target character object (currently
+ *   unused in positioning but reserved for future use).
+ * @param {boolean}       isCrit     - When true the number is styled as a
+ *   critical hit and an exclamation mark is appended.
+ * @returns {void}
+ */
 function showDamageNumber(value, targetChar, isCrit) {
   const combatArea = document.getElementById('combat-area');
   if (!combatArea) return;
@@ -872,6 +1005,13 @@ function showDamageNumber(value, targetChar, isCrit) {
 
 // ─── Level Up Effect ──────────────────────────────────────────────────────────
 
+/**
+ * Triggers a level-up burst animation on the matching party-member card and
+ * displays a "LEVEL UP!" overlay in the combat area for two seconds.
+ * @param {string|number} charId - The character ID used to find the matching
+ *   `.party-member` DOM element.
+ * @returns {void}
+ */
 function showLevelUpEffect(charId) {
   document.querySelectorAll('.party-member').forEach(m => {
     if (m.dataset.charId === String(charId)) {
@@ -892,6 +1032,14 @@ function showLevelUpEffect(charId) {
 
 // ─── Combat Log Management ────────────────────────────────────────────────────
 
+/**
+ * Appends a timestamped entry to the GameState combat log (capped at 100
+ * entries) and immediately refreshes the combat-log panel.
+ * @param {string} text - The message text to add to the log.
+ * @param {string} type - The log entry type (e.g. `"info"`, `"system"`,
+ *   `"loot"`, `"damage"`), used to apply CSS styling.
+ * @returns {void}
+ */
 function addCombatLog(text, type) {
   if (!GameState.combatLog) GameState.combatLog = [];
   GameState.combatLog.push({ text, type: type || 'info', time: Date.now() });
@@ -901,10 +1049,21 @@ function addCombatLog(text, type) {
   renderCombatLog();
 }
 
+/**
+ * Adds a single item drop to the loot display panel.
+ * @param {string} itemId    - The item identifier to display.
+ * @param {number} quantity  - The quantity of the item dropped.
+ * @returns {void}
+ */
 function addLoot(itemId, quantity) {
   renderLootPanel([{ itemId, quantity }]);
 }
 
+/**
+ * Clears the recent-loot list from GameState and empties the loot-display
+ * element in the DOM.
+ * @returns {void}
+ */
 function clearLootDisplay() {
   GameState.recentLoot = [];
   const lootEl = document.getElementById('loot-display');
@@ -913,6 +1072,11 @@ function clearLootDisplay() {
 
 // ─── Game Clock ───────────────────────────────────────────────────────────────
 
+/**
+ * Updates the game-clock element with the current in-game day and 12-hour
+ * time derived from GameState.gameTime.
+ * @returns {void}
+ */
 function updateGameClock() {
   const clockEl = document.getElementById('game-clock');
   if (!clockEl) return;
@@ -927,6 +1091,11 @@ function updateGameClock() {
 
 // ─── Draggable Panels ─────────────────────────────────────────────────────────
 
+/**
+ * Attaches mousedown/mousemove/mouseup drag handlers and collapse-button
+ * click handlers to every `.panel` element that has a `.panel-header`.
+ * @returns {void}
+ */
 function initDraggablePanels() {
   const panels = document.querySelectorAll('.panel');
   panels.forEach(panel => {
@@ -990,6 +1159,11 @@ function initDraggablePanels() {
   });
 }
 
+/**
+ * Reads saved panel positions from storage and applies left/top offsets and
+ * collapsed state to each panel element.
+ * @returns {void}
+ */
 function restorePanelPositions() {
   const positions = getPanelPositions();
   for (const [panelId, pos] of Object.entries(positions)) {
@@ -1009,6 +1183,11 @@ function restorePanelPositions() {
 
 // ─── Update Functions (called from game loop) ─────────────────────────────────
 
+/**
+ * Refreshes the combat log, enemy display, party UI, and top bar, then
+ * updates the stop-button enabled state.
+ * @returns {void}
+ */
 function updateCombatUI() {
   renderCombatLog();
   updateEnemyDisplay();
@@ -1017,6 +1196,11 @@ function updateCombatUI() {
   if (typeof updateStopButtonState === 'function') updateStopButtonState();
 }
 
+/**
+ * Re-renders the party panel and, if a character is being inspected, also
+ * refreshes the inspect and stats panels.
+ * @returns {void}
+ */
 function updatePartyUI() {
   renderPartyPanel();
   if (GameState.inspectedCharIndex !== undefined) {
@@ -1025,6 +1209,11 @@ function updatePartyUI() {
   }
 }
 
+/**
+ * Refreshes the inventory panel and rebuilds the inventory list with
+ * rarity-coloured item entries and tooltips.
+ * @returns {void}
+ */
 function updateInventoryUI() {
   renderInventoryPanel();
 
@@ -1047,11 +1236,20 @@ function updateInventoryUI() {
   });
 }
 
+/**
+ * Refreshes both the kill-count panel and the monster-log panel.
+ * @returns {void}
+ */
 function updateKillCountUI() {
   renderKillCountPanel();
   renderMonsterLogPanel();
 }
 
+/**
+ * Advances the in-game clock by one hour (rolling over at midnight) and
+ * updates the game-clock display.
+ * @returns {void}
+ */
 function updateGameTime() {
   if (!GameState.gameTime) GameState.gameTime = { day: 1, hour: 6 };
   GameState.gameTime.hour++;
@@ -1064,6 +1262,14 @@ function updateGameTime() {
 
 // ─── Offline Progress Modal ───────────────────────────────────────────────────
 
+/**
+ * Displays the offline-progress modal summarising XP earned while the player
+ * was away.
+ * @param {{offlineHours: number, xpEarned: number}} offlineData - Object
+ *   containing the number of hours offline and total XP earned during that
+ *   time.
+ * @returns {void}
+ */
 function showOfflineProgressModal(offlineData) {
   const modal = document.getElementById('offline-modal');
   if (!modal) return;
@@ -1083,6 +1289,11 @@ function showOfflineProgressModal(offlineData) {
 
 // ─── Export / Import UI Handlers ──────────────────────────────────────────────
 
+/**
+ * Opens the export-save modal and pre-populates its textarea with the
+ * base64-encoded save string.
+ * @returns {void}
+ */
 function handleExportSave() {
   const encoded = exportSave();
   if (!encoded) { alert('No save to export.'); return; }
@@ -1094,6 +1305,10 @@ function handleExportSave() {
   }
 }
 
+/**
+ * Opens the import-save modal so the player can paste an exported save string.
+ * @returns {void}
+ */
 function handleImportSave() {
   const modal = document.getElementById('import-modal');
   if (modal) modal.style.display = 'flex';
@@ -1101,6 +1316,12 @@ function handleImportSave() {
 
 // ─── Inventory Panel ──────────────────────────────────────────────────────────
 
+/**
+ * Returns an emoji icon character representing the item's equipment slot or
+ * type for use in inventory and bag slot displays.
+ * @param {string} itemId - The item identifier to look up in ITEMS.
+ * @returns {string} A single emoji character representing the item category.
+ */
 function getItemIcon(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '?';
@@ -1114,6 +1335,11 @@ function getItemIcon(itemId) {
   return '📦';
 }
 
+/**
+ * Renders the full inventory panel including the weight bar, carry/bags/bank
+ * tabs, and wires tab-switching and item-tooltip interactions.
+ * @returns {void}
+ */
 function renderInventoryPanel() {
   const panel = document.getElementById('inventory-panel');
   if (!panel) return;
@@ -1174,6 +1400,11 @@ function renderInventoryPanel() {
   }
 }
 
+/**
+ * Builds and returns the HTML for the carry-slot grid from GameState.inventory,
+ * showing filled slots with icon and stack count and empty slots as blanks.
+ * @returns {string} HTML markup for the carry-slots grid.
+ */
 function renderCarrySlots() {
   const inventory = GameState.inventory || [];
   const MAX_SLOTS = typeof MAX_CARRY_SLOTS !== 'undefined' ? MAX_CARRY_SLOTS : 30;
@@ -1196,6 +1427,11 @@ function renderCarrySlots() {
   return `<div class="inv-grid">${slots.join('')}</div>`;
 }
 
+/**
+ * Builds and returns the HTML for all four bag slots, each containing the
+ * bag's name, capacity, weight-reduction info, and an inline contents grid.
+ * @returns {string} HTML markup for the bag-slots section.
+ */
 function renderBagSlots() {
   const bags = GameState.bags || [null, null, null, null];
   const bagContents = GameState.bagContents || [{}, {}, {}, {}];
@@ -1226,6 +1462,12 @@ function renderBagSlots() {
   return html;
 }
 
+/**
+ * Builds and returns the HTML for the contents grid of a single bag.
+ * @param {number} bagIndex  - Zero-based index into GameState.bagContents.
+ * @param {number} capacity  - Number of slots the bag has.
+ * @returns {string} HTML markup for the bag-contents grid.
+ */
 function renderBagContents(bagIndex, capacity) {
   const contents = (GameState.bagContents || [{}, {}, {}, {}])[bagIndex] || {};
   let html = '';
@@ -1247,6 +1489,11 @@ function renderBagContents(bagIndex, capacity) {
   return html;
 }
 
+/**
+ * Builds and returns the HTML for the 100-slot bank grid along with the
+ * bank header and deposit-all button.
+ * @returns {string} HTML markup for the bank-slots section.
+ */
 function renderBankSlots() {
   const bank = GameState.bank || [];
   const BANK_SLOTS = 100;
@@ -1277,6 +1524,12 @@ function renderBankSlots() {
   `;
 }
 
+/**
+ * Wires left-click (withdraw) and right-click context-menu interactions onto
+ * the bank slot elements inside the given container.
+ * @param {HTMLElement} container - The DOM element containing the bank slots.
+ * @returns {void}
+ */
 function wireBankInteractions(container) {
   // Left-click filled slot → withdraw
   container.querySelectorAll('.bank-slot-filled').forEach(slotEl => {
@@ -1303,6 +1556,14 @@ function wireBankInteractions(container) {
   });
 }
 
+/**
+ * Displays a context menu at the mouse position for a bank slot, providing
+ * withdraw and destroy actions for the item stored there.
+ * @param {MouseEvent} e              - The right-click mouse event used for
+ *   positioning the menu.
+ * @param {number}     bankSlotIndex  - Zero-based index of the bank slot.
+ * @returns {void}
+ */
 function showBankContextMenu(e, bankSlotIndex) {
   document.querySelectorAll('.bank-context-menu').forEach(m => m.remove());
   const stack = (GameState.bank || [])[bankSlotIndex];
@@ -1341,6 +1602,15 @@ function showBankContextMenu(e, bankSlotIndex) {
   setTimeout(() => document.addEventListener('click', dismiss), 0);
 }
 
+/**
+ * Opens a floating deposit-picker popover anchored to an empty bank slot,
+ * listing all depositable inventory items for the player to choose from.
+ * @param {HTMLElement} anchorEl       - The bank-slot element to anchor the
+ *   picker next to.
+ * @param {number}      bankSlotIndex  - Zero-based index of the target bank
+ *   slot.
+ * @returns {void}
+ */
 function showDepositPicker(anchorEl, bankSlotIndex) {
   document.querySelectorAll('.bank-deposit-picker').forEach(p => p.remove());
   const inventory = GameState.inventory || [];
@@ -1390,6 +1660,11 @@ function showDepositPicker(anchorEl, bankSlotIndex) {
 
 // ─── City Panel ───────────────────────────────────────────────────────────────
 
+/**
+ * Renders the city panel by wiring tab-button click handlers (once) and
+ * rendering the currently active tab content.
+ * @returns {void}
+ */
 function renderCityPanel() {
   const cityPanel = document.getElementById('city-panel');
   if (!cityPanel) return;
@@ -1418,6 +1693,13 @@ function renderCityPanel() {
   renderCityTabContent(activeTab);
 }
 
+/**
+ * Renders the content for a specific city tab into its corresponding
+ * `#city-tab-{tab}` element.  Supports `"bank"`, `"market"`, `"guild"`,
+ * `"players"`, and `"leaderboard"` tabs.
+ * @param {string} tab - The tab identifier to render (e.g. `"bank"`).
+ * @returns {void}
+ */
 function renderCityTabContent(tab) {
   const el = document.getElementById(`city-tab-${tab}`);
   if (!el) return;

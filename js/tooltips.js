@@ -1,6 +1,10 @@
 let tooltipEl = null;
 let tooltipTimeout = null;
 
+/**
+ * Creates the tooltip DOM element and attaches global mouse/scroll listeners.
+ * @returns {void}
+ */
 function initTooltips() {
   tooltipEl = document.createElement('div');
   tooltipEl.id = 'tooltip';
@@ -17,6 +21,12 @@ function initTooltips() {
   document.addEventListener('scroll', hideTooltip, true);
 }
 
+/**
+ * Positions the tooltip element relative to the cursor, avoiding viewport edges.
+ * @param {number} x - The horizontal cursor position in client coordinates.
+ * @param {number} y - The vertical cursor position in client coordinates.
+ * @returns {void}
+ */
 function positionTooltip(x, y) {
   const ttW = tooltipEl.offsetWidth;
   const ttH = tooltipEl.offsetHeight;
@@ -33,6 +43,13 @@ function positionTooltip(x, y) {
   tooltipEl.style.top = top + 'px';
 }
 
+/**
+ * Sets tooltip innerHTML and makes the tooltip visible at the given coordinates.
+ * @param {string} html - The HTML string to render inside the tooltip.
+ * @param {number} x - The horizontal cursor position in client coordinates.
+ * @param {number} y - The vertical cursor position in client coordinates.
+ * @returns {void}
+ */
 function showTooltip(html, x, y) {
   if (!tooltipEl) initTooltips();
   tooltipEl.innerHTML = html;
@@ -40,11 +57,21 @@ function showTooltip(html, x, y) {
   positionTooltip(x, y);
 }
 
+/**
+ * Hides the tooltip and clears any pending show timeout.
+ * @returns {void}
+ */
 function hideTooltip() {
   if (tooltipEl) tooltipEl.style.display = 'none';
   clearTimeout(tooltipTimeout);
 }
 
+/**
+ * Attaches mouseenter/mouseleave/mousemove handlers to an element for delayed tooltip display.
+ * @param {object} element - The DOM element to attach tooltip behavior to.
+ * @param {Function} getHtmlFn - A function (or HTML string) that returns the tooltip HTML.
+ * @returns {void}
+ */
 function attachTooltip(element, getHtmlFn) {
   element.addEventListener('mouseenter', (e) => {
     tooltipTimeout = setTimeout(() => {
@@ -60,6 +87,11 @@ function attachTooltip(element, getHtmlFn) {
   });
 }
 
+/**
+ * Builds and returns the full item tooltip HTML string with stats, flags, and flavor.
+ * @param {string} itemId - The key used to look up the item in the ITEMS global.
+ * @returns {string} An HTML string representing the complete item tooltip.
+ */
 function getItemTooltipHTML(itemId) {
   const item = ITEMS[itemId];
   if (!item) return '<div class="tt-error">Unknown item</div>';
@@ -117,6 +149,11 @@ function getItemTooltipHTML(itemId) {
   return html;
 }
 
+/**
+ * Builds the enemy tooltip HTML with level, con color, XP, and loot table.
+ * @param {string} enemyId - The key used to look up the enemy in the ENEMIES global.
+ * @returns {string} An HTML string representing the complete enemy tooltip.
+ */
 function getEnemyTooltipHTML(enemyId) {
   const enemy = ENEMIES[enemyId];
   if (!enemy) return '<div class="tt-error">Unknown enemy</div>';
@@ -165,6 +202,11 @@ function getEnemyTooltipHTML(enemyId) {
   return html;
 }
 
+/**
+ * Returns tooltip HTML describing a stat (STR, DEX, AGI, etc.).
+ * @param {string} statName - The stat identifier (e.g., 'STR', 'SV Magic').
+ * @returns {string} An HTML string with the stat name and description.
+ */
 function getStatTooltipHTML(statName) {
   const statDescriptions = {
     STR: 'Strength — Increases melee damage and attack power. Affects max hit. Cap: 255.',
@@ -189,6 +231,11 @@ function getStatTooltipHTML(statName) {
   return `<div class="tt-stat-desc"><div class="tt-name" style="color:#c8a84b">${statName}</div><div class="tt-body">${desc}</div></div>`;
 }
 
+/**
+ * Returns tooltip HTML for a class ability with mana, cast time, and recast info.
+ * @param {object} ability - The ability object with name, manaCost, castTime, recastTime, and description.
+ * @returns {string} An HTML string representing the ability tooltip.
+ */
 function getAbilityTooltipHTML(ability) {
   if (!ability) return '';
   let html = `<div class="tt-ability">`;
@@ -201,6 +248,11 @@ function getAbilityTooltipHTML(ability) {
   return html;
 }
 
+/**
+ * Returns tooltip HTML with a class overview and description.
+ * @param {string} classId - The class identifier used to look up the class in the CLASSES global.
+ * @returns {string} An HTML string representing the class tooltip.
+ */
 function getClassTooltipHTML(classId) {
   const cls = CLASSES[classId];
   if (!cls) return '';

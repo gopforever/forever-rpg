@@ -2,6 +2,10 @@
 
 // ─── Guild Data ───────────────────────────────────────────────────────────────
 
+/**
+ * Map of class ID to guild info for each playable class in Qeynos.
+ * @type {object}
+ */
 const GUILDS = {
   warrior:      { name: 'Warriors of the Shield',   npc: 'Sergeant Darius Gandros', location: 'North Qeynos' },
   paladin:      { name: 'The Protectors of Pine',   npc: 'High Priest Nondank',     location: 'North Qeynos' },
@@ -23,6 +27,10 @@ const GUILDS = {
 
 // ─── City Vendor Inventory ────────────────────────────────────────────────────
 
+/**
+ * Array of vendor-sold items with buy prices.
+ * @type {Array<object>}
+ */
 const CITY_VENDORS = [
   { itemId: 'cloth_cap',     buyPrice: 10  },
   { itemId: 'cloth_tunic',   buyPrice: 18  },
@@ -39,6 +47,10 @@ const CITY_VENDORS = [
 
 // ─── Guild Spells ─────────────────────────────────────────────────────────────
 
+/**
+ * Array of purchasable spells organized by class, level, and effect.
+ * @type {Array<object>}
+ */
 const GUILD_SPELLS = [
   // Cleric
   { id: 'spell_minor_healing',   name: 'Minor Healing',             classId: 'cleric',       level: 1,  manaCost: 10, effect: { healAmount: 30  }, buyPrice: 500  },
@@ -87,6 +99,11 @@ const GUILD_SPELLS = [
 
 // ─── Coin Formatting ──────────────────────────────────────────────────────────
 
+/**
+ * Converts a copper integer amount to a formatted coin string like "2g 3s 5c".
+ * @param {number} copper - Total amount in copper pieces.
+ * @returns {string} Formatted coin string.
+ */
 function formatCoins(copper) {
   if (!copper || copper <= 0) return '0c';
   const gold   = Math.floor(copper / 1000);
@@ -101,18 +118,38 @@ function formatCoins(copper) {
 
 // ─── City Logic Functions ─────────────────────────────────────────────────────
 
+/**
+ * Returns the guild object for the given class ID, or null if none exists.
+ * @param {string} classId - The class identifier (e.g. 'warrior', 'cleric').
+ * @returns {object|null} Guild info object or null.
+ */
 function getGuildForClass(classId) {
   return GUILDS[classId] || null;
 }
 
+/**
+ * Returns spells available to a class at or below the given level.
+ * @param {string} classId - The class identifier.
+ * @param {number} level   - The character's current level.
+ * @returns {Array<object>} Filtered array of matching spell objects.
+ */
 function getAvailableSpells(classId, level) {
   return GUILD_SPELLS.filter(s => s.classId === classId && s.level <= level);
 }
 
+/**
+ * Returns the party's total wealth expressed in copper from GameState gold/silver/copper.
+ * @returns {number} Total copper value.
+ */
 function getTotalCopper() {
   return ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
 }
 
+/**
+ * Deducts the given copper amount from GameState, redistributing across gold/silver/copper.
+ * @param {number} amount - Amount in copper to deduct.
+ * @returns {boolean} True if the deduction succeeded, false if insufficient funds.
+ */
 function deductCopper(amount) {
   let total = getTotalCopper() - amount;
   if (total < 0) return false;
@@ -123,6 +160,11 @@ function deductCopper(amount) {
   return true;
 }
 
+/**
+ * Purchases a spell from the guild and adds it to the learned spells list.
+ * @param {string} spellId - The ID of the spell to purchase.
+ * @returns {boolean} True if the purchase succeeded, false otherwise.
+ */
 function buySpell(spellId) {
   const spell = GUILD_SPELLS.find(s => s.id === spellId);
   if (!spell) { addCombatLog('Unknown spell.', 'system'); return false; }
@@ -154,6 +196,11 @@ function buySpell(spellId) {
   return true;
 }
 
+/**
+ * Purchases an item from the city vendor and adds it to the party inventory.
+ * @param {string} itemId - The ID of the item to purchase.
+ * @returns {boolean} True if the purchase succeeded, false otherwise.
+ */
 function buyFromVendor(itemId) {
   const entry = CITY_VENDORS.find(v => v.itemId === itemId);
   if (!entry) { addCombatLog('Item not available.', 'system'); return false; }
@@ -175,6 +222,12 @@ function buyFromVendor(itemId) {
   return true;
 }
 
+/**
+ * Sells a quantity of an item from the party inventory to the vendor.
+ * @param {string} itemId   - The ID of the item to sell.
+ * @param {number} quantity - Number of items to sell.
+ * @returns {boolean} True if the sale succeeded, false otherwise.
+ */
 function sellToVendor(itemId, quantity) {
   quantity = quantity || 1;
 
@@ -216,6 +269,12 @@ function sellToVendor(itemId, quantity) {
 
 // ─── Bank Operations ──────────────────────────────────────────────────────────
 
+/**
+ * Deposits an item from the party inventory into the bank.
+ * @param {string} itemId             - The ID of the item to deposit.
+ * @param {number} fromInventoryIndex - Index of the item in GameState.inventory.
+ * @returns {boolean} True if the deposit succeeded, false otherwise.
+ */
 function depositItemToBank(itemId, fromInventoryIndex) {
   if (!GameState.inventory) return false;
   const stack = GameState.inventory[fromInventoryIndex];
@@ -238,6 +297,11 @@ function depositItemToBank(itemId, fromInventoryIndex) {
   return true;
 }
 
+/**
+ * Withdraws an item from the bank into the party inventory.
+ * @param {number} bankSlotIndex - Index of the bank slot to withdraw from.
+ * @returns {boolean} True if the withdrawal succeeded, false otherwise.
+ */
 function withdrawItemFromBank(bankSlotIndex) {
   if (!GameState.bank) return false;
   const stack = GameState.bank[bankSlotIndex];
@@ -263,6 +327,11 @@ function withdrawItemFromBank(bankSlotIndex) {
 
 // ─── Zone Travel ──────────────────────────────────────────────────────────────
 
+/**
+ * Moves the party to the specified zone, stopping combat and refreshing all zone UI.
+ * @param {string} zoneId - The ID of the zone to travel to.
+ * @returns {void}
+ */
 function travelToZone(zoneId) {
   const zone = typeof ZONES !== 'undefined' ? ZONES[zoneId] : null;
   if (!zone) { addCombatLog('Unknown zone.', 'system'); return; }

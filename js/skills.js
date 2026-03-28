@@ -1,8 +1,16 @@
 // skills.js - P99/EverQuest-authentic per-character skill system for Forever RPG
 
+/** New characters start with 1 to this value points in each unlocked skill. */
 const INITIAL_SKILL_RANGE = 10;    // new chars start with 1–10 points in each unlocked skill
+
+/** Skill-ups are announced to the combat log at multiples of this value. */
 const SKILL_MILESTONE_INTERVAL = 25; // announce skill-ups at multiples of this value
 
+/**
+ * Per-class map of skill names to their absolute maximum value (hard cap).
+ * Used to clamp skill gains regardless of level.
+ * @type {object}
+ */
 const SKILL_HARD_CAPS = {
   warrior: {
     offense: 252, defense: 252, oneHandSlash: 252, oneHandBlunt: 252,
@@ -102,6 +110,11 @@ const SKILL_HARD_CAPS = {
   },
 };
 
+/**
+ * Maps each class ID to its archetype tier: melee, hybrid, priest, or caster.
+ * Used to determine skill gain rate.
+ * @type {object}
+ */
 const CLASS_TIER = {
   warrior: 'melee', monk: 'melee', rogue: 'melee', berserker: 'melee',
   paladin: 'hybrid', shadowknight: 'hybrid', ranger: 'hybrid', bard: 'hybrid', beastlord: 'hybrid',
@@ -109,8 +122,16 @@ const CLASS_TIER = {
   wizard: 'caster', magician: 'caster', enchanter: 'caster', necromancer: 'caster',
 };
 
+/**
+ * Maps class tier to the per-level skill cap multiplier used in getSkillCap().
+ * @type {object}
+ */
 const TIER_MULTIPLIER = { melee: 5, hybrid: 5, priest: 4, caster: 3 };
 
+/**
+ * Per-class map of skill names to the level at which that skill becomes available.
+ * @type {object}
+ */
 const SKILL_UNLOCK_LEVELS = {
   warrior: {
     offense: 1, defense: 1, oneHandSlash: 1, oneHandBlunt: 1,
@@ -207,6 +228,10 @@ const SKILL_UNLOCK_LEVELS = {
   },
 };
 
+/**
+ * Maps each skill name to the primary stat that governs its skill-up roll probability.
+ * @type {object}
+ */
 const SKILL_STAT = {
   offense: 'STR', defense: 'AGI',
   oneHandSlash: 'STR', oneHandBlunt: 'STR', twoHandSlash: 'STR',
@@ -228,6 +253,10 @@ const SKILL_STAT = {
   senseUndead: 'WIS', senseDead: 'INT',
 };
 
+/**
+ * Maps skill keys (camelCase) to human-readable display names shown in the UI.
+ * @type {object}
+ */
 const SKILL_DISPLAY_NAMES = {
   offense: 'Offense', defense: 'Defense',
   oneHandSlash: '1H Slash', oneHandBlunt: '1H Blunt',

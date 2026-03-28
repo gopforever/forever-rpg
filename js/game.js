@@ -2,6 +2,11 @@
 // FOREVER RPG — Main Game State & Loop
 // ============================================================
 
+/**
+ * Global mutable state object for the entire game session.
+ * Tracks party, enemies, inventory, zone, combat state, and settings.
+ * @type {object}
+ */
 const GameState = {
   party: [],
   currentEnemy: null,
@@ -40,11 +45,19 @@ const GameState = {
 // Game Loop Intervals
 // ============================================================
 
+/** @type {number|null} Interval handle for the combat tick loop. */
 let combatInterval = null;
+/** @type {number|null} Interval handle for the game tick (100ms mana regen and buff decay). */
 let gameTickInterval = null;
+/** @type {number|null} Interval handle for the auto-save tick. */
 let autoSaveInterval = null;
+/** @type {number|null} Interval handle for the in-game clock. */
 let clockInterval = null;
 
+/**
+ * Initializes all game timer loops (combat, game tick, auto-save, and clock).
+ * @returns {void}
+ */
 function startGameLoops() {
   // Clear any existing intervals
   if (combatInterval) clearInterval(combatInterval);
@@ -73,6 +86,10 @@ function startGameLoops() {
 }
 
 // Called every 100ms
+/**
+ * Called every 100ms to handle mana regeneration and out-of-combat buff decay.
+ * @returns {void}
+ */
 function gameTick() {
   const now = Date.now();
 
@@ -100,6 +117,10 @@ function gameTick() {
   }
 }
 
+/**
+ * Flashes the save indicator element in the DOM to confirm a successful save.
+ * @returns {void}
+ */
 function updateSaveIndicator() {
   const el = document.getElementById('save-indicator');
   if (el) {
@@ -113,6 +134,10 @@ function updateSaveIndicator() {
 // Initialization
 // ============================================================
 
+/**
+ * Entry point for the game — checks for an existing save, launches the UI, and starts game loops.
+ * @returns {void}
+ */
 function init() {
   // Check for existing save
   if (typeof hasSave === 'function' && hasSave()) {
@@ -150,6 +175,10 @@ function init() {
   startGameLoops();
 }
 
+/**
+ * Attaches all DOM event listeners for buttons and interactive controls.
+ * @returns {void}
+ */
 function wireUpButtons() {
   // Begin Adventure button
   const beginBtn = document.getElementById('begin-adventure-btn');
@@ -313,6 +342,10 @@ function wireUpButtons() {
   }
 }
 
+/**
+ * Toggles the visibility of the settings panel.
+ * @returns {void}
+ */
 function toggleSettingsPanel() {
   const panel = document.getElementById('settings-panel');
   if (panel) {
@@ -321,6 +354,10 @@ function toggleSettingsPanel() {
   }
 }
 
+/**
+ * Updates the enabled/disabled state and labels of combat, pull, camp, and sit buttons.
+ * @returns {void}
+ */
 function updateStopButtonState() {
   const stopBtn = document.getElementById('stop-combat-btn');
   if (!stopBtn) return;

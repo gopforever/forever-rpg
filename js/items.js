@@ -1,3 +1,60 @@
+/**
+ * Registry of every item in the game, keyed by snake_case item ID.
+ *
+ * Each entry describes a single item definition shared across all instances
+ * of that item. Fields marked optional may be absent on items where they
+ * do not apply.
+ *
+ * @type {Object<string, {
+ *   id:              string,
+ *   name:            string,
+ *   slot:            string,
+ *   type:            string,
+ *   rarity:          string,
+ *   lore:            boolean,
+ *   nodrop:          boolean,
+ *   weight:          number,
+ *   classes:         Array<string>,
+ *   races:           Array<string>,
+ *   flavor:          string,
+ *   dmg?:            number,
+ *   delay?:          number,
+ *   weaponType?:     string,
+ *   ac?:             number,
+ *   stats?:          object,
+ *   resists?:        object,
+ *   effect?:         string,
+ *   capacity?:       number,
+ *   weightReduction?: number
+ * }>}
+ *
+ * @property {string}        id              - Snake_case identifier matching the map key.
+ * @property {string}        name            - Display name shown in the UI.
+ * @property {string}        slot            - Equipment slot: 'primary', 'secondary', 'head',
+ *                                            'chest', 'legs', 'feet', 'bag', etc.
+ * @property {string}        type            - Category: 'weapon', 'armor', 'consumable',
+ *                                            'bag', 'tradeskill'.
+ * @property {string}        rarity          - 'common', 'magic', 'rare', or 'named'.
+ * @property {boolean}       lore            - If true, only one copy may be carried at a time.
+ * @property {boolean}       nodrop          - If true, the item cannot be traded, sold, or banked.
+ * @property {number}        weight          - Item weight contributing to encumbrance.
+ * @property {Array<string>} classes         - Class IDs allowed to use this item; empty = all classes.
+ * @property {Array<string>} races           - Race IDs allowed to use this item; empty = all races.
+ * @property {string}        flavor          - Italic lore / flavor text displayed on the item tooltip.
+ * @property {number}        [dmg]           - (Weapons) Base damage per hit.
+ * @property {number}        [delay]         - (Weapons) Attack delay in tenths of a second.
+ * @property {string}        [weaponType]    - (Weapons) Damage type: 'slash', 'pierce', 'blunt',
+ *                                            or 'hand_to_hand'.
+ * @property {number}        [ac]            - (Armor) Armor class value.
+ * @property {object}        [stats]         - Optional attribute bonuses, e.g.
+ *                                            { STR, DEX, AGI, STA, WIS, INT, CHA, hp, mana }.
+ * @property {object}        [resists]       - Optional resist bonuses, e.g.
+ *                                            { magic, fire, cold, poison, disease }.
+ * @property {string}        [effect]        - On-use or worn effect name.
+ * @property {number}        [capacity]      - (Bags) Number of item slots inside the bag.
+ * @property {number}        [weightReduction] - (Bags) Percentage weight reduction applied to
+ *                                            contents.
+ */
 const ITEMS = {
   // ─── WEAPONS ───────────────────────────────────────────────────────────────
 
@@ -851,6 +908,13 @@ const ITEMS = {
   },
 };
 
+/**
+ * Maps each class ID to the ordered list of item IDs equipped on that class
+ * when a new character is created.  Items are applied in array order, so
+ * earlier entries take priority if slot conflicts arise.
+ *
+ * @type {Object<string, Array<string>>}
+ */
 const STARTING_GEAR = {
   warrior:     ['short_sword', 'small_shield', 'cloth_cap', 'crude_leather_tunic', 'cloth_pants', 'simple_boots'],
   paladin:     ['short_sword', 'small_shield', 'cloth_cap', 'crude_leather_tunic', 'cloth_pants', 'simple_boots'],
@@ -870,10 +934,24 @@ const STARTING_GEAR = {
   shaman:      ['crude_staff', 'cloth_cap', 'crude_leather_tunic', 'cloth_pants', 'simple_boots'],
 };
 
+/**
+ * Retrieves a single item definition by its snake_case ID.
+ *
+ * @param {string} id - The snake_case item ID to look up.
+ * @returns {object|null} The item definition object, or null if not found.
+ */
 function getItemById(id) {
   return ITEMS[id] || null;
 }
 
+/**
+ * Creates a lightweight inventory stack descriptor for the given item.
+ *
+ * @param {string} itemId    - The snake_case ID of the item.
+ * @param {number} [quantity=1] - Number of items in the stack.
+ * @returns {{ itemId: string, quantity: number, item: object }} Stack descriptor
+ *   containing the item ID, quantity, and the full item definition object.
+ */
 function createInventoryStack(itemId, quantity = 1) {
   return { itemId, quantity, item: ITEMS[itemId] };
 }

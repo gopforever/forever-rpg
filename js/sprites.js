@@ -1,5 +1,12 @@
 'use strict';
 
+/**
+ * Map of entity IDs to inline SVG strings used to render enemy and
+ * character icons throughout the UI.  Each key is an enemy/entity ID
+ * (e.g. `"mangy_rat"`) and each value is a self-contained SVG markup
+ * string sized at 64 × 64 viewBox units.
+ * @type {Object.<string, string>}
+ */
 const SPRITES = {
 
   mangy_rat: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -763,10 +770,22 @@ const PORTRAITS = {
 
 };
 
+/**
+ * Returns the inline SVG string for the given entity ID, falling back to a
+ * grey question-mark placeholder when no sprite is registered for that ID.
+ * @param {string} enemyId - The entity/enemy ID to look up in SPRITES.
+ * @returns {string} The inline SVG markup for the entity icon.
+ */
 function getSprite(enemyId) {
   return SPRITES[enemyId] || `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="4" fill="#888888"/><text x="32" y="38" text-anchor="middle" fill="#fff" font-size="10" font-family="sans-serif">?</text></svg>`;
 }
 
+/**
+ * Returns a 128 × 128 version of the sprite for the given entity ID by
+ * rewriting the width/height attributes on the SVG element.
+ * @param {string} enemyId - The entity/enemy ID whose sprite should be enlarged.
+ * @returns {string} The inline SVG markup resized to 128 × 128 pixels.
+ */
 function getLargeSprite(enemyId) {
   const svg = getSprite(enemyId);
   return svg.replace('<svg ', '<svg width="128" height="128" ');

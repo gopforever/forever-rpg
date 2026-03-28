@@ -3,24 +3,45 @@
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
+/** @type {string} LocalStorage key used to persist the serialized ghost player array. */
 const GHOST_SAVE_KEY     = 'foreverRPG_ghosts';
+/** @type {string} LocalStorage key storing the Unix-ms timestamp of the last ghost tick. */
 const GHOST_TICK_KEY     = 'foreverRPG_ghostTick';
+/** @type {string} LocalStorage key storing the current ghost data schema version number. */
 const GHOST_VERSION_KEY  = 'foreverRPG_ghostsVersion';
+/** @type {number} Schema version for ghost player data; stale data is wiped on mismatch. */
 const GHOST_PLAYERS_VERSION = 2;
+/** @type {string} LocalStorage key used to persist the serialized player market listing array. */
 const MARKET_SAVE_KEY    = 'foreverRPG_market';
+/** @type {number} Number of real-world seconds that elapse per ghost simulation tick. */
 const TICK_SECONDS       = 30;           // 30 real seconds = 1 tick
+/** @type {number} Maximum ticks applied when catching up offline progress (caps at 72 hours). */
 const MAX_OFFLINE_TICKS  = 8640;         // 8640 ticks (72 hours at 30-second intervals)
+/** @type {number} Milliseconds between automatic market listing trickle updates (2.5 minutes). */
 const MARKET_TRICKLE_MS  = 150000;       // 2.5 minutes
+/** @type {number} Maximum number of chat messages retained and rendered in the zone chat log. */
 const CHAT_MAX_MESSAGES  = 30;
+/** @type {number} Maximum number of world-event badges shown in the world feed panel at once. */
 const WORLD_FEED_MAX     = 3;
+/** @type {number} Maximum number of ghost players shown in the Who's Online panel. */
 const WHO_ONLINE_MAX     = 8;
+/** @type {number} Minimum number of ghost players shown in the Who's Online panel. */
 const WHO_ONLINE_MIN     = 4;
+/** @type {number} Minimum delay in milliseconds between consecutive ghost chat messages. */
 const CHAT_MIN_DELAY_MS  = 20000;        // minimum 20 seconds between chat messages
+/** @type {number} Maximum additional random delay in milliseconds added on top of CHAT_MIN_DELAY_MS. */
 const CHAT_DELAY_RANGE_MS = 25000;       // random extra 0–25 seconds
+/** @type {number} Minimum delay in milliseconds between consecutive world-feed events. */
 const WORLD_EVENT_MIN_MS = 30000;        // minimum 30 seconds between world events
+/** @type {number} Maximum additional random delay in milliseconds added on top of WORLD_EVENT_MIN_MS. */
 const WORLD_EVENT_RANGE_MS = 60000;      // random extra 0–60 seconds
 
 // Class icons matching CLASSES object
+/**
+ * Maps each class ID to its representative emoji icon used in chat and the Who's Online panel.
+ *
+ * @type {Object<string, string>}
+ */
 const CLASS_ICONS = {
   warrior:     '⚔️',
   paladin:     '🛡️',
@@ -41,6 +62,12 @@ const CLASS_ICONS = {
 };
 
 // Class color for chat names
+/**
+ * Maps each class ID to a WoW-style hex color string used to colorize player names in chat
+ * and the Who's Online panel.
+ *
+ * @type {Object<string, string>}
+ */
 const CLASS_COLORS = {
   warrior:     '#c0c0c0',
   paladin:     '#f58cba',
@@ -61,6 +88,12 @@ const CLASS_COLORS = {
 };
 
 // Ghost player name pool — EverQuest-style fantasy names (account/leader names)
+/**
+ * Pool of EverQuest-style fantasy names used as ghost player leader names.
+ * One ghost is created per name, so the pool size determines total ghost count.
+ *
+ * @type {Array<string>}
+ */
 const GHOST_NAMES = [
   'Thalindra','Drakkon','Seraphina','Gorthak','Mireille','Vaelith','Bryndor','Cressida',
   'Zoltan','Fenwick','Alyxandre','Brimthorn','Caelindra','Darkveil','Elyndra','Frostwick',
@@ -70,6 +103,12 @@ const GHOST_NAMES = [
 ];
 
 // Separate name pool for party members (distinct from leader names)
+/**
+ * Pool of fantasy names assigned to non-leader ghost party members.
+ * Kept separate from GHOST_NAMES to avoid name collisions within a party.
+ *
+ * @type {Array<string>}
+ */
 const PARTY_MEMBER_NAMES = [
   'Arithar','Baelindra','Cyranoth','Delvara','Evindrel','Faerith','Gaelindra',
   'Heloria','Indreth','Jarindra','Kelavar','Larimoth','Mindrath','Naelindra',
@@ -83,19 +122,44 @@ const PARTY_MEMBER_NAMES = [
 ];
 
 // All playable class IDs
+/**
+ * Complete list of playable class IDs used when randomly assigning a class to a ghost player.
+ *
+ * @type {Array<string>}
+ */
 const GHOST_CLASSES = [
   'warrior','paladin','shadowknight','ranger','rogue','bard','monk',
   'wizard','magician','enchanter','necromancer','cleric','druid','shaman','beastlord','berserker',
 ];
 
 // Class role buckets for MMO-authentic party composition
+/**
+ * Class IDs that fulfil the healer role; used to ensure parties of 3+ include a healer.
+ *
+ * @type {Array<string>}
+ */
 const HEALER_CLASSES = ['cleric','druid','shaman'];
+/**
+ * Class IDs that fulfil the tank role; used to ensure parties of 4+ include a tank.
+ *
+ * @type {Array<string>}
+ */
 const TANK_CLASSES   = ['warrior','paladin','shadowknight'];
 
 // All zone IDs (must match zones.js)
+/**
+ * All zone IDs available in the game.  Must stay in sync with the ZONES registry in zones.js.
+ *
+ * @type {Array<string>}
+ */
 const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos'];
 
 // Non-city zones used for ghost activity
+/**
+ * Subset of ALL_ZONES containing non-city (combat) zones where ghosts actively hunt.
+ *
+ * @type {Array<string>}
+ */
 const COMBAT_ZONES = ['qeynos_hills','blackburrow'];
 
 // Enemy names by zone for flavor text
@@ -139,6 +203,12 @@ const ZONE_LOCS = {
 // Sellable item names for chat / market (grabbed dynamically, cached here)
 let _sellableItems = null;
 
+/**
+ * Returns (and caches) the list of all tradeable items derived from the ITEMS registry.
+ * Items with `nodrop: true` or without a `name` are excluded.
+ *
+ * @returns {Array<object>} Array of item definition objects that can be sold or traded.
+ */
 function getSellableItems() {
   if (_sellableItems) return _sellableItems;
   if (typeof ITEMS === 'undefined') return [];
@@ -148,24 +218,52 @@ function getSellableItems() {
 
 // ─── Seeded Random Helpers ──────────────────────────────────────────────────────
 
+/**
+ * Mulberry32 seeded pseudo-random number generator.
+ * Produces a deterministic float in [0, 1) for a given 32-bit integer seed.
+ *
+ * @param {number} seed - 32-bit integer seed value.
+ * @returns {number} Pseudo-random float in the range [0, 1).
+ */
 function seededRand(seed) {
-  // Simple mulberry32 PRNG
   let t = seed + 0x6D2B79F5;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
+/**
+ * Derives a deterministic integer seed from a ghost's numeric ID, the current day,
+ * and an optional extra discriminator.  Mixing in the day gives slow drift over time
+ * while keeping the output stable within a single session.
+ *
+ * @param {number} ghostId - The ghost player's numeric ID.
+ * @param {number} [extra=0] - Optional extra value to further differentiate seeds.
+ * @returns {number} A 32-bit integer seed suitable for seededRand().
+ */
 function ghostSeed(ghostId, extra) {
   // Mix ghost id with day number (and optional extra) for deterministic feel
   const day = Math.floor(Date.now() / 86400000);
   return (ghostId * 31337 + day * 9973 + (extra || 0)) | 0;
 }
 
+/**
+ * Picks a random element from an array using a seeded RNG for deterministic selection.
+ *
+ * @param {Array<object>} arr  - The array to pick from.
+ * @param {number}        seed - Integer seed passed to seededRand().
+ * @returns {object} A single element from arr chosen deterministically by seed.
+ */
 function seededPick(arr, seed) {
   return arr[Math.floor(seededRand(seed) * arr.length)];
 }
 
+/**
+ * Generates a random character level weighted toward the mid-range (10–35),
+ * with tails for low-level (1–9), high-level (36–50), and max-tier (51–60) players.
+ *
+ * @returns {number} A level between 1 and 60 inclusive.
+ */
 function weightedLevel() {
   // Weighted toward mid-range 10–35, min 1, max 60
   const r = Math.random();
@@ -177,6 +275,17 @@ function weightedLevel() {
 
 // ─── Ghost Party Builder ─────────────────────────────────────────────────────────
 
+/**
+ * Builds a ghost party with the leader as the first member.
+ * Parties of 3+ guarantee a healer; parties of 4+ also guarantee a tank,
+ * unless the leader already fills that role.  Each member gets a unique name
+ * drawn from PARTY_MEMBER_NAMES and a unique class.
+ *
+ * @param {string} leaderName    - Display name of the party leader.
+ * @param {string} leaderClassId - Class ID of the party leader.
+ * @returns {Array<{ name: string, classId: string, level: number, xp: number }>}
+ *   Ordered array of party members starting with the leader.
+ */
 function createGhostParty(leaderName, leaderClassId) {
   const size = 1 + Math.floor(Math.random() * 5);   // 1 to 5 members total
   const usedClasses = new Set([leaderClassId]);
@@ -225,6 +334,13 @@ function createGhostParty(leaderName, leaderClassId) {
 
 // ─── Ghost Player Definitions ───────────────────────────────────────────────────
 
+/**
+ * Creates the initial array of ghost player objects, one per entry in GHOST_NAMES.
+ * Each ghost starts at level 1 in a random combat zone and is assigned a randomized
+ * XP rate multiplier and a freshly built party.
+ *
+ * @returns {Array<object>} Array of ghost player objects ready for persistence and simulation.
+ */
 function createGhostPlayers() {
   const ghosts = [];
   for (let i = 0; i < GHOST_NAMES.length; i++) {
@@ -251,6 +367,13 @@ function createGhostPlayers() {
 
 // ─── Persistence ────────────────────────────────────────────────────────────────
 
+/**
+ * Loads the persisted ghost player array from localStorage.
+ * Returns null when data is absent, corrupted, or from a mismatched schema version
+ * (stale data is automatically cleared in that case).
+ *
+ * @returns {Array<object>|null} Parsed ghost array, or null if unavailable.
+ */
 function loadGhosts() {
   try {
     const version = parseInt(localStorage.getItem(GHOST_VERSION_KEY) || '0', 10);
@@ -267,6 +390,13 @@ function loadGhosts() {
   return null;
 }
 
+/**
+ * Serializes the ghost player array to localStorage along with the current schema version.
+ * Errors (e.g., storage quota exceeded) are silently swallowed.
+ *
+ * @param {Array<object>} ghosts - Array of ghost player objects to persist.
+ * @returns {void}
+ */
 function saveGhosts(ghosts) {
   try {
     localStorage.setItem(GHOST_SAVE_KEY, JSON.stringify(ghosts));
@@ -274,6 +404,12 @@ function saveGhosts(ghosts) {
   } catch (_) {}
 }
 
+/**
+ * Loads the persisted market listing array from localStorage.
+ * Returns null when data is absent or corrupted.
+ *
+ * @returns {Array<object>|null} Parsed market listings, or null if unavailable.
+ */
 function loadMarket() {
   try {
     const raw = localStorage.getItem(MARKET_SAVE_KEY);
@@ -282,6 +418,13 @@ function loadMarket() {
   return null;
 }
 
+/**
+ * Serializes the market listing array to localStorage.
+ * Errors (e.g., storage quota exceeded) are silently swallowed.
+ *
+ * @param {Array<object>} listings - Market listing objects to persist.
+ * @returns {void}
+ */
 function saveMarket(listings) {
   try {
     localStorage.setItem(MARKET_SAVE_KEY, JSON.stringify(listings));
@@ -290,6 +433,15 @@ function saveMarket(listings) {
 
 // ─── Offline Ghost Progression ──────────────────────────────────────────────────
 
+/**
+ * Advances a single ghost player by one simulation tick.
+ * Grants XP, kills, and gold scaled to the ghost's level and individual XP rate.
+ * Triggers level-ups (capped at 60), syncs party member levels, and occasionally
+ * moves the ghost to a different combat zone on level-up.
+ *
+ * @param {object} ghost - A ghost player object from the _ghosts array (mutated in place).
+ * @returns {object} The mutated ghost object.
+ */
 function simulateGhostTick(ghost) {
   // XP per tick scales with level and ghost's individual XP rate
   const rate = ghost.xpRate || 1;
@@ -322,6 +474,14 @@ function simulateGhostTick(ghost) {
   return ghost;
 }
 
+/**
+ * Calculates how many simulation ticks have elapsed since the last saved tick timestamp
+ * and applies that many ticks to every ghost (capped at MAX_OFFLINE_TICKS).
+ * Updates the stored tick timestamp on completion.
+ *
+ * @param {Array<object>} ghosts - Array of ghost player objects (mutated in place).
+ * @returns {Array<object>} The same mutated ghosts array.
+ */
 function simulateOfflineProgression(ghosts) {
   let lastTick = 0;
   try {
@@ -363,6 +523,14 @@ let _marketTrickleInterval = null;
 
 // ─── World Feed ─────────────────────────────────────────────────────────────────
 
+/**
+ * Appends a world-event badge to the world-feed DOM element.
+ * Removes the oldest badge when the panel exceeds WORLD_FEED_MAX entries.
+ * The badge auto-dismisses after 10 seconds.
+ *
+ * @param {string} text - HTML string to display inside the badge.
+ * @returns {void}
+ */
 function pushWorldEvent(text) {
   const feed = document.getElementById('world-feed');
   if (!feed) return;
@@ -383,6 +551,12 @@ function pushWorldEvent(text) {
   }, 10000);
 }
 
+/**
+ * Picks a random ghost and generates a world-feed event: a kill, level-up, death,
+ * or item acquisition message, each with different probabilities.
+ *
+ * @returns {void}
+ */
 function generateWorldEvent() {
   const ghost = _ghosts[Math.floor(Math.random() * _ghosts.length)];
   if (!ghost) return;
@@ -414,10 +588,24 @@ function generateWorldEvent() {
 
 let _chatMessages = [];
 
+/**
+ * Wraps item link tokens of the form `[Item Name]` in a styled `<span>` for display in chat.
+ *
+ * @param {string} text - Raw chat message text potentially containing `[Item Name]` tokens.
+ * @returns {string} HTML string with item tokens replaced by styled spans.
+ */
 function formatChatItem(text) {
   return text.replace(/\[([^\]]+)\]/g, '<span class="chat-item">[$1]</span>');
 }
 
+/**
+ * Appends a new chat line from the given ghost to the zone-chat-log DOM element
+ * and to the in-memory _chatMessages buffer.  Trims the log to CHAT_MAX_MESSAGES.
+ *
+ * @param {object} ghost - Ghost player object providing name, classId, etc.
+ * @param {string} text  - Plain-text or item-link-annotated message body.
+ * @returns {void}
+ */
 function addChatMessage(ghost, text) {
   const log = document.getElementById('zone-chat-log');
   const color = CLASS_COLORS[ghost.classId] || '#e8d5a0';
@@ -441,6 +629,14 @@ function addChatMessage(ghost, text) {
   log.scrollTop = log.scrollHeight;
 }
 
+/**
+ * Generates a context-appropriate chat message string for the given ghost.
+ * Selects a template category (LFG, WTS, WTB, or general) and fills in
+ * zone, item, enemy, landmark, class, and level placeholders.
+ *
+ * @param {object} ghost - Ghost player object used to derive level and zone context.
+ * @returns {string} A filled-in, plain-text chat message.
+ */
 function buildChatMessage(ghost) {
   const zoneId   = typeof GameState !== 'undefined' ? GameState.zone : 'qeynos_hills';
   const items    = getSellableItems();
@@ -486,6 +682,12 @@ function buildChatMessage(ghost) {
   return msg;
 }
 
+/**
+ * Picks a random ghost from the current zone (or the full ghost pool as a fallback),
+ * builds a chat message for it, and posts it to the zone chat log.
+ *
+ * @returns {void}
+ */
 function triggerChatMessage() {
   const zoneId = typeof GameState !== 'undefined' ? GameState.zone : 'qeynos_hills';
   // Pick a ghost from the current zone players, or any ghost
@@ -495,6 +697,13 @@ function triggerChatMessage() {
   addChatMessage(ghost, buildChatMessage(ghost));
 }
 
+/**
+ * Schedules the next ghost chat message after a randomized delay
+ * (CHAT_MIN_DELAY_MS + random portion of CHAT_DELAY_RANGE_MS) and then reschedules
+ * itself, creating a self-perpetuating chat loop.
+ *
+ * @returns {void}
+ */
 function scheduleChatMessage() {
   const delay = CHAT_MIN_DELAY_MS + Math.random() * CHAT_DELAY_RANGE_MS;
   _chatInterval = setTimeout(() => {
@@ -516,11 +725,26 @@ const STATUS_TEMPLATES = [
   g => `OOM — medding`,
 ];
 
+/**
+ * Returns a randomly selected status description string for a ghost player,
+ * such as "Fighting a Gnoll Scout" or "Medding".
+ *
+ * @param {object} ghost - Ghost player object providing zone context.
+ * @returns {string} A short human-readable activity string.
+ */
 function getGhostStatus(ghost) {
   const fn = STATUS_TEMPLATES[Math.floor(Math.random() * STATUS_TEMPLATES.length)];
   return fn(ghost);
 }
 
+/**
+ * Deterministically selects a subset of ghosts for the given zone based on the ghost IDs
+ * and the current day, then stores them in _zoneGhosts.  Each selected ghost has its
+ * zone field overridden to zoneId so they appear to be present in that zone.
+ *
+ * @param {string} zoneId - The zone ID to populate with ghost players.
+ * @returns {Array<object>} The selected ghost objects (also stored in _zoneGhosts).
+ */
 function pickZoneGhosts(zoneId) {
   // Deterministically pick 4–8 ghosts for this zone based on ghost id + day
   const count = WHO_ONLINE_MIN + Math.floor(seededRand(ghostSeed(zoneId.length, zoneId.charCodeAt(0))) * (WHO_ONLINE_MAX - WHO_ONLINE_MIN));
@@ -531,6 +755,13 @@ function pickZoneGhosts(zoneId) {
   return selected;
 }
 
+/**
+ * Rebuilds the Who's Online panel DOM with the current zone ghosts (or all ghosts when
+ * in a city safe-zone).  Attaches left-click (inspect) and right-click (context menu)
+ * handlers to each row.
+ *
+ * @returns {void}
+ */
 function renderWhoOnlinePanel() {
   const el = document.getElementById('who-online-list');
   if (!el) return;
@@ -581,6 +812,12 @@ function renderWhoOnlinePanel() {
   });
 }
 
+/**
+ * Re-picks the ghost players for the player's current zone and re-renders
+ * the Who's Online panel to reflect the updated selection.
+ *
+ * @returns {void}
+ */
 function refreshZonePlayers() {
   const zoneId = typeof GameState !== 'undefined' ? GameState.zone : 'qeynos_hills';
   pickZoneGhosts(zoneId);
@@ -589,6 +826,13 @@ function refreshZonePlayers() {
 
 // ─── Ghost Inspect Modal ─────────────────────────────────────────────────────────
 
+/**
+ * Opens and populates the ghost inspect modal with the party roster, zone,
+ * total kill count, and gold earned for the given ghost.
+ *
+ * @param {object} ghost - The ghost player object to inspect.
+ * @returns {void}
+ */
 function showGhostInspectModal(ghost) {
   const modal = document.getElementById('ghost-inspect-modal');
   if (!modal) return;
@@ -633,6 +877,12 @@ function showGhostInspectModal(ghost) {
 }
 
 // One-time setup for the ghost inspect modal (escape + click-outside)
+/**
+ * Attaches one-time event listeners to the ghost inspect modal so that clicking
+ * outside its content area or pressing Escape will close it.
+ *
+ * @returns {void}
+ */
 function _setupGhostInspectModal() {
   const modal = document.getElementById('ghost-inspect-modal');
   if (!modal) return;
@@ -658,6 +908,16 @@ const TELL_RESPONSES = [
   'Can\'t chat, about to pull. Hit me up after.',
 ];
 
+/**
+ * Displays a right-click context menu near the cursor with options to inspect,
+ * send a tell to, or invite the given ghost.  Dismisses automatically on any
+ * subsequent click outside the menu.
+ *
+ * @param {object} ghost - The ghost player object the menu was invoked on.
+ * @param {number} x     - Horizontal pixel position (clientX) for the menu.
+ * @param {number} y     - Vertical pixel position (clientY) for the menu.
+ * @returns {void}
+ */
 function showGhostContextMenu(ghost, x, y) {
   if (_contextMenu) { _contextMenu.remove(); _contextMenu = null; }
 
@@ -708,6 +968,13 @@ const VENDOR_BASE_PRICES = {
   crude_staff:   35,  small_shield:55,  bread_loaf:    3,
 };
 
+/**
+ * Returns the base copper price for an item, consulting the VENDOR_BASE_PRICES table first
+ * and falling back to a formula derived from the item's weapon damage or armor class.
+ *
+ * @param {string} itemId - The snake_case item ID to price.
+ * @returns {number} Estimated base price in copper coins.
+ */
 function getBasePrice(itemId) {
   if (VENDOR_BASE_PRICES[itemId]) return VENDOR_BASE_PRICES[itemId];
   // Estimate from item data if available
@@ -720,6 +987,14 @@ function getBasePrice(itemId) {
   return 10;
 }
 
+/**
+ * Generates an array of randomized ghost-player market listings.
+ * Each listing contains a random tradeable item, a random ghost seller,
+ * a random quantity, and a price derived from the base price with a ±30% spread.
+ *
+ * @param {number} [count] - Number of listings to generate; defaults to 8–15 if omitted.
+ * @returns {Array<object>} Array of market listing objects.
+ */
 function generateMarketListings(count) {
   count = count || (8 + Math.floor(Math.random() * 8));
   const items = getSellableItems();
@@ -748,15 +1023,32 @@ function generateMarketListings(count) {
   return listings;
 }
 
+/**
+ * Returns the current in-memory market listing array.
+ *
+ * @returns {Array<object>} The active market listings.
+ */
 function getMarketListings() {
   return _marketListings;
 }
 
+/**
+ * Replaces the in-memory market listings with a new array and persists it.
+ *
+ * @param {Array<object>} listings - New market listing objects to store.
+ * @returns {void}
+ */
 function setMarketListings(listings) {
   _marketListings = listings;
   saveMarket(listings);
 }
 
+/**
+ * Adds one freshly generated market listing to _marketListings (evicting the oldest
+ * when the cap of 20 is reached) and persists the updated list.
+ *
+ * @returns {void}
+ */
 function trickleMarketListing() {
   if (_marketListings.length >= 20) {
     // Remove oldest
@@ -771,6 +1063,21 @@ function trickleMarketListing() {
 
 // ─── Leaderboard ────────────────────────────────────────────────────────────────
 
+/**
+ * Builds the sorted leaderboard data by combining all ghost players with the real player
+ * (from GameState), then returning the top 20 entries ranked by level, then kills.
+ *
+ * @returns {Array<{
+ *   id: number,
+ *   name: string,
+ *   classId: string,
+ *   level: number,
+ *   kills: number,
+ *   zone: string,
+ *   party: Array<object>|null,
+ *   isPlayer: boolean
+ * }>} Top-20 leaderboard entries.
+ */
 function getLeaderboardData() {
   const entries = _ghosts.map(g => ({
     id:       g.id,
@@ -805,6 +1112,15 @@ function getLeaderboardData() {
 
 // ─── Initialization ─────────────────────────────────────────────────────────────
 
+/**
+ * Bootstraps the entire ghost player simulation system.
+ * Loads or creates ghost data, applies offline progression, starts the per-tick
+ * interval, initializes the Who's Online panel, sets up the inspect modal,
+ * loads or generates market listings, starts the market trickle, schedules world-feed
+ * events, and begins the zone chat loop.
+ *
+ * @returns {void}
+ */
 function initGhostPlayers() {
   // Load or create ghost players (version check is inside loadGhosts)
   let ghosts = loadGhosts();
