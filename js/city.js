@@ -193,6 +193,8 @@ function buySpell(spellId) {
   GameState.learnedSpells.push(spellId);
   addCombatLog(`You learned ${spell.name}!`, 'levelup');
   if (typeof renderTopBar === 'function') renderTopBar();
+  // Achievement hook
+  if (typeof checkAchievements === 'function') checkAchievements('spell_buy', {});
   return true;
 }
 
@@ -291,6 +293,10 @@ function depositItemToBank(itemId, fromInventoryIndex) {
   }
   GameState.inventory.splice(fromInventoryIndex, 1);
   addCombatLog(`Deposited ${item ? item.name : itemId} to bank.`, 'loot');
+  // Achievement hook
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('bank_deposit', { bankSize: (GameState.bank || []).filter(Boolean).length });
+  }
   if (typeof saveGame === 'function') saveGame();
   if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
   if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
@@ -343,6 +349,21 @@ function travelToZone(zoneId) {
   GameState.selectedEnemyId = null;
 
   GameState.zone = zoneId;
+
+  // Track visited zones
+  if (!GameState.visitedZones) GameState.visitedZones = [];
+  if (!GameState.visitedZones.includes(zoneId)) {
+    GameState.visitedZones.push(zoneId);
+  }
+
+  // Achievement hook: zone_change
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('zone_change', { zoneId, visitedZones: new Set(GameState.visitedZones) });
+  }
+  // Safe zone: reach_qeynos
+  if (zone.isSafeZone && typeof checkAchievements === 'function') {
+    checkAchievements('zone_change', { zoneId: 'qeynos', visitedZones: new Set(GameState.visitedZones) });
+  }
 
   if (typeof renderZonePanel === 'function') renderZonePanel();
   if (typeof renderEnemySelector === 'function') renderEnemySelector();

@@ -558,6 +558,11 @@ function addChatMessage(ghost, text) {
   _chatMessages.push(msg);
   if (_chatMessages.length > CHAT_MAX_MESSAGES) _chatMessages.shift();
 
+  // Achievement hook: chat message seen
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('chat_message', {});
+  }
+
   if (!log) return;
 
   const line = document.createElement('div');
@@ -770,6 +775,9 @@ function getItemRarityClass(item) {
 function showGhostInspectModal(ghost) {
   const modal = document.getElementById('ghost-inspect-modal');
   if (!modal) return;
+
+  // Achievement hook: inspect ghost
+  if (typeof checkAchievements === 'function') checkAchievements('inspect', {});
 
   const zone  = typeof ZONES !== 'undefined' && ZONES[ghost.zone] ? ZONES[ghost.zone].name : ghost.zone;
   const party = ghost.party || [{ name: ghost.name, classId: ghost.classId, level: ghost.level, xp: 0 }];
@@ -1058,11 +1066,26 @@ function simulateGhostTick(ghost) {
   ghost.kills   += killsPerTick;
   ghost.gold    += goldPerTick;
 
+  // Initialize visitedZones tracking
+  if (!ghost.visitedZones) ghost.visitedZones = [];
+  if (ghost.zone && !ghost.visitedZones.includes(ghost.zone)) {
+    ghost.visitedZones.push(ghost.zone);
+    // Ghost discovers a zone — World First
+    if (typeof recordWorldFirst === 'function') {
+      const zoneName = (typeof ZONES !== 'undefined' && ZONES[ghost.zone]) ? ZONES[ghost.zone].name : ghost.zone;
+      recordWorldFirst(`first_zone_${ghost.zone}`, ghost.name, `${ghost.name} discovered ${zoneName}!`);
+    }
+  }
+
   if (typeof xpForLevel === 'function' && ghost.level < 60) {
     while (ghost.level < 60 && ghost.totalXP >= xpForLevel(ghost.level + 1)) {
       ghost.level++;
       if (ghost.party) {
         for (const member of ghost.party) { member.level = ghost.level; }
+      }
+      // World First: level 60
+      if (ghost.level === 60 && typeof recordWorldFirst === 'function') {
+        recordWorldFirst('first_level_60', ghost.name, `${ghost.name} reached Level 60!`);
       }
       if (Math.random() < 0.2) {
         const suitableZones = COMBAT_ZONES.filter(zid => {
@@ -1087,6 +1110,14 @@ function simulateGhostTick(ghost) {
       const equipped = tryAutoEquip(ghost, newItem);
       if (equipped) {
         pushWorldEvent(`🛡️ <strong style="color:${CLASS_COLORS[ghost.classId]}">${ghost.name}</strong> equipped [${newItem.name}] — an upgrade!`);
+        // World First: first item of this type
+        if (typeof recordWorldFirst === 'function') {
+          recordWorldFirst(`first_item_${newItem.id}`, ghost.name, `${ghost.name} obtained [${newItem.name}] first!`);
+        }
+      }
+      // Check if rare item
+      if (newItem.isRare && typeof recordWorldFirst === 'function' && ENEMIES) {
+        recordWorldFirst(`first_named_kill_${newItem.id}`, ghost.name, `${ghost.name} slew a rare enemy!`);
       }
     }
   }
@@ -1097,6 +1128,11 @@ function simulateGhostTick(ghost) {
 
   if (Math.random() < 0.10 && _marketListings.length > 0) {
     ghostBuyFromMarket(ghost);
+  }
+
+  // Guild tick
+  if (typeof tickGuildProgress === 'function') {
+    tickGuildProgress(ghost, killsPerTick, xpPerTick);
   }
 
   ghost.lastActive = Date.now();
@@ -1136,34 +1172,65 @@ function simulateOfflineProgression(ghosts) {
 // ─── Leaderboard ────────────────────────────────────────────────────────────────
 
 function getLeaderboardData() {
-  const entries = _ghosts.map(g => ({
-    id:       g.id,
-    name:     g.name,
-    classId:  g.classId,
-    level:    g.level,
-    kills:    g.kills,
-    zone:     g.zone,
-    party:    g.party || null,
-    isPlayer: false,
-  }));
+  const entries = _ghosts.map(g => {
+    // Find guild for this ghost
+    let guildName = null;
+    let guildTag  = null;
+    if (typeof getGuildForGhost === 'function') {
+      const guild = getGuildForGhost(g.id) || getGuildForGhost(g.name);
+      if (guild) { guildName = guild.name; guildTag = guild.tag; }
+    }
+    return {
+      id:               g.id,
+      name:             g.name,
+      classId:          g.classId,
+      level:            g.level,
+      kills:            g.kills,
+      zone:             g.zone,
+      party:            g.party || null,
+      isPlayer:         false,
+      gold:             g.gold || 0,
+      totalXP:          g.totalXP || 0,
+      guildName,
+      guildTag,
+      visitedZoneCount: (g.visitedZones || []).length,
+      namedKills:       g.namedKills || 0,
+      achievements:     0,
+    };
+  });
 
   if (typeof GameState !== 'undefined' && GameState.party && GameState.party.length > 0) {
     const leader = GameState.party[0];
     const kills  = Object.values(GameState.killCounts || {}).reduce((s, v) => s + v, 0);
+    const totalCopper = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+    let guildName = null;
+    let guildTag  = null;
+    if (typeof getPlayerGuild === 'function') {
+      const guild = getPlayerGuild();
+      if (guild) { guildName = guild.name; guildTag = guild.tag; }
+    }
+    const achievementCount = (typeof getUnlockedCount === 'function') ? getUnlockedCount() : 0;
     entries.push({
-      id:       -1,
-      name:     leader.name,
-      classId:  leader.classId,
-      level:    leader.level,
+      id:               -1,
+      name:             leader.name,
+      classId:          leader.classId,
+      level:            leader.level,
       kills,
-      zone:     GameState.zone,
-      party:    GameState.party.map(m => ({ name: m.name, classId: m.classId, level: m.level })),
-      isPlayer: true,
+      zone:             GameState.zone,
+      party:            GameState.party.map(m => ({ name: m.name, classId: m.classId, level: m.level })),
+      isPlayer:         true,
+      gold:             totalCopper,
+      totalXP:          leader.xp || 0,
+      guildName,
+      guildTag,
+      visitedZoneCount: (GameState.visitedZones || []).length,
+      namedKills:       GameState.namedKills || 0,
+      achievements:     achievementCount,
     });
   }
 
   entries.sort((a, b) => b.level - a.level || b.kills - a.kills);
-  return entries.slice(0, 20);
+  return entries.slice(0, 50);
 }
 
 // ─── City Online Count ──────────────────────────────────────────────────────────

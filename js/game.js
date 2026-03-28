@@ -39,6 +39,13 @@ const GameState = {
   _lastBuffDecayTick: 0,
   isPulling: false,
   camp: null,
+  // New fields for achievements/guilds/QoL
+  visitedZones: [],
+  consecutiveWins: 0,
+  guildId: null,
+  totalXPEarned: 0,
+  namedKills: 0,
+  chatMessagesSeen: 0,
 };
 
 // ============================================================
@@ -168,6 +175,10 @@ function init() {
   // Wire up all button handlers
   wireUpButtons();
   
+  // Initialize achievement and guild systems
+  if (typeof initAchievements === 'function') initAchievements();
+  if (typeof initGuilds === 'function') initGuilds();
+
   // Initialize ghost player simulation
   if (typeof initGhostPlayers === 'function') initGhostPlayers();
   
