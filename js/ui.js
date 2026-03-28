@@ -583,6 +583,8 @@ function showPartyMemberContextMenu(e, member, charIdx) {
   };
   setTimeout(() => document.addEventListener('click', dismiss), 0);
 }
+
+/**
  * @param {object} member - The party member object to build the tooltip for.
  * @returns {string} HTML markup for the member tooltip.
  */
