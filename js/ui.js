@@ -1,6 +1,41 @@
 // ui.js — DOM rendering and UI updates for Forever RPG
 
-// ─── Character Creation UI ────────────────────────────────────────────────────
+// ─── Achievement Toast ────────────────────────────────────────────────────────
+
+/**
+ * Shows a toast notification when an achievement is unlocked.
+ * Toasts stack at bottom-right and auto-dismiss after 5 seconds.
+ * @param {object} achievement - Achievement definition object
+ * @returns {void}
+ */
+function showAchievementToast(achievement) {
+  let container = document.getElementById('achievement-toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  const catLabel = achievement.category
+    ? achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)
+    : '';
+  toast.innerHTML = `
+    <div class="achievement-toast-icon">🏆</div>
+    <div>
+      <div class="achievement-toast-title">Achievement Unlocked!</div>
+      <div class="achievement-toast-name">${achievement.name}</div>
+      <div class="achievement-toast-cat">${catLabel} · ${achievement.desc || ''}</div>
+    </div>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.4s';
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 400);
+  }, 5000);
+}
+
 
 /**
  * Shows the character-creation overlay and wires the Begin Adventure button.
@@ -143,6 +178,14 @@ function handleBeginAdventure() {
 
   hideCharacterCreation();
   initMainUI();
+
+  // Achievement hooks for new game
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('first_login', {});
+    checkAchievements('party_size', { size: GameState.party.length });
+    checkAchievements('class', { party: GameState.party });
+  }
+
   saveGame();
 }
 
@@ -2404,23 +2447,61 @@ function renderCityTabContent(tab) {
         if (typeof addCombatLog === 'function') addCombatLog(`Purchased ${listing.itemName} x${listing.qty} from ${listing.seller} for ${fmt2(totalCost)}.`, 'loot');
         if (typeof renderTopBar === 'function') renderTopBar();
         if (typeof updateInventoryUI === 'function') updateInventoryUI();
+        // Achievement hook: market purchase
+        if (typeof checkAchievements === 'function') checkAchievements('market_buy', {});
 
         renderCityTabContent('players');
       });
     });
 
   } else if (tab === 'leaderboard') {
-    const data = typeof getLeaderboardData === 'function' ? getLeaderboardData() : [];
+    // ── Inner sub-tabs: Rankings | Achievements | World Firsts | Guilds ──────
+    el.innerHTML = `
+      <div class="lb-tabs">
+        <button class="lb-tab-btn active" data-lb="rankings">🏆 Rankings</button>
+        <button class="lb-tab-btn" data-lb="achievements">🎖 Achievements</button>
+        <button class="lb-tab-btn" data-lb="worldfirsts">🌟 World Firsts</button>
+        <button class="lb-tab-btn" data-lb="guilds">⚔ Guilds</button>
+      </div>
+      <div id="lb-pane-rankings"     class="lb-pane active"></div>
+      <div id="lb-pane-achievements" class="lb-pane" style="display:none"></div>
+      <div id="lb-pane-worldfirsts"  class="lb-pane" style="display:none"></div>
+      <div id="lb-pane-guilds"       class="lb-pane" style="display:none"></div>
+    `;
 
+    // Wire sub-tab buttons
+    el.querySelectorAll('.lb-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        el.querySelectorAll('.lb-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        el.querySelectorAll('.lb-pane').forEach(p => p.style.display = 'none');
+        const pane = el.querySelector(`#lb-pane-${btn.dataset.lb}`);
+        if (pane) pane.style.display = 'block';
+        _renderLbPane(btn.dataset.lb, el);
+      });
+    });
+
+    // Render the default Rankings pane
+    _renderLbPane('rankings', el);
+  }
+}
+
+// ─── Leaderboard Sub-Pane Renderers ──────────────────────────────────────────
+
+function _renderLbPane(pane, containerEl) {
+  const paneEl = containerEl.querySelector(`#lb-pane-${pane}`);
+  if (!paneEl) return;
+
+  if (pane === 'rankings') {
+    const data = typeof getLeaderboardData === 'function' ? getLeaderboardData() : [];
     if (!data.length) {
-      el.innerHTML = '<div class="city-empty">No ranking data available.</div>';
+      paneEl.innerHTML = '<div class="city-empty">No ranking data available.</div>';
       return;
     }
-
     const rows = data.map((entry, i) => {
       const color = (typeof CLASS_COLORS !== 'undefined' && CLASS_COLORS[entry.classId]) || '#e8d5a0';
       const icon  = (typeof CLASS_ICONS  !== 'undefined' && CLASS_ICONS[entry.classId])  || '⚔';
-      const zone  = (typeof ZONES !== 'undefined' && ZONES[entry.zone]) ? ZONES[entry.zone].name : entry.zone;
+      const zone  = (typeof ZONES !== 'undefined' && ZONES[entry.zone]) ? ZONES[entry.zone].name : (entry.zone || '—');
       const name  = entry.isPlayer ? `[YOU] ${entry.name}` : entry.name;
       const rowClass = entry.isPlayer ? 'leaderboard-you' : '';
       const partyIconsHtml = (entry.party && entry.party.length)
@@ -2430,33 +2511,217 @@ function renderCityTabContent(tab) {
             return `<span style="color:${col}" title="${m.classId}">${ic}</span>`;
           }).join('')
         : `<span style="color:${color}">${icon}</span>`;
+      const guildCell = entry.guildTag
+        ? `<span class="guild-tag">${entry.guildTag}</span>`
+        : '—';
+      const goldK = entry.gold >= 1000 ? (entry.gold / 1000).toFixed(1) + 'k' : String(entry.gold);
       return `<tr class="${rowClass}">
         <td>${i + 1}</td>
         <td style="color:${color}">${name}</td>
+        <td>${guildCell}</td>
         <td><span class="party-icons">${partyIconsHtml}</span></td>
         <td>${entry.level}</td>
-        <td>${entry.kills.toLocaleString()}</td>
+        <td>${(entry.kills || 0).toLocaleString()}</td>
+        <td>${goldK}c</td>
+        <td>${entry.visitedZoneCount || 0}</td>
         <td>${zone}</td>
       </tr>`;
     }).join('');
-
-    el.innerHTML = `
-      <div class="city-section-title">🏆 World Rankings — Top 20</div>
+    paneEl.innerHTML = `
+      <div class="city-section-title">🏆 World Rankings — Top 50</div>
       <table class="leaderboard-table">
         <thead>
-          <tr><th>#</th><th>Name</th><th>Party</th><th>Level</th><th>Kills</th><th>Zone</th></tr>
+          <tr><th>#</th><th>Name</th><th>Guild</th><th>Party</th><th>Lv</th><th>Kills</th><th>Gold</th><th>Zones</th><th>Location</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     `;
+
+  } else if (pane === 'achievements') {
+    const categories = ['general','advancement','class','keys','level','progression','skills','special','vanity'];
+    const catLabels  = {
+      general:'General', advancement:'Advancement', class:'Class',
+      keys:'Keys', level:'Level', progression:'Progression',
+      skills:'Skills', special:'Special', vanity:'Vanity',
+    };
+    const unlockedCount = typeof getUnlockedCount === 'function' ? getUnlockedCount() : 0;
+    const totalCount    = typeof getTotalCount    === 'function' ? getTotalCount()    : 0;
+
+    const catListHtml = categories.map((cat, i) => `
+      <div class="ach-cat ${i === 0 ? 'active' : ''}" data-cat="${cat}">${catLabels[cat]}</div>
+    `).join('');
+
+    paneEl.innerHTML = `
+      <div class="ach-panel">
+        <div class="ach-sidebar">
+          <div class="ach-sidebar-header">Database ► <span>Achievements</span></div>
+          <div class="ach-cat-list">${catListHtml}</div>
+        </div>
+        <div class="ach-content-wrap">
+          <div class="ach-content-header">${unlockedCount} / ${totalCount} Achievements Unlocked</div>
+          <div class="ach-content" id="ach-content-pane"></div>
+        </div>
+      </div>
+    `;
+
+    const renderAchCat = (cat) => {
+      const contentPane = paneEl.querySelector('#ach-content-pane');
+      if (!contentPane) return;
+      const achs = typeof getAchievementsByCategory === 'function'
+        ? getAchievementsByCategory(cat)
+        : [];
+      contentPane.innerHTML = achs.map(ach => {
+        const unlocked = ach.unlockedAt !== null;
+        const rowClass = unlocked ? 'unlocked' : 'locked';
+        const dateStr  = unlocked
+          ? new Date(ach.unlockedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'2-digit' })
+          : '';
+        const pct = (ach.threshold && ach.progress)
+          ? Math.min(100, Math.round((ach.progress / ach.threshold) * 100))
+          : (unlocked ? 100 : 0);
+        const progressBar = ach.threshold
+          ? `<div class="ach-progress-bar"><div class="ach-progress-fill" style="width:${pct}%"></div></div>`
+          : '';
+        return `
+          <div class="ach-row ${rowClass}">
+            <div class="ach-icon">${unlocked ? '🏆' : '🔒'}</div>
+            <div class="ach-info">
+              <div class="ach-name">${ach.name}</div>
+              <div class="ach-desc">${ach.desc}</div>
+              ${progressBar}
+            </div>
+            <div class="ach-date">${dateStr}</div>
+          </div>
+        `;
+      }).join('') || '<div class="city-empty">No achievements in this category.</div>';
+    };
+
+    // Wire category clicks
+    paneEl.querySelectorAll('.ach-cat').forEach(catEl => {
+      catEl.addEventListener('click', () => {
+        paneEl.querySelectorAll('.ach-cat').forEach(c => c.classList.remove('active'));
+        catEl.classList.add('active');
+        renderAchCat(catEl.dataset.cat);
+      });
+    });
+
+    // Render first category
+    renderAchCat(categories[0]);
+
+  } else if (pane === 'worldfirsts') {
+    const wf = typeof getWorldFirsts === 'function' ? getWorldFirsts() : {};
+    const entries = Object.entries(wf).sort((a, b) => a[1].when - b[1].when);
+    if (!entries.length) {
+      paneEl.innerHTML = `
+        <div class="city-section-title">🌟 World First Records</div>
+        <div class="city-empty">No world firsts recorded yet. Be the first!</div>
+      `;
+      return;
+    }
+    const rows = entries.map(([key, rec], idx) => {
+      const d = new Date(rec.when);
+      const dateStr = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+      const rowClass = idx === 0 ? 'wf-first-row' : '';
+      return `<tr class="${rowClass}">
+        <td>${rec.detail || key}</td>
+        <td class="wf-holder">${rec.who}</td>
+        <td>${dateStr}</td>
+      </tr>`;
+    }).join('');
+    paneEl.innerHTML = `
+      <div class="city-section-title">🌟 World First Records</div>
+      <table class="wf-table">
+        <thead><tr><th>Achievement</th><th>Holder</th><th>Date</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+  } else if (pane === 'guilds') {
+    const guilds = typeof getGuildLeaderboard === 'function' ? getGuildLeaderboard() : [];
+    const playerGuild = typeof getPlayerGuild === 'function' ? getPlayerGuild() : null;
+
+    let bannerHtml = '';
+    if (playerGuild) {
+      bannerHtml = `<div class="guild-player-banner">⚔ You are in <strong>${playerGuild.name}</strong> [${playerGuild.tag}]
+        <button class="city-btn guild-leave-btn" style="margin-left:8px;font-size:0.62rem">Leave Guild</button></div>`;
+    }
+
+    const guildRows = guilds.map((g, i) => {
+      const joinBtn = !playerGuild
+        ? `<button class="city-btn guild-join-btn" data-guild-id="${g.id}" style="font-size:0.65rem;padding:2px 6px">Join</button>`
+        : '';
+      return `
+        <div class="guild-lb-row" data-guild-id="${g.id}">
+          <span class="guild-rank-num">${i + 1}</span>
+          <span class="guild-name-cell">${g.name}</span>
+          <span class="guild-tag">[${g.tag}]</span>
+          <span class="guild-member-count">${g.members.length}m</span>
+          <span class="guild-kills-count">${(g.kills || 0).toLocaleString()}</span>
+          <span class="guild-wf-count">🌟${g.worldFirsts || 0}</span>
+          <span>${joinBtn}</span>
+        </div>
+        <div class="guild-member-list" id="guild-members-${g.id}">
+          ${g.members.map(m => `
+            <div class="guild-member-row">
+              <span>${(CLASS_ICONS && CLASS_ICONS[m.classId]) || '⚔'} ${m.name}</span>
+              <span>Lv.${m.level}</span>
+              <span class="guild-rank-badge">${m.rank}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('');
+
+    paneEl.innerHTML = `
+      <div class="city-section-title">⚔ Guild Leaderboard</div>
+      ${bannerHtml}
+      <div class="guild-lb-header">
+        <span>#</span><span>Guild</span><span>Tag</span><span>Members</span><span>Kills</span><span>WFs</span><span></span>
+      </div>
+      ${guildRows || '<div class="city-empty">No guilds found.</div>'}
+    `;
+
+    // Toggle member list on row click
+    paneEl.querySelectorAll('.guild-lb-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.classList.contains('guild-join-btn')) return;
+        const gId = row.dataset.guildId;
+        const memberList = paneEl.querySelector(`#guild-members-${gId}`);
+        if (memberList) memberList.classList.toggle('open');
+      });
+    });
+
+    // Join guild buttons
+    paneEl.querySelectorAll('.guild-join-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (typeof joinGuild === 'function') {
+          joinGuild(btn.dataset.guildId);
+          _renderLbPane('guilds', containerEl);
+        }
+      });
+    });
+
+    // Leave guild button
+    const leaveBtn = paneEl.querySelector('.guild-leave-btn');
+    if (leaveBtn) {
+      leaveBtn.addEventListener('click', () => {
+        if (typeof leaveGuild === 'function') {
+          leaveGuild();
+          _renderLbPane('guilds', containerEl);
+        }
+      });
+    }
   }
 }
+
+// ─── (end of renderCityTabContent helpers) ───────────────────────────────────
 
 // ─── Module Export ────────────────────────────────────────────────────────────
 
 if (typeof module !== 'undefined') module.exports = {
   showCharacterCreation,
   hideCharacterCreation,
+  showAchievementToast,
   initMainUI,
   updateCombatUI,
   updatePartyUI,

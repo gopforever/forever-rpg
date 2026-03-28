@@ -8,7 +8,7 @@ const SAVE_KEY = 'foreverRPG_save';
  * Current save data schema version number.
  * @type {number}
  */
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 /**
  * Serializes the current GameState to localStorage as a versioned JSON object.
@@ -33,6 +33,12 @@ function saveGame() {
     selectedEnemyId: GameState.selectedEnemyId,
     gameTime: GameState.gameTime,
     panelPositions: getPanelPositions(),
+    visitedZones: [...(GameState.visitedZones || [])],
+    consecutiveWins: GameState.consecutiveWins || 0,
+    guildId: GameState.guildId || null,
+    totalXPEarned: GameState.totalXPEarned || 0,
+    namedKills: GameState.namedKills || 0,
+    chatMessagesSeen: GameState.chatMessagesSeen || 0,
   };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
@@ -53,7 +59,9 @@ function loadGame() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    if (!data || data.version !== SAVE_VERSION) return null;
+    if (!data) return null;
+    // Accept current version; migrate v1 saves
+    if (data.version !== SAVE_VERSION && data.version !== 1) return null;
     return data;
   } catch (e) {
     console.error('Load failed:', e);
@@ -142,6 +150,13 @@ function applyLoadedSave(data) {
   GameState.zone = data.zone || 'qeynos_hills';
   GameState.selectedEnemyId = data.selectedEnemyId || null;
   GameState.gameTime = data.gameTime || { day: 1, hour: 6 };
+  // New fields (v2+)
+  GameState.visitedZones = data.visitedZones || [];
+  GameState.consecutiveWins = data.consecutiveWins || 0;
+  GameState.guildId = data.guildId || null;
+  GameState.totalXPEarned = data.totalXPEarned || 0;
+  GameState.namedKills = data.namedKills || 0;
+  GameState.chatMessagesSeen = data.chatMessagesSeen || 0;
 }
 
 /**

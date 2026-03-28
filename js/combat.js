@@ -230,6 +230,7 @@ function startCombat(enemyId) {
   GameState.threatTable = {};
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
+  GameState._lastFightEnemyCount = 1;
 
   if (typeof clearLootDisplay === 'function') clearLootDisplay();
 
@@ -268,6 +269,7 @@ function startGroupCombat(enemyIds) {
   GameState.threatTable = {};
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
+  GameState._lastFightEnemyCount = liveEnemies.length;
 
   if (typeof clearLootDisplay === 'function') clearLootDisplay();
 
@@ -1029,6 +1031,14 @@ function handleEnemyDeath(enemy) {
     if (lu.leveled) {
       addCombatLog(`${lu.charName} reached level ${lu.newLevel}!`, 'levelup');
       if (typeof showLevelUpEffect === 'function') showLevelUpEffect(lu.charId);
+      // Achievement hook: level up
+      const member = GameState.party.find(m => m.id === lu.charId);
+      if (typeof checkAchievements === 'function' && member) {
+        checkAchievements('level_up', { member, level: lu.newLevel, totalXP: member.xp || 0 });
+      }
+      if (lu.newLevel === 60 && member && typeof recordWorldFirst === 'function') {
+        recordWorldFirst('first_level_60', member.name, `${member.name} reached Level 60 first!`);
+      }
     }
   }
 
@@ -1039,6 +1049,18 @@ function handleEnemyDeath(enemy) {
   const logEntry = ensureMonsterLogEntry(enemy.id);
   logEntry.kills++;
   logEntry.lastKill = Date.now();
+
+  // Achievement hook: kill
+  if (typeof checkAchievements === 'function') {
+    const totalKills = Object.values(GameState.killCounts).reduce((s, v) => s + v, 0);
+    const enemyDef = ENEMIES[enemy.id] || enemy;
+    checkAchievements('kill', {
+      enemy: enemyDef,
+      totalKills,
+      killCounts: GameState.killCounts,
+      party: GameState.party,
+    });
+  }
 
   const lootDrops = rollLoot(ENEMIES[enemy.id]);
   for (const drop of lootDrops) {
@@ -1051,6 +1073,10 @@ function handleEnemyDeath(enemy) {
       addCombatLog(`${item.name} x${drop.quantity} — on the ground.`, 'loot');
     }
     addLoot(drop.itemId, drop.quantity);
+    // Achievement hook: loot
+    if (typeof checkAchievements === 'function') {
+      checkAchievements('loot', { itemId: drop.itemId, item, party: GameState.party });
+    }
   }
 
   if (remaining > 0) {
@@ -1065,6 +1091,12 @@ function handleEnemyDeath(enemy) {
   // All enemies are dead — end the encounter
   GameState.combatActive = false;
   GameState.inCombat = false;
+
+  // Achievement hook: fight win
+  if (typeof checkAchievements === 'function') {
+    const startEnemyCount = (GameState._lastFightEnemyCount || 1);
+    checkAchievements('fight_win', { party: GameState.party, enemyCount: startEnemyCount });
+  }
 
   if (GameState.camp && GameState.camp.zoneId === GameState.zone && GameState.camp.enemyId === GameState.selectedEnemyId) {
     setTimeout(() => {
@@ -1102,6 +1134,9 @@ function handlePartyWipe() {
   GameState.combatActive = false;
   GameState.inCombat = false;
   GameState.enemies = [];
+
+  // Achievement hook: fight loss
+  if (typeof checkAchievements === 'function') checkAchievements('fight_loss', {});
   GameState.currentEnemy = null;
 
   // XP penalty: lose 7% of current level's XP progress, cannot de-level

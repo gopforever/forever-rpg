@@ -335,6 +335,10 @@ function trySkillGain(member, skillName) {
       const displayName = SKILL_DISPLAY_NAMES[skillName] || skillName;
       addCombatLog(`${member.name}'s ${displayName} has increased to ${newVal}!`, 'levelup');
     }
+    // Achievement hook: skill_up
+    if (typeof checkAchievements === 'function') {
+      checkAchievements('skill_up', { skillName, value: newVal });
+    }
     return true;
   }
   return false;

@@ -2685,3 +2685,263 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .rarity-rare    { color: var(--rarity-rare); }
 .rarity-named   { color: var(--rarity-named); }
 #city-online-count { font-size: 0.75rem; color: var(--text-secondary); padding: 3px 8px; text-align: center; border-bottom: 1px solid var(--panel-border); margin-bottom: 4px; }
+
+/* ============================================================
+   ACHIEVEMENT TOAST NOTIFICATIONS
+   ============================================================ */
+
+#achievement-toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.achievement-toast {
+  background: linear-gradient(135deg, #1a1208 0%, #2a1e08 100%);
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 280px;
+  max-width: 340px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 0 20px rgba(200,168,75,0.3);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.achievement-toast-icon { font-size: 1.4rem; }
+.achievement-toast-title { color: var(--gold-dim); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.achievement-toast-name { color: var(--gold-bright); font-family: 'Cinzel', serif; font-size: 0.82rem; font-weight: 700; }
+.achievement-toast-cat { color: var(--text-dim); font-size: 0.68rem; margin-top: 2px; }
+
+/* ============================================================
+   LEADERBOARD INNER TABS
+   ============================================================ */
+
+.lb-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-wrap: wrap;
+}
+
+.lb-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+
+.lb-tab-btn:hover { color: var(--text-primary); }
+.lb-tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.lb-pane { display: none; }
+.lb-pane.active { display: block; }
+
+/* ============================================================
+   ACHIEVEMENT PANEL
+   ============================================================ */
+
+.ach-panel {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0;
+  min-height: 300px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ach-sidebar {
+  background: var(--panel-bg2);
+  border-right: 1px solid var(--panel-border);
+}
+
+.ach-sidebar-header {
+  padding: 6px 8px;
+  font-size: 0.65rem;
+  color: var(--gold-dim);
+  font-family: 'Cinzel', serif;
+  border-bottom: 1px solid var(--panel-border);
+  background: #0d0a05;
+}
+
+.ach-sidebar-header span { color: var(--gold); }
+
+.ach-cat {
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
+}
+
+.ach-cat:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.ach-cat.active { color: var(--gold); border-left-color: var(--gold); background: rgba(200,168,75,0.08); }
+
+.ach-content-wrap { display: flex; flex-direction: column; overflow: hidden; }
+
+.ach-content-header {
+  padding: 6px 10px;
+  font-size: 0.67rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--panel-border);
+  font-style: italic;
+  background: var(--panel-bg);
+}
+
+.ach-content {
+  overflow-y: auto;
+  max-height: 380px;
+  padding: 4px 0;
+}
+
+.ach-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 60px;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(74,56,32,0.2);
+  transition: background 0.1s;
+}
+
+.ach-row:hover { background: rgba(255,255,255,0.03); }
+.ach-row.unlocked .ach-name { color: var(--gold-bright); }
+.ach-row.locked   .ach-name { color: var(--text-dim); }
+
+.ach-info { min-width: 0; }
+.ach-icon { font-size: 1rem; text-align: center; }
+.ach-name { font-size: 0.76rem; font-weight: 600; font-family: 'Cinzel', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ach-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 1px; }
+.ach-date { font-size: 0.62rem; color: var(--gold-dim); text-align: right; font-family: 'Share Tech Mono', monospace; }
+
+.ach-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.ach-progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* ============================================================
+   WORLD FIRSTS TABLE
+   ============================================================ */
+
+.wf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.wf-table th {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--panel-border);
+  text-align: left;
+}
+
+.wf-table td {
+  padding: 3px 6px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(74,56,32,0.2);
+}
+
+.wf-table .wf-first-row td { color: var(--gold-bright); font-weight: 700; }
+.wf-holder { color: var(--text-primary); }
+
+/* ============================================================
+   GUILD LEADERBOARD
+   ============================================================ */
+
+.guild-lb-header {
+  display: grid;
+  grid-template-columns: 24px 1fr 36px 50px 60px 40px 60px;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 0.65rem;
+  color: var(--gold-dim);
+  border-bottom: 1px solid var(--panel-border);
+  font-family: 'Cinzel', serif;
+}
+
+.guild-lb-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 36px 50px 60px 40px 60px;
+  gap: 4px;
+  align-items: center;
+  padding: 5px 6px;
+  border-bottom: 1px solid rgba(74,56,32,0.2);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.guild-lb-row:hover { background: rgba(255,255,255,0.04); }
+
+.guild-rank-num { color: var(--text-dim); text-align: center; font-size: 0.65rem; }
+.guild-tag { font-family: 'Share Tech Mono', monospace; color: var(--gold); font-size: 0.65rem; background: rgba(200,168,75,0.1); border: 1px solid rgba(200,168,75,0.3); border-radius: 2px; padding: 0 3px; }
+.guild-name-cell { color: var(--text-primary); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guild-member-count { color: var(--text-dim); font-size: 0.68rem; text-align: center; }
+.guild-kills-count { color: var(--text-secondary); font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; }
+.guild-wf-count { color: var(--gold-dim); font-size: 0.65rem; }
+
+.guild-player-banner {
+  background: rgba(200,168,75,0.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  color: var(--gold);
+}
+
+.guild-member-list {
+  padding: 0 8px;
+  border-top: 1px solid var(--panel-border);
+  display: none;
+  background: rgba(0,0,0,0.15);
+}
+
+.guild-member-list.open { display: block; padding: 4px 8px; }
+
+.guild-member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.guild-rank-badge {
+  font-size: 0.6rem;
+  color: var(--gold-dim);
+  padding: 0 3px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+}
