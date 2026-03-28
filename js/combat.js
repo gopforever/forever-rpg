@@ -99,6 +99,13 @@ function startCombat(enemyId) {
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
 
+  // Reset per-character swing timers for the new encounter
+  if (GameState.party) {
+    for (const member of GameState.party) {
+      member.nextSwingAt = 0;
+    }
+  }
+
   if (GameState.isSitting) {
     GameState.isSitting = false;
     addCombatLog('You stand up as combat begins!', 'system');
@@ -127,6 +134,13 @@ function startGroupCombat(enemyIds) {
   GameState.threatTable = {};
   GameState._lastHPRegenTick = Date.now();
   GameState._lastBuffDecayTick = Date.now();
+
+  // Reset per-character swing timers for the new encounter
+  if (GameState.party) {
+    for (const member of GameState.party) {
+      member.nextSwingAt = 0;
+    }
+  }
 
   if (GameState.isSitting) {
     GameState.isSitting = false;
@@ -419,8 +433,15 @@ function getWeaponSkillName(weapon) {
 }
 
 function memberAttack(member, enemy) {
+  const now = Date.now();
+  if (member.nextSwingAt && now < member.nextSwingAt) return; // not ready to swing yet
+
   const weaponId = member.equipment ? member.equipment.primary : null;
   const weapon = weaponId && ITEMS[weaponId] ? ITEMS[weaponId] : { dmg: 2, delay: 28, name: 'Fists' };
+
+  // Set swing timer (applies even on a miss)
+  const delayMs = (weapon.delay || 28) * 100 * (isSlowed(member) ? 2 : 1);
+  member.nextSwingAt = now + delayMs;
 
   if (isSlowed(member) && Math.random() < 0.5) return;
 
@@ -853,6 +874,7 @@ function handlePartyWipe() {
       if (member.statusEffectMap) member.statusEffectMap = {};
       member.castingAbility = null;
       member.isCasting = false;
+      member.nextSwingAt = 0;
     }
     addCombatLog('Party recovers... ready to fight again.', 'system');
     if (typeof updateCombatUI === 'function') updateCombatUI();

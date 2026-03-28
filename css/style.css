@@ -374,29 +374,32 @@ body {
 .effect-mez { border-color: #8844ff; color: #8844ff; }
 .effect-fear { border-color: #ff8844; color: #ff8844; }
 
-/* ─── Multi-enemy display ────────────────────────────────────────────────────── */
-#active-enemies-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+/* ─── Enemy List (multi-enemy encounter display) ─── */
+#enemy-list {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: 4px 0;
 }
 
+.no-enemy {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 40px 20px;
+  font-style: italic;
+}
+
 .enemy-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: rgba(20, 10, 0, 0.6);
-  border: 1px solid var(--panel-border);
-  border-radius: 5px;
-  padding: 8px 10px;
+  background: rgba(10,8,5,0.7);
+  border: 1px solid #2a2010;
+  border-radius: 4px;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
-  min-width: 110px;
-  max-width: 150px;
-  flex: 1;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 .enemy-card:hover { border-color: var(--gold-dim); }
 .enemy-card.focused {
@@ -404,57 +407,69 @@ body {
   box-shadow: 0 0 8px rgba(200, 160, 60, 0.35);
 }
 
-.enemy-card-sprite {
-  width: 72px;
-  height: 72px;
+.enemy-card-primary {
+  border-color: #4a3820;
+  background: rgba(20,14,6,0.85);
+}
+
+.enemy-card-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
+  gap: 5px;
+  margin-bottom: 3px;
 }
-.enemy-card-sprite svg { width: 72px; height: 72px; }
-
-#active-enemies-display.single-enemy .enemy-card-sprite {
-  width: 128px;
-  height: 128px;
-}
-#active-enemies-display.single-enemy .enemy-card-sprite svg { width: 128px; height: 128px; }
-#active-enemies-display.single-enemy .enemy-card { max-width: 220px; }
 
 .enemy-card-name {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 4px;
-  line-height: 1.3;
+  flex: 1;
 }
 
-.enemy-card-hp-wrap { width: 100%; margin-bottom: 2px; }
-.enemy-card-hp-bar-bg {
-  width: 100%;
-  height: 10px;
+.enemy-card-level {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.enemy-card-hp-text {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-family: 'Share Tech Mono', monospace;
+  min-width: 70px;
+  text-align: right;
+}
+
+.enemy-card-hp-track {
+  height: 8px;
   background: var(--hp-dark);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
   border: 1px solid #3a0808;
-  margin-bottom: 2px;
 }
+
 .enemy-card-hp-bar { height: 100%; background: var(--hp-red); transition: width 0.3s ease-out; }
-.enemy-card-hp-text {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--text-secondary);
-  text-align: center;
-}
 
 .enemy-card-status {
   display: flex;
   gap: 3px;
   flex-wrap: wrap;
-  justify-content: center;
   margin-top: 3px;
-  min-height: 16px;
+}
+
+.enemy-cc-tag {
+  font-size: 0.58rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: #4a2244;
+  color: #dd88ff;
+  font-weight: bold;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.cc-fear {
+  background: #442200;
+  color: #ffaa44;
 }
 
 /* Combat Log */
@@ -476,7 +491,7 @@ body {
   text-transform: uppercase;
 }
 #combat-log {
-  height: 160px;
+  height: 200px;
   overflow-y: auto;
   padding: 6px 8px;
   font-family: 'Share Tech Mono', monospace;
@@ -496,17 +511,40 @@ body {
 .log-spell { color: var(--spell-color); }
 .log-heal { color: var(--heal-color); }
 .log-death { color: #ff6600; font-weight: bold; }
-.log-loot { color: #ccaa44; }
-.log-xp { color: var(--xp-green); }
-.log-levelup { color: var(--gold-bright); font-weight: bold; }
-.log-system { color: var(--text-dim); font-style: italic; }
+.log-loot { color: #88aaff; }
+.log-xp { color: #c8a84b; }
+.log-levelup { color: #ffdd44; font-weight: bold; letter-spacing: 0.5px; }
+.log-system { color: #7a7a5a; font-style: italic; }
 .log-poison { color: #44cc44; }
-.log-buff   { color: #88ccff; }
-.log-debuff { color: #ff8844; }
+.log-buff   { color: #88ddaa; }
+.log-debuff { color: #dd8844; }
+
+/* Timestamp badge in combat log */
+.log-timestamp {
+  color: #4a4a3a;
+  font-size: 0.65rem;
+  margin-right: 4px;
+  font-family: 'Share Tech Mono', monospace;
+}
 
 /* Status effect icons on party frames */
 .status-icons { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px; min-height: 14px; }
 .status-icon  { font-size: 11px; cursor: default; }
+
+/* Party member action display */
+.member-action {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  min-height: 13px;
+  font-family: 'Share Tech Mono', monospace;
+}
+.action-dead { color: #993333; }
+.action-sit { color: #88cc88; }
+.action-casting { color: #8899ff; }
+.action-swing { color: #bbaa77; }
+.action-attacking { color: #ccaa66; }
+.action-idle { color: #4a4a3a; }
 
 /* Loot Display */
 #loot-display {

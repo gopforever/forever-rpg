@@ -252,6 +252,23 @@ function changeZone(zoneId) {
   if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
 }
 
+function getMemberActionText(member) {
+  if (!member.isAlive) return '<span class="action-dead">💀 Dead</span>';
+  if (!GameState.combatActive && GameState.isSitting) return '<span class="action-sit">🧘 Medding</span>';
+  if (!GameState.combatActive) return '<span class="action-idle">— Idle</span>';
+  if (member.isCasting && member.castingAbility) {
+    const ability = member.castingAbility.ability;
+    const remaining = Math.max(0, Math.ceil((member.castingAbility.castEndTime - Date.now()) / 1000));
+    return `<span class="action-casting">🔮 ${ability.name} (${remaining}s)</span>`;
+  }
+  const now = Date.now();
+  if (member.nextSwingAt && now < member.nextSwingAt) {
+    const wait = Math.max(0, (member.nextSwingAt - now) / 1000).toFixed(1);
+    return `<span class="action-swing">⚔ Swing (${wait}s)</span>`;
+  }
+  return `<span class="action-attacking">⚔ Attacking</span>`;
+}
+
 function renderPartyPanel() {
   const rosterEl = document.getElementById('party-roster');
   if (!rosterEl) return;
@@ -300,6 +317,7 @@ function renderPartyPanel() {
               </div>` : ''}
             </div>
             <div class="status-icons">${statusIcons}</div>
+            <div class="member-action">${getMemberActionText(member)}</div>
             ${(typeof getPetForOwner === 'function' && getPetForOwner(member.id)) ? (() => {
               const pet = getPetForOwner(member.id);
               const petHpPct = Math.max(0, Math.min(100, (pet.hp / pet.maxHP) * 100));
@@ -460,24 +478,27 @@ function renderCombatLog() {
   if (!logEl) return;
 
   const log = GameState.combatLog || [];
-  logEl.innerHTML = log.slice(-15).map(entry =>
-    `<div class="log-entry log-${entry.type || 'info'}">${entry.text}</div>`
-  ).join('');
+  const now = Date.now();
+  logEl.innerHTML = log.slice(-12).map(entry => {
+    const secsAgo = Math.floor((now - (entry.time || now)) / 1000);
+    const isOld = secsAgo > 30;
+    const style = isOld ? ' style="opacity:0.45"' : '';
+    return `<div class="log-entry log-${entry.type || 'info'}"${style}><span class="log-timestamp">[${secsAgo}s]</span>${entry.text}</div>`;
+  }).join('');
 
   logEl.scrollTop = logEl.scrollHeight;
 }
 
 function updateEnemyDisplay() {
-  const container = document.getElementById('active-enemies-display');
-  if (!container) return;
+  const listEl = document.getElementById('enemy-list');
+  if (!listEl) return;
 
   const enemies = GameState.enemies && GameState.enemies.length > 0
     ? GameState.enemies.filter(e => e && e.hp > 0)
     : [];
 
   if (enemies.length === 0) {
-    container.className = '';
-    container.innerHTML = '<div class="no-enemy">Select an enemy to fight</div>';
+    listEl.innerHTML = '<div class="no-enemy">Select an enemy to fight</div>';
     return;
   }
 
@@ -485,19 +506,14 @@ function updateEnemyDisplay() {
     ? Math.max(...GameState.party.filter(m => m && m.isAlive).map(m => m.level), 1)
     : 1;
 
-  container.className = enemies.length === 1 ? 'single-enemy' : '';
-
-  container.innerHTML = enemies.map((enemy, i) => {
-    const isFocused = enemy === GameState.currentEnemy;
+  const now = Date.now();
+  listEl.innerHTML = enemies.map((enemy, idx) => {
     const con = getConColor(highestLevel, enemy.level);
-    const pct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHP) * 100));
-    const sprite = enemies.length === 1 ? getLargeSprite(enemy.id) : getSprite(enemy.id);
+    const hpPct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHP) * 100));
+    const isPrimary = idx === 0;
+    const isFocused = enemy === GameState.currentEnemy;
 
-    const now = Date.now();
     const statusTags = [];
-    if (enemy.stunUntil && enemy.stunUntil > now) statusTags.push('<span class="effect-tag effect-stun">stun</span>');
-    if (enemy.mezzedUntil && enemy.mezzedUntil > now) statusTags.push('<span class="effect-tag effect-mez">mez</span>');
-    if (enemy.fearedUntil && enemy.fearedUntil > now) statusTags.push('<span class="effect-tag effect-fear">fear</span>');
     if (enemy.statusEffects && enemy.statusEffects.length > 0) {
       enemy.statusEffects.forEach(e => {
         if (e.type === 'slow') statusTags.push('<span class="effect-tag effect-slow">slow</span>');
@@ -507,20 +523,34 @@ function updateEnemyDisplay() {
     if (enemy.dots && enemy.dots.length > 0) {
       statusTags.push(`<span class="effect-tag effect-poison">${enemy.dots.length} DoT</span>`);
     }
+    const statusHtml = statusTags.join('');
 
-    return `<div class="enemy-card${isFocused ? ' focused' : ''}" data-enemy-index="${i}">
-      <div class="enemy-card-sprite">${sprite}</div>
-      <div class="enemy-card-name"><span class="con-dot con-${con.color}" title="${con.label}">●</span> <span class="enemy-level">[Lv.${enemy.level}]</span> ${enemy.name}</div>
-      <div class="enemy-card-hp-wrap">
-        <div class="enemy-card-hp-bar-bg"><div class="enemy-card-hp-bar" style="width:${pct}%"></div></div>
-        <div class="enemy-card-hp-text">${Math.max(0, enemy.hp)} / ${enemy.maxHP} HP</div>
+    const mezzed = enemy.mezzedUntil && now < enemy.mezzedUntil;
+    const stunned = enemy.stunUntil && now < enemy.stunUntil;
+    const feared = enemy.fearedUntil && now < enemy.fearedUntil;
+    const ccLabel = mezzed ? ' <span class="enemy-cc-tag">MEZ</span>'
+                  : stunned ? ' <span class="enemy-cc-tag">STUN</span>'
+                  : feared  ? ' <span class="enemy-cc-tag cc-fear">FEAR</span>'
+                  : '';
+
+    return `
+      <div class="enemy-card${isPrimary ? ' enemy-card-primary' : ''}${isFocused ? ' focused' : ''}" data-enemy-index="${idx}">
+        <div class="enemy-card-header">
+          <span class="con-dot con-${con.color}" title="${con.label}">●</span>
+          <span class="enemy-card-name">${enemy.name}${ccLabel}</span>
+          <span class="enemy-card-level">[Lv.${enemy.level}]</span>
+          <span class="enemy-card-hp-text">${Math.max(0, enemy.hp)}/${enemy.maxHP}</span>
+        </div>
+        <div class="enemy-card-hp-track">
+          <div class="enemy-card-hp-bar" style="width:${hpPct}%"></div>
+        </div>
+        ${statusHtml ? `<div class="enemy-card-status">${statusHtml}</div>` : ''}
       </div>
-      <div class="enemy-card-status">${statusTags.join('')}</div>
-    </div>`;
+    `;
   }).join('');
 
   // Single delegated listener on the container — replaced each render so no accumulation
-  container.onclick = (e) => {
+  listEl.onclick = (e) => {
     const card = e.target.closest('.enemy-card');
     if (!card) return;
     const idx = parseInt(card.dataset.enemyIndex, 10);
