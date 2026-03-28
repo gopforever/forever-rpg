@@ -269,6 +269,9 @@ function combatTick() {
     return;
   }
 
+  // Apply bard song auras each tick
+  tickBardSongs();
+
   // Resolve in-flight ability casts (target primary enemy)
   const primaryEnemy = GameState.enemies[0];
   tickAbilityCasts(livingMembers, primaryEnemy);
@@ -463,6 +466,12 @@ function memberAttack(member, enemy) {
     damage = Math.floor(damage * (1 + (damageBuff.value || 0) / 100));
   }
 
+  // Check for active buff_attack (e.g. Bard's Anthem de Arms — % ATK bonus)
+  const attackBuff = (member.statusEffects || []).find(e => e.type === 'buff_attack' && Date.now() < e.endTime);
+  if (attackBuff) {
+    damage = Math.floor(damage * (1 + (attackBuff.value || 0) / 100));
+  }
+
   damage = applyACMitigation(damage, { currentAC: enemy.ac, AGI: enemy.ac * 3, statBonuses: {} });
   damage = Math.max(1, damage);
 
@@ -566,7 +575,15 @@ function enemyAttack(enemy, target, party) {
   }
 
   const effectiveAtk = Math.max(1, enemy.atk - (enemy.debuffs && enemy.debuffs.STR ? Math.floor(enemy.debuffs.STR / 5) : 0));
-  let damage = Math.max(1, effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5)));
+  let rawDamage = Math.max(1, effectiveAtk + Math.floor(Math.random() * (effectiveAtk * 0.5)));
+
+  // Check for active debuff_atk on the enemy (e.g. Bard's Angstlich's Appalling Screech)
+  const atkDebuff = (enemy.statusEffects || []).find(e => e.type === 'debuff_atk' && Date.now() < e.endTime);
+  if (atkDebuff) {
+    rawDamage = Math.floor(rawDamage * (1 - (atkDebuff.value || 0) / 100));
+  }
+
+  let damage = Math.max(1, rawDamage);
   damage = applyACMitigation(damage, target);
 
   // Check for active buff_ac on the target (e.g. Warrior's Defense Discipline)
@@ -827,7 +844,15 @@ function handleEnemyDeath(enemy) {
   GameState.combatActive = false;
   GameState.inCombat = false;
 
-  if (GameState.selectedEnemyId) {
+  if (GameState.camp && GameState.camp.zoneId === GameState.zone && GameState.camp.enemyId === GameState.selectedEnemyId) {
+    setTimeout(() => {
+      if (GameState.camp && GameState.selectedEnemyId) {
+        addCombatLog(`Your camp respawns — ${ENEMIES[GameState.selectedEnemyId] ? ENEMIES[GameState.selectedEnemyId].name : GameState.selectedEnemyId} returns.`, 'system');
+        startCombat(GameState.selectedEnemyId);
+        if (typeof updateCombatUI === 'function') updateCombatUI();
+      }
+    }, 1500); // faster camp respawn
+  } else if (GameState.selectedEnemyId) {
     const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : 3000;
     setTimeout(() => {
       if (GameState.selectedEnemyId) {
@@ -1493,4 +1518,159 @@ function standUp() {
   if (typeof updateCombatUI === 'function') updateCombatUI();
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp };
+/**
+ * Pull System — sends the fastest party member out to pull the selected enemy.
+ * Has a chance to drag in an add (~25% base, reduced for skilled pullers).
+ */
+function pullEnemy() {
+  if (GameState.combatActive || !GameState.selectedEnemyId) return;
+
+  // Find the puller: prefer Rogue/Ranger/Monk, else highest DEX
+  const living = GameState.party.filter(m => m && m.isAlive);
+  const preferredPullers = living.filter(m => ['rogue', 'ranger', 'monk'].includes(m.classId));
+  const puller = preferredPullers.length > 0
+    ? preferredPullers.reduce((a, b) => (b.DEX || 0) > (a.DEX || 0) ? b : a)
+    : living.reduce((a, b) => (b.DEX || 0) > (a.DEX || 0) ? b : a);
+
+  if (!puller) return;
+
+  const template = ENEMIES[GameState.selectedEnemyId];
+  if (!template) return;
+
+  addCombatLog(`${puller.name} heads out to pull ${template.name}...`, 'system');
+
+  // Pull delay: 2–4 seconds (simulates travel time)
+  const pullDelay = 2000 + Math.random() * 2000;
+
+  GameState.isPulling = true;
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+
+  setTimeout(() => {
+    GameState.isPulling = false;
+
+    // Check for pull add: ~25% base chance, reduced if puller is Monk/Rogue/Ranger
+    const addChance = ['monk', 'rogue', 'ranger'].includes(puller.classId) ? 0.10 : 0.25;
+    const pulled = [makeLiveEnemy(GameState.selectedEnemyId)].filter(Boolean);
+
+    if (Math.random() < addChance) {
+      // Pull a random common enemy from the zone as the add
+      const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+      const pool = zone ? (zone.commonEnemies || []) : [];
+      const addId = pool[Math.floor(Math.random() * pool.length)];
+      if (addId && addId !== GameState.selectedEnemyId) {
+        const add = makeLiveEnemy(addId);
+        if (add) {
+          pulled.push(add);
+          addCombatLog(`${puller.name} dragged in an add: ${add.name}!`, 'system');
+        }
+      }
+    }
+
+    if (pulled.length === 0) {
+      addCombatLog('The pull failed — no enemies found.', 'system');
+      if (typeof updateCombatUI === 'function') updateCombatUI();
+      return;
+    }
+
+    // Start combat with pulled enemies
+    GameState.enemies = pulled.slice(0, MAX_ENCOUNTER_ENEMIES);
+    GameState.currentEnemy = GameState.enemies[0];
+    GameState.combatActive = true;
+    GameState.inCombat = true;
+    GameState.threatTable = {};
+    GameState._lastHPRegenTick = Date.now();
+    GameState._lastBuffDecayTick = Date.now();
+
+    if (GameState.isSitting) {
+      GameState.isSitting = false;
+      addCombatLog('You stand up as combat begins!', 'system');
+    }
+
+    const names = GameState.enemies.map(e => e.name).join(', ');
+    addCombatLog(`${puller.name} returns with: ${names}!`, 'system');
+
+    if (typeof updateCombatUI === 'function') updateCombatUI();
+  }, pullDelay);
+}
+
+/**
+ * Camp System — set camp on the currently selected enemy type.
+ * Camp respawns are faster and flagged with flavor text.
+ */
+function setCamp() {
+  if (!GameState.selectedEnemyId) {
+    addCombatLog('Select an enemy first to set camp on it.', 'system');
+    return;
+  }
+  GameState.camp = {
+    zoneId: GameState.zone,
+    enemyId: GameState.selectedEnemyId,
+    setAt: Date.now(),
+  };
+  const template = ENEMIES[GameState.selectedEnemyId];
+  addCombatLog(`Camp set on ${template ? template.name : GameState.selectedEnemyId}. Enemies will respawn to your camp.`, 'system');
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+/**
+ * Break the current camp.
+ */
+function breakCamp() {
+  GameState.camp = null;
+  addCombatLog('Camp broken.', 'system');
+  if (typeof updateCombatUI === 'function') updateCombatUI();
+}
+
+/**
+ * Bard Songs — applies persistent song auras each combat tick if a Bard is in the party.
+ * Songs are passive, mana-free auras that buff the whole party and debuff enemies.
+ */
+function tickBardSongs() {
+  if (!GameState.combatActive) return;
+  const bard = (GameState.party || []).find(m => m && m.isAlive && m.classId === 'bard');
+  if (!bard) return;
+
+  const party = GameState.party.filter(m => m && m.isAlive);
+  const now = Date.now();
+  const songDuration = 8000; // songs last 8 seconds (refreshed each tick ~2–3s, so persistent)
+
+  // Anthem de Arms (lv 1+): party-wide ATK +5%
+  if (bard.level >= 1) {
+    for (const member of party) {
+      applyStatusEffect(member, { type: 'buff_attack', value: 5, endTime: now + songDuration });
+    }
+  }
+
+  // Chant of Battle (lv 2+): flat melee damage buff
+  if (bard.level >= 2) {
+    for (const member of party) {
+      applyStatusEffect(member, { type: 'buff_damage', value: 3, endTime: now + songDuration });
+    }
+  }
+
+  // Angstlich's Appalling Screech (lv 3+): enemy ATK debuff
+  if (bard.level >= 3 && GameState.enemies) {
+    for (const enemy of GameState.enemies.filter(e => e.hp > 0)) {
+      applyStatusEffect(enemy, { type: 'debuff_atk', value: 10, endTime: now + songDuration });
+    }
+  }
+
+  // Lyssa's Solidarity of Vision (lv 5+): party-wide AC buff
+  if (bard.level >= 5) {
+    for (const member of party) {
+      applyStatusEffect(member, { type: 'buff_ac', value: 8, endTime: now + songDuration });
+    }
+  }
+
+  // Verses of Victory (lv 8+): party-wide HP regen aura
+  if (bard.level >= 8) {
+    for (const member of party) {
+      member.hp = Math.min(member.maxHP, member.hp + 3);
+    }
+  }
+
+  // Gain singing skill on each tick
+  if (typeof trySkillGain === 'function') trySkillGain(bard, 'singing');
+}
+
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp, pullEnemy, setCamp, breakCamp, tickBardSongs };

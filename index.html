@@ -116,7 +116,12 @@
     <div id="combat-area">
       <div id="enemy-list"><div class="no-enemy">Select an enemy below to begin combat</div></div>
       <button id="stop-combat-btn" class="btn-stop-combat" title="Stop fighting and stand down" disabled>⛔ Stop Fighting</button>
-      <button id="sit-btn" class="btn-sit" title="Sit to meditate and recover mana faster" disabled>🧘 Sit</button>
+      <div class="combat-btn-row">
+        <button id="sit-btn" class="btn-sit" title="Sit to meditate and recover mana faster" disabled>🧘 Sit</button>
+        <button id="pull-btn" class="btn-pull" title="Send puller to fetch the selected enemy" disabled>🎯 Pull</button>
+        <button id="set-camp-btn" class="btn-camp" title="Set camp on selected enemy">⛺ Set Camp</button>
+      </div>
+      <div id="camp-indicator" style="display:none"></div>
     </div>
 
     <div id="combat-log-container">

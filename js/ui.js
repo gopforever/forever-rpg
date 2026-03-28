@@ -295,7 +295,7 @@ function renderPartyPanel() {
       const statusIcons = (member.statusEffects || [])
         .filter(e => Date.now() < e.endTime)
         .map(e => {
-          const icons = { poison: '☠', disease: '🤢', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡' };
+          const icons = { poison: '☠', disease: '🤢', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡', buff_attack: '🎵' };
           return `<span class="status-icon" title="${e.type}">${icons[e.type] || '✦'}</span>`;
         }).join('');
 
@@ -517,6 +517,7 @@ function updateEnemyDisplay() {
     if (enemy.statusEffects && enemy.statusEffects.length > 0) {
       enemy.statusEffects.forEach(e => {
         if (e.type === 'slow') statusTags.push('<span class="effect-tag effect-slow">slow</span>');
+        else if (e.type === 'debuff_atk') statusTags.push('<span class="effect-tag effect-slow">🎵 screech</span>');
         else statusTags.push(`<span class="effect-tag">${e.type}</span>`);
       });
     }
