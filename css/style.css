@@ -2650,3 +2650,38 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .party-member-ctx .ctx-revive { color: #88cc44; }
 .party-member-ctx .ctx-info   { color: #4488cc; }
 .party-member-ctx .ctx-destroy { color: #cc4444; }
+
+/* ─── Ghost Inspect Modal v3 ─────────────────────────────────────────────────── */
+
+#ghost-inspect-modal .modal-content {
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.ghost-inspect-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.ghost-inspect-classicon { font-size: 2rem; flex-shrink: 0; }
+.ghost-inspect-nameblock h2 { margin: 0; font-size: 1.1rem; }
+.ghost-inspect-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+.ghost-inspect-badge { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; }
+.personality-badge { background: rgba(200,168,75,0.15); border: 1px solid var(--panel-border); border-radius: 3px; padding: 1px 6px; color: var(--gold); font-size: 0.72rem; }
+.ghost-inspect-bio { font-size: 0.78rem; color: var(--text-secondary); font-style: italic; margin-bottom: 10px; padding: 6px 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+.ghost-inspect-stats-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; margin-bottom: 12px; padding: 6px 8px; background: rgba(0,0,0,0.15); border-radius: 4px; }
+.ghost-stat-hp    { color: var(--hp-green); }
+.ghost-stat-mana  { color: var(--mana-blue); }
+.ghost-stat-ac    { color: var(--text-secondary); }
+.ghost-stat-kills { color: #cc4444; }
+.ghost-stat-gold  { color: var(--gold); }
+.ghost-inspect-section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-dim); border-bottom: 1px solid var(--panel-border); padding-bottom: 3px; margin: 10px 0 5px; }
+.ghost-equip-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 4px; }
+.ghost-equip-row { display: flex; gap: 6px; align-items: center; font-size: 0.72rem; padding: 2px 4px; }
+.ghost-equip-slot { color: var(--text-dim); font-size: 0.65rem; min-width: 62px; flex-shrink: 0; }
+.ghost-equip-item { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ghost-equip-empty { color: var(--text-dim); font-size: 0.72rem; opacity: 0.5; }
+.ghost-inv-panel { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.ghost-inv-row { font-size: 0.75rem; padding: 2px 4px; }
+.ghost-inv-empty { color: var(--text-dim); font-style: italic; }
+.rarity-common  { color: var(--rarity-common); }
+.rarity-magic   { color: var(--rarity-magic); }
+.rarity-rare    { color: var(--rarity-rare); }
+.rarity-named   { color: var(--rarity-named); }
+#city-online-count { font-size: 0.75rem; color: var(--text-secondary); padding: 3px 8px; text-align: center; border-bottom: 1px solid var(--panel-border); margin-bottom: 4px; }
