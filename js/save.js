@@ -172,7 +172,7 @@ function checkOfflineProgress() {
     const offlineMinutes = offlineMs / 60000;
     if (offlineMinutes < 5) return null;
 
-    const offlineHours = Math.min(8, offlineMs / 3600000);
+    const offlineHours = Math.min(96, offlineMs / 3600000);
 
     const zone = ZONES[data.zone || 'qeynos_hills'];
     const avgXPPerKill = 30;
@@ -242,4 +242,36 @@ function hardReset() {
   location.reload();
 }
 
-if (typeof module !== 'undefined') module.exports = { saveGame, loadGame, hasSave, deleteSave, exportSave, importSave, applyLoadedSave, checkOfflineProgress, applyOfflineProgress, getPanelPositions, savePanelPosition, hardReset };
+/**
+ * Returns a cosmetic summary of how many zone changes ghost players made while
+ * the game was offline. This is purely informational and intended for display
+ * in the offline progress modal.
+ *
+ * @returns {{ totalMoves: number, uniqueZones: number, summary: string }|null}
+ *   An object with move counts and a human-readable summary, or null if no
+ *   ghost data is available.
+ */
+function checkOfflineZoneActivity() {
+  try {
+    const raw = localStorage.getItem('foreverRPG_ghosts');
+    if (!raw) return null;
+    const ghosts = JSON.parse(raw);
+    if (!Array.isArray(ghosts) || !ghosts.length) return null;
+    const zonesVisited = new Set();
+    ghosts.forEach(g => {
+      if (g.zone) zonesVisited.add(g.zone);
+      if (Array.isArray(g.visitedZones)) g.visitedZones.forEach(z => zonesVisited.add(z));
+    });
+    const totalMoves = ghosts.reduce((sum, g) => {
+      // Estimate zone changes: ghosts that have been around long enough to move
+      return sum + (g.lastZoneChange && g.lastZoneChange > 0 ? 1 : 0);
+    }, 0);
+    const uniqueZones = zonesVisited.size;
+    const summary = `While you were away, ghost players visited ${uniqueZones} zone${uniqueZones !== 1 ? 's' : ''} across the world.`;
+    return { totalMoves, uniqueZones, summary };
+  } catch (e) {
+    return null;
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { saveGame, loadGame, hasSave, deleteSave, exportSave, importSave, applyLoadedSave, checkOfflineProgress, applyOfflineProgress, checkOfflineZoneActivity, getPanelPositions, savePanelPosition, hardReset };

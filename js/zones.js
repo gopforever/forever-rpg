@@ -665,7 +665,7 @@ const ZONES = {
     groupSpawnChance: 0.30,
     respawnTime: 4000,
     ambientColor: '#1a1208',
-    connections: ['west_karana', 'kithicor_forest'],
+    connections: ['west_karana', 'kithicor_forest', 'lake_of_ill_omen'],
     flavorLines: [
       'The narrow path winds between sheer cliff faces. One wrong step means a fatal fall.',
       'The wind screams through the pass, masking the sound of approaching danger.',
@@ -825,7 +825,7 @@ const ZONES = {
     groupSpawnChance: 0.30,
     respawnTime: 5000,
     ambientColor: '#1a0e08',
-    connections: ['kithicor_forest'],
+    connections: ['kithicor_forest', 'plane_of_fear', 'lake_of_ill_omen'],
     flavorLines: [
       'The road is rutted by the passage of orc war parties. The dust never settles.',
       'Orc drums beat in the distance — a war march growing closer.',
@@ -866,6 +866,186 @@ const ZONES = {
   <circle cx="140" cy="144" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
   <!-- Zone border -->
   <rect width="280" height="200" fill="none" stroke="#3a2010" stroke-width="2" rx="3"/>
+</svg>`,
+  },
+
+  // ─── Plane of Fear ─────────────────────────────────────────────────────────
+
+  plane_of_fear: {
+    id: 'plane_of_fear',
+    name: 'Plane of Fear',
+    shortName: 'PoF',
+    levelRange: [45, 55],
+    xpModifier: 1.5,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'The Plane of Fear is the realm of Cazic-Thule, the Faceless — a dimension of pure dread where mortals are unmade by terror. Ancient constructs, thought horrors, and the undead dracoliche stalk this hellish landscape.',
+    enemies: [
+      'fear_golem', 'thought_horror', 'dracoliche', 'frenzied_puma',
+      'amygdalan_warrior', 'cazic_thule',
+    ],
+    commonEnemies: [
+      'fear_golem', 'thought_horror', 'dracoliche', 'frenzied_puma', 'amygdalan_warrior',
+    ],
+    rareEnemies: ['cazic_thule'],
+    rareSpawnChance: 0.04,
+    groups: [
+      { members: ['fear_golem', 'amygdalan_warrior'], weight: 4 },
+      { members: ['fear_golem', 'fear_golem'], weight: 3 },
+      { members: ['frenzied_puma', 'frenzied_puma'], weight: 3 },
+      { members: ['frenzied_puma', 'frenzied_puma', 'frenzied_puma'], weight: 1 },
+      { members: ['amygdalan_warrior', 'amygdalan_warrior'], weight: 2 },
+    ],
+    groupSpawnChance: 0.35,
+    respawnTime: 8000,
+    ambientColor: '#1a0014',
+    connections: ['commonlands'],
+    flavorLines: [
+      'The air itself trembles here. Reality feels thin, like a membrane about to tear.',
+      'Lava cracks split the obsidian ground, filling the sky with the stench of sulfur and despair.',
+      'Twisted spires of black stone jut from the earth like broken teeth. Something writhes at their bases.',
+      'Glowing eyes watch from every shadow. They do not blink. They never blink.',
+      'Cazic-Thule\'s presence permeates every stone. To be here is to know true fear.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Dark hellish background -->
+  <rect width="280" height="200" fill="#0d000d"/>
+  <!-- Lava ground cracks -->
+  <path d="M0,180 Q40,170 80,175 Q120,180 160,172 Q200,165 280,178" fill="#1a0014" stroke="none"/>
+  <path d="M20,190 Q60,175 100,185 Q140,195 180,178 Q220,162 280,185" fill="#200018" stroke="none"/>
+  <!-- Lava crack lines -->
+  <path d="M30,185 Q50,160 70,180 Q90,160 110,185" fill="none" stroke="#ff2200" stroke-width="2" opacity="0.8"/>
+  <path d="M130,190 Q155,165 175,188 Q195,168 215,190" fill="none" stroke="#ff4400" stroke-width="1.5" opacity="0.7"/>
+  <path d="M0,175 Q25,155 45,175" fill="none" stroke="#cc1100" stroke-width="2" opacity="0.6"/>
+  <path d="M230,178 Q255,155 280,175" fill="none" stroke="#dd1100" stroke-width="2" opacity="0.6"/>
+  <!-- Lava glow fills in cracks -->
+  <path d="M30,185 Q50,160 70,180" fill="none" stroke="#ff6600" stroke-width="1" opacity="0.5"/>
+  <path d="M130,190 Q155,165 175,188" fill="none" stroke="#ff8800" stroke-width="0.5" opacity="0.4"/>
+  <!-- Twisted spires -->
+  <polygon points="50,170 42,60 58,60" fill="#1a0020" stroke="#330033" stroke-width="1"/>
+  <polygon points="50,170 44,55 56,55" fill="#220028" stroke="none"/>
+  <polygon points="120,175 109,45 131,45" fill="#1c001c" stroke="#2a0028" stroke-width="1"/>
+  <polygon points="200,172 190,70 210,70" fill="#1a0020" stroke="#330033" stroke-width="1"/>
+  <polygon points="250,175 243,80 257,80" fill="#1e001e" stroke="none"/>
+  <!-- Spire glow tips -->
+  <circle cx="50" cy="58" r="3" fill="#aa00ff" opacity="0.4"/>
+  <circle cx="120" cy="47" r="4" fill="#cc00cc" opacity="0.35"/>
+  <circle cx="200" cy="73" r="3" fill="#aa00ff" opacity="0.4"/>
+  <circle cx="250" cy="83" r="2" fill="#9900cc" opacity="0.3"/>
+  <!-- Glowing eyes in shadows -->
+  <ellipse cx="80" cy="130" rx="3" ry="2" fill="#ff0000" opacity="0.8"/>
+  <ellipse cx="86" cy="130" rx="3" ry="2" fill="#ff0000" opacity="0.8"/>
+  <ellipse cx="160" cy="115" rx="3" ry="2" fill="#ff2200" opacity="0.7"/>
+  <ellipse cx="166" cy="115" rx="3" ry="2" fill="#ff2200" opacity="0.7"/>
+  <ellipse cx="220" cy="135" rx="2" ry="1.5" fill="#dd0000" opacity="0.6"/>
+  <ellipse cx="225" cy="135" rx="2" ry="1.5" fill="#dd0000" opacity="0.6"/>
+  <!-- Altar of Cazic-Thule marker -->
+  <rect x="108" y="68" width="44" height="16" fill="#0d0010" stroke="#550055" stroke-width="1" rx="2"/>
+  <text x="130" y="79" text-anchor="middle" font-family="serif" font-size="5.5" fill="#cc44cc">✦ Cazic's Altar</text>
+  <!-- Golem Forge marker -->
+  <rect x="28" y="88" width="38" height="14" fill="#100010" stroke="#440022" stroke-width="1" rx="2"/>
+  <text x="47" y="98" text-anchor="middle" font-family="serif" font-size="5" fill="#ff4444">Golem Forge</text>
+  <!-- Lava Pit marker -->
+  <rect x="195" y="95" width="30" height="14" fill="#120006" stroke="#440000" stroke-width="1" rx="2"/>
+  <text x="210" y="105" text-anchor="middle" font-family="serif" font-size="5" fill="#ff6600">Lava Pit</text>
+  <!-- Commonlands connection (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#160010" stroke="#3a0030" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ CL</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="148" r="7" fill="#000000" opacity="0.6"/>
+  <text x="140" y="152" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="148" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#330022" stroke-width="2" rx="3"/>
+</svg>`,
+  },
+
+  // ─── Lake of Ill Omen ──────────────────────────────────────────────────────
+
+  lake_of_ill_omen: {
+    id: 'lake_of_ill_omen',
+    name: 'Lake of Ill Omen',
+    shortName: 'LOIO',
+    levelRange: [25, 35],
+    xpModifier: 1.2,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'A vast, murky lake on the continent of Kunark, fouled by Sarnak activity and goblin encampments along its shores. Iksar bandits lurk among the ruins, and something ancient watches from the deep water.',
+    enemies: [
+      'sarnak_warrior', 'sarnak_shaman', 'sarnak_berserker', 'froglok_tad',
+      'lake_goblin', 'goblin_shaman', 'giant_crab', 'iksar_bandit', 'the_emissary',
+    ],
+    commonEnemies: [
+      'sarnak_warrior', 'sarnak_shaman', 'sarnak_berserker', 'froglok_tad',
+      'lake_goblin', 'goblin_shaman', 'giant_crab', 'iksar_bandit',
+    ],
+    rareEnemies: ['the_emissary'],
+    rareSpawnChance: 0.06,
+    groups: [
+      { members: ['sarnak_warrior', 'sarnak_warrior'], weight: 4 },
+      { members: ['sarnak_warrior', 'sarnak_shaman'], weight: 3 },
+      { members: ['lake_goblin', 'lake_goblin'], weight: 4 },
+      { members: ['lake_goblin', 'goblin_shaman'], weight: 3 },
+      { members: ['sarnak_berserker', 'sarnak_warrior'], weight: 2 },
+      { members: ['giant_crab', 'giant_crab'], weight: 2 },
+    ],
+    groupSpawnChance: 0.30,
+    respawnTime: 4000,
+    ambientColor: '#061410',
+    connections: ['commonlands', 'highpass_hold'],
+    flavorLines: [
+      'The lake water is an unsettling green-black. Shapes move beneath the surface that have no name.',
+      'Sarnak war drums echo across the still water from the eastern encampment.',
+      'Rotting docks jut from the shore like broken fingers. The wood is black and slick with algae.',
+      'Froglok tadpoles swarm in the shallows. Their presence usually means something worse is nearby.',
+      'A mist hangs permanently over the lake, muffling sound and swallowing light. Omens are bad here.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Dark murky background -->
+  <rect width="280" height="200" fill="#060e0a"/>
+  <!-- Lake water (murky green) -->
+  <ellipse cx="140" cy="115" rx="120" ry="75" fill="#0a1e14"/>
+  <ellipse cx="140" cy="115" rx="105" ry="62" fill="#0d2418"/>
+  <!-- Water shimmer ripples -->
+  <ellipse cx="110" cy="105" rx="30" ry="8" fill="none" stroke="#1a4028" stroke-width="1" opacity="0.5"/>
+  <ellipse cx="170" cy="125" rx="25" ry="6" fill="none" stroke="#163820" stroke-width="1" opacity="0.4"/>
+  <ellipse cx="140" cy="90" rx="20" ry="5" fill="none" stroke="#1a4028" stroke-width="0.5" opacity="0.3"/>
+  <!-- Shore terrain -->
+  <path d="M20,140 Q60,185 140,190 Q220,185 260,140" fill="#0e1a10" stroke="#122016" stroke-width="1"/>
+  <path d="M0,130 Q30,175 140,180 Q250,175 280,130" fill="none" stroke="#0d2010" stroke-width="2"/>
+  <!-- Ruined docks -->
+  <rect x="35" y="135" width="4" height="25" fill="#1e1008" stroke="#2a1810" stroke-width="1"/>
+  <rect x="45" y="132" width="4" height="28" fill="#1e1008" stroke="#2a1810" stroke-width="1"/>
+  <rect x="55" y="137" width="4" height="22" fill="#1e1008" stroke="#2a1810" stroke-width="1"/>
+  <path d="M35,136 Q45,133 55,138" fill="none" stroke="#2a1808" stroke-width="2"/>
+  <rect x="210" y="133" width="4" height="26" fill="#1e1008" stroke="#2a1810" stroke-width="1"/>
+  <rect x="220" y="136" width="4" height="23" fill="#1e1008" stroke="#2a1810" stroke-width="1"/>
+  <path d="M210,134 Q220,137" fill="none" stroke="#2a1808" stroke-width="2"/>
+  <!-- Ruins along shore -->
+  <rect x="60" y="155" width="16" height="10" fill="#162018" stroke="#1e2c20" stroke-width="1" rx="1"/>
+  <rect x="64" y="148" width="8" height="8" fill="#162018" stroke="none"/>
+  <rect x="190" y="152" width="20" height="12" fill="#162018" stroke="#1e2c20" stroke-width="1" rx="1"/>
+  <!-- Sarnak camp marker -->
+  <rect x="170" y="55" width="38" height="14" fill="#0e0a08" stroke="#3a2808" stroke-width="1" rx="2"/>
+  <text x="189" y="65" text-anchor="middle" font-family="serif" font-size="5" fill="#b05a20">⚔ Sarnak Camp</text>
+  <!-- Goblin village marker -->
+  <rect x="60" y="60" width="34" height="14" fill="#080e0a" stroke="#1a3010" stroke-width="1" rx="2"/>
+  <text x="77" y="70" text-anchor="middle" font-family="serif" font-size="5" fill="#60a040">Goblin Village</text>
+  <!-- Deep water marker -->
+  <rect x="112" y="100" width="36" height="14" fill="#060e0a" stroke="#0a2818" stroke-width="1" rx="2"/>
+  <text x="130" y="110" text-anchor="middle" font-family="serif" font-size="5" fill="#30a878">~ Deep Water ~</text>
+  <!-- Commonlands connection (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#0e1408" stroke="#1a2808" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ CL</text>
+  <!-- Highpass Hold connection (right) -->
+  <rect x="256" y="85" width="22" height="14" fill="#0e1008" stroke="#1a2008" stroke-width="1" rx="2"/>
+  <text x="267" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">HP ►</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="148" r="7" fill="#000000" opacity="0.5"/>
+  <text x="140" y="152" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="148" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#0e2010" stroke-width="2" rx="3"/>
 </svg>`,
   },
 };

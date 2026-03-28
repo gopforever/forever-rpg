@@ -95,6 +95,53 @@ const GUILD_SPELLS = [
   // Beastlord
   { id: 'spell_minor_heal_bst',  name: 'Minor Healing',             classId: 'beastlord',    level: 1,  manaCost: 10, effect: { healAmount: 25  }, buyPrice: 500  },
   { id: 'spell_burst_flame_bst', name: 'Burst of Flame',            classId: 'beastlord',    level: 1,  manaCost: 10, effect: { dmg: 15         }, buyPrice: 500  },
+
+  // ─── High-Level Spells (Level 45–55) ─────────────────────────────────────
+
+  // Cleric — level 45-55
+  { id: 'spell_divine_aura',        name: 'Divine Aura',           classId: 'cleric',       level: 45, manaCost: 180, effect: { healAmount: 800  }, buyPrice: 85000  },
+  { id: 'spell_complete_heal',      name: 'Complete Heal',         classId: 'cleric',       level: 50, manaCost: 300, effect: { healAmount: 2000 }, buyPrice: 150000 },
+  { id: 'spell_celestial_healing',  name: 'Celestial Healing',     classId: 'cleric',       level: 55, manaCost: 400, effect: { healAmount: 3000 }, buyPrice: 250000 },
+
+  // Druid — level 45-55
+  { id: 'spell_nature_walker',      name: 'Nature Walker\'s Behest', classId: 'druid',      level: 45, manaCost: 160, effect: { dmg: 380        }, buyPrice: 80000  },
+  { id: 'spell_storm_strike',       name: 'Storm Strike',          classId: 'druid',        level: 50, manaCost: 250, effect: { dmg: 600        }, buyPrice: 140000 },
+  { id: 'spell_superior_regen',     name: 'Superior Regeneration', classId: 'druid',        level: 55, manaCost: 350, effect: { hpRegen: 22     }, buyPrice: 220000 },
+
+  // Shaman — level 45-55
+  { id: 'spell_cannibalize_iv',     name: 'Cannibalize IV',        classId: 'shaman',       level: 45, manaCost: 0,   effect: { manaRegen: 12   }, buyPrice: 80000  },
+  { id: 'spell_avatar',             name: 'Avatar',                classId: 'shaman',       level: 50, manaCost: 280, effect: { atkBuff: 80     }, buyPrice: 145000 },
+  { id: 'spell_torpor',             name: 'Torpor',                classId: 'shaman',       level: 55, manaCost: 400, effect: { healAmount: 1500 }, buyPrice: 240000 },
+
+  // Wizard — level 45-55
+  { id: 'spell_sunstrike',          name: 'Sunstrike',             classId: 'wizard',       level: 45, manaCost: 195, effect: { dmg: 720        }, buyPrice: 90000  },
+  { id: 'spell_ice_comet',          name: 'Ice Comet',             classId: 'wizard',       level: 50, manaCost: 290, effect: { dmg: 1100       }, buyPrice: 160000 },
+  { id: 'spell_time_stop',          name: 'Time Stop',             classId: 'wizard',       level: 55, manaCost: 400, effect: { stun: true      }, buyPrice: 250000 },
+
+  // Magician — level 45-55
+  { id: 'spell_elemental_simulacrum', name: 'Elemental Simulacrum', classId: 'magician',    level: 45, manaCost: 200, effect: { summon: 'pet'   }, buyPrice: 90000  },
+  { id: 'spell_monster_summon_iii', name: 'Monster Summoning III', classId: 'magician',     level: 50, manaCost: 300, effect: { summon: 'pet'   }, buyPrice: 160000 },
+  { id: 'spell_dagger_of_symbols',  name: 'Dagger of Symbols',    classId: 'magician',     level: 55, manaCost: 380, effect: { dmg: 850        }, buyPrice: 240000 },
+
+  // Enchanter — level 45-55
+  { id: 'spell_beguile',            name: 'Beguile',               classId: 'enchanter',    level: 45, manaCost: 170, effect: { mez: true       }, buyPrice: 85000  },
+  { id: 'spell_clarity_ii',         name: 'Clarity II',            classId: 'enchanter',    level: 50, manaCost: 200, effect: { manaRegen: 15   }, buyPrice: 150000 },
+  { id: 'spell_rune_v',             name: 'Rune V',                classId: 'enchanter',    level: 55, manaCost: 350, effect: { ac: 120         }, buyPrice: 240000 },
+
+  // Necromancer — level 45-55
+  { id: 'spell_death_peace',        name: 'Death Peace',           classId: 'necromancer',  level: 45, manaCost: 160, effect: { mez: true       }, buyPrice: 85000  },
+  { id: 'spell_lich',               name: 'Lich',                  classId: 'necromancer',  level: 50, manaCost: 0,   effect: { manaRegen: 20   }, buyPrice: 150000 },
+  { id: 'spell_quivering_veil',     name: 'Quivering Veil of Xarn', classId: 'necromancer', level: 55, manaCost: 400, effect: { dot: 180        }, buyPrice: 250000 },
+
+  // Paladin — level 45-55
+  { id: 'spell_holy_might',         name: 'Holy Might',            classId: 'paladin',      level: 45, manaCost: 160, effect: { dmg: 400        }, buyPrice: 85000  },
+  { id: 'spell_symbol_of_marr',     name: 'Symbol of Marr',        classId: 'paladin',      level: 50, manaCost: 250, effect: { healAmount: 900 }, buyPrice: 150000 },
+  { id: 'spell_supernal_remedy',    name: 'Supernal Remedy',       classId: 'paladin',      level: 55, manaCost: 350, effect: { healAmount: 1600 }, buyPrice: 240000 },
+
+  // Shadow Knight — level 45-55
+  { id: 'spell_leech',              name: 'Leech',                 classId: 'shadowknight', level: 45, manaCost: 160, effect: { dmg: 380, heal: 380 }, buyPrice: 85000  },
+  { id: 'spell_bond_of_death',      name: 'Bond of Death',         classId: 'shadowknight', level: 50, manaCost: 260, effect: { dot: 120        }, buyPrice: 150000 },
+  { id: 'spell_dread_gaze',         name: 'Dread Gaze',            classId: 'shadowknight', level: 55, manaCost: 380, effect: { fear: true      }, buyPrice: 240000 },
 ];
 
 // ─── Coin Formatting ──────────────────────────────────────────────────────────
