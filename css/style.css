@@ -21,6 +21,8 @@
   --text-dim: #6a6040;
   --hp-red: #cc2222;
   --hp-dark: #4a0808;
+  --hp-green: #33bb33;
+  --hp-yellow: #ccaa22;
   --mana-blue: #2244cc;
   --mana-dark: #081840;
   --xp-green: #22aa22;
@@ -2290,3 +2292,168 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .btn-dismiss-pet:hover {
   background: #8b3a3a;
 }
+
+/* ============================================================
+   PER-MEMBER COMBAT FRAMES (Part 1)
+   ============================================================ */
+
+.member-frame {
+  position: relative;
+  background: var(--panel-bg2);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.member-frame:hover { border-color: var(--gold-dim); background: #1e1810; }
+.member-frame.dead { opacity: 0.55; border-color: #5a1a1a; }
+
+.dead-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,5,5,0.55);
+  color: var(--hp-red);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.target-indicator {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.85rem;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.member-frame-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+
+.member-frame-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+/* HP bar colour tiers */
+.hp-bar        { background: var(--hp-green); }   /* healthy — green */
+.hp-bar.mid    { background: var(--hp-yellow); }  /* mid — yellow */
+.hp-bar.low    { background: var(--hp-red); }     /* low — red */
+
+/* ─── Cast Bar ──────────────────────────────────────────────── */
+
+.cast-bar-track {
+  position: relative;
+  height: 7px;
+  background: #1a1208;
+  border: 1px solid #3a2508;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.cast-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c87820 0%, #f4b840 100%);
+  border-radius: 2px;
+  transition: width 0.25s linear;
+  animation: castPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes castPulse {
+  from { filter: brightness(0.85); }
+  to   { filter: brightness(1.15); }
+}
+
+.cast-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* ============================================================
+   ITEM CONTEXT MENU (Part 2)
+   ============================================================ */
+
+.item-context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #12100d;
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.85);
+  overflow: hidden;
+  min-width: 170px;
+}
+
+.item-context-menu .ctx-item { border-bottom: 1px solid #2a1f0d; }
+.item-context-menu .ctx-item:last-child { border-bottom: none; }
+
+.ctx-disabled {
+  opacity: 0.42;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* ============================================================
+   EQUIPMENT PANEL IMPROVEMENTS (Part 2)
+   ============================================================ */
+
+.equip-char-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px 4px 0;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 5px;
+}
+
+.equip-char-tab {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.equip-char-tab:hover { border-color: var(--gold-dim); color: var(--text-primary); }
+.equip-char-tab.active { background: #2a1f0d; border-color: var(--gold); color: var(--gold); }
+
+.equip-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 3px 6px 5px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 4px;
+}
+.equip-summary strong { color: var(--text-primary); }
+.equip-bonuses { color: var(--gold-dim); font-size: 0.65rem; font-family: 'Share Tech Mono', monospace; }

@@ -335,6 +335,8 @@ function renderPartyPanel() {
   if (!rosterEl) return;
   rosterEl.innerHTML = '';
 
+  const now = Date.now();
+
   for (let i = 0; i < 5; i++) {
     const member = GameState.party[i];
     const slot = document.createElement('div');
@@ -351,51 +353,82 @@ function renderPartyPanel() {
       const myThreat = (GameState.threatTable || {})[member.id] || 0;
       const maxThreat = Math.max(...Object.values(GameState.threatTable || {}).concat([0]));
       const isTarget = myThreat > 0 && myThreat >= maxThreat;
-      const threatIcon = isTarget ? ' 🎯' : '';
 
+      const statusIconMap = { poison: '☠', disease: '🤢', cold: '🧊', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡', buff_attack: '🎵' };
       const statusIcons = (member.statusEffects || [])
-        .filter(e => Date.now() < e.endTime)
-        .map(e => {
-          const icons = { poison: '☠', disease: '🤢', cold: '🧊', stun: '⭐', mez: '💤', slow: '🐢', buff_damage: '⚔', buff_ac: '🛡', buff_attack: '🎵' };
-          return `<span class="status-icon" title="${e.type}">${icons[e.type] || '✦'}</span>`;
-        }).join('');
+        .filter(e => now < e.endTime)
+        .map(e => `<span class="status-icon" title="${e.type}">${statusIconMap[e.type] || '✦'}</span>`)
+        .join('');
+
+      // HP bar colour tier
+      const hpBarClass = hpPct <= 25 ? 'hp-bar low' : hpPct <= 50 ? 'hp-bar mid' : 'hp-bar';
+
+      // Cast bar
+      let castBarHTML = '';
+      if (member.isCasting && member.castingAbility) {
+        const ca = member.castingAbility;
+        let castPct = 0;
+        if (ca.castStartTime && ca.castEndTime > ca.castStartTime) {
+          const castDuration = ca.castEndTime - ca.castStartTime;
+          const elapsed = now - ca.castStartTime;
+          castPct = Math.max(0, Math.min(100, (elapsed / castDuration) * 100));
+        }
+        castBarHTML = `
+          <div class="cast-bar-track">
+            <div class="cast-bar-fill" style="width:${castPct}%"></div>
+            <span class="cast-bar-label">${ca.ability.name}</span>
+          </div>`;
+      }
+
+      // Pet row
+      let petRowHTML = '';
+      if (typeof getPetForOwner === 'function') {
+        const pet = getPetForOwner(member.id);
+        if (pet) {
+          const petHpPct = Math.max(0, Math.min(100, (pet.hp / pet.maxHP) * 100));
+          petRowHTML = `<div class="pet-row">
+            <span class="pet-name">${pet.name}</span>
+            <div class="bar-container">
+              <div class="bar pet-hp-bar" style="width:${petHpPct}%"></div>
+              <span class="bar-text">${pet.hp}/${pet.maxHP}</span>
+            </div>
+            <button class="btn-dismiss-pet" onclick="dismissPet('${member.id}')">Dismiss</button>
+          </div>`;
+        }
+      }
 
       slot.innerHTML = `
-        <div class="party-member" data-char-id="${member.id}" data-index="${i}">
-          <div class="member-portrait">${portrait}</div>
-          <div class="member-info">
-            <div class="member-name ${member.isAlive ? '' : 'dead'}">${member.name}${threatIcon}</div>
-            <div class="member-class">${cls ? cls.icon + ' ' + cls.name : ''} Lv.${member.level}</div>
-            <div class="member-bars">
-              <div class="bar-container">
-                <div class="bar hp-bar" style="width:${hpPct}%"></div>
-                <span class="bar-text">${member.hp}/${member.maxHP}</span>
-              </div>
-              ${member.maxMana > 0 ? `
-              <div class="bar-container">
-                <div class="bar mana-bar" style="width:${manaPct}%"></div>
-                <span class="bar-text">${member.mana}/${member.maxMana}</span>
-              </div>` : ''}
+        <div class="member-frame${member.isAlive ? '' : ' dead'}" data-char-id="${member.id}" data-index="${i}">
+          ${!member.isAlive ? '<div class="dead-overlay">DEAD</div>' : ''}
+          ${isTarget ? '<div class="target-indicator">🎯</div>' : ''}
+          <div class="member-frame-top">
+            <div class="member-portrait">${portrait}</div>
+            <div class="member-info">
+              <div class="member-name ${member.isAlive ? '' : 'dead'}">${member.name}</div>
+              <div class="member-class">${cls ? cls.icon + ' ' + cls.name : ''} Lv.${member.level}</div>
             </div>
+          </div>
+          <div class="member-bars">
+            <div class="bar-container">
+              <div class="bar ${hpBarClass}" style="width:${hpPct}%"></div>
+              <span class="bar-text">${member.hp}/${member.maxHP}</span>
+            </div>
+            ${member.maxMana > 0 ? `
+            <div class="bar-container">
+              <div class="bar mana-bar" style="width:${manaPct}%"></div>
+              <span class="bar-text">${member.mana}/${member.maxMana}</span>
+            </div>` : ''}
+          </div>
+          ${castBarHTML}
+          <div class="member-frame-footer">
             <div class="status-icons">${statusIcons}</div>
             <div class="member-action">${getMemberActionText(member)}</div>
-            ${(typeof getPetForOwner === 'function' && getPetForOwner(member.id)) ? (() => {
-              const pet = getPetForOwner(member.id);
-              const petHpPct = Math.max(0, Math.min(100, (pet.hp / pet.maxHP) * 100));
-              return `<div class="pet-row">
-                <span class="pet-name">${pet.name}</span>
-                <div class="bar-container">
-                  <div class="bar pet-hp-bar" style="width:${petHpPct}%"></div>
-                  <span class="bar-text">${pet.hp}/${pet.maxHP}</span>
-                </div>
-                <button class="btn-dismiss-pet" onclick="dismissPet('${member.id}')">Dismiss</button>
-              </div>`;
-            })() : ''}
           </div>
+          ${petRowHTML}
         </div>
       `;
 
-      slot.querySelector('.party-member').addEventListener('click', () => {
+      slot.querySelector('.member-frame').addEventListener('click', () => {
         GameState.inspectedCharIndex = i;
         renderCharacterInspectPanel();
         renderStatsPanel();
@@ -895,7 +928,31 @@ function renderEquipmentPanel() {
     ['ring1', 'Ring 1'], ['ring2', 'Ring 2']
   ];
 
-  el.innerHTML = `<div class="equip-grid">` + slots.map(([slotId, label]) => {
+  // Character selector tabs
+  const charTabs = GameState.party.map((m, i) => {
+    if (!m) return '';
+    const cls = CLASSES[m.classId];
+    return `<button class="equip-char-tab${i === idx ? ' active' : ''}" data-char-idx="${i}" title="${m.name}">${cls ? cls.icon : '?'} ${m.name}</button>`;
+  }).join('');
+
+  // Stat summary
+  const totalAC = member.currentAC || 0;
+  const carriedWeight = typeof getCurrentCarryWeight === 'function' ? getCurrentCarryWeight(member) : 0;
+  const weightLimit = typeof getWeightLimit === 'function' ? getWeightLimit(member) : 100;
+  const bonuses = member.statBonuses || {};
+  const bonusStr = Object.entries(bonuses)
+    .filter(([, v]) => v !== 0)
+    .map(([k, v]) => `${k} ${v > 0 ? '+' : ''}${v}`)
+    .join('  ');
+
+  el.innerHTML = `
+    <div class="equip-char-tabs">${charTabs}</div>
+    <div class="equip-summary">
+      <span>AC: <strong>${totalAC}</strong></span>
+      <span>Wt: <strong>${carriedWeight}/${weightLimit}</strong></span>
+      ${bonusStr ? `<span class="equip-bonuses" title="Gear bonuses">${bonusStr}</span>` : ''}
+    </div>
+    <div class="equip-grid">` + slots.map(([slotId, label]) => {
     const itemId = member.equipment ? member.equipment[slotId] : null;
     const item = itemId ? ITEMS[itemId] : null;
     const rarityClass = item ? `rarity-${item.rarity}` : '';
@@ -904,13 +961,32 @@ function renderEquipmentPanel() {
       <div class="equip-slot-label">${label}</div>
       <div class="equip-slot-item">${item ? item.name : '—'}</div>
     </div>`;
-  }).join('') + '</div>';
+  }).join('') + `</div>`;
 
-  el.querySelectorAll('.equip-slot[data-item]').forEach(slotEl => {
+  el.querySelectorAll('.equip-slot').forEach(slotEl => {
     const itemId = slotEl.dataset.item;
     if (itemId) {
       attachTooltip(slotEl, () => getItemTooltipHTML(itemId));
     }
+    // Right-click on equipped slot → unequip context menu
+    slotEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const equippedId = slotEl.dataset.item;
+      if (!equippedId) return;
+      showUnequipContextMenu(e, slotEl.dataset.slot, member);
+    });
+  });
+
+  // Character selector tab clicks
+  el.querySelectorAll('.equip-char-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      GameState.inspectedCharIndex = parseInt(tab.dataset.charIdx, 10);
+      renderEquipmentPanel();
+      renderCharacterInspectPanel();
+      renderStatsPanel();
+      renderSpellsPanel();
+    });
   });
 }
 
@@ -1392,6 +1468,16 @@ function renderInventoryPanel() {
     }
   });
 
+  // Right-click on filled carry slots → equip context menu
+  panel.querySelectorAll('#inv-tab-carry .inv-slot.filled').forEach(slotEl => {
+    slotEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const slotIndex = parseInt(slotEl.dataset.slotIndex, 10);
+      showItemContextMenu(e, slotEl.dataset.item, slotIndex);
+    });
+  });
+
   const depositBtn = panel.querySelector('#deposit-all-btn');
   if (depositBtn) {
     depositBtn.addEventListener('click', () => {
@@ -1554,6 +1640,159 @@ function wireBankInteractions(container) {
       showDepositPicker(slotEl, idx);
     });
   });
+}
+
+/**
+ * Equips an item from the carry inventory onto a party member.
+ * Swaps any previously equipped item in the same slot back to inventory.
+ * Calls computeDerivedStats and refreshes all relevant panels.
+ * @param {string} itemId            - The item ID to equip.
+ * @param {number} inventorySlotIndex - Index in GameState.inventory.
+ * @param {object} member            - The party member object to equip onto.
+ */
+function equipItemOnMember(itemId, inventorySlotIndex, member) {
+  const item = ITEMS[itemId];
+  if (!item || !item.slot) return;
+
+  if (item.classes && item.classes.length > 0 && !item.classes.includes(member.classId)) {
+    addCombatLog(`${member.name} cannot use ${item.name}.`, 'system');
+    return;
+  }
+
+  const targetSlot = item.slot;
+  const currentlyEquipped = member.equipment ? member.equipment[targetSlot] : null;
+  if (currentlyEquipped) {
+    if (typeof addToInventory === 'function') addToInventory(currentlyEquipped, 1);
+  }
+
+  if (!member.equipment) member.equipment = {};
+  member.equipment[targetSlot] = itemId;
+
+  const stack = GameState.inventory[inventorySlotIndex];
+  if (stack) {
+    stack.quantity -= 1;
+    if (stack.quantity <= 0) {
+      GameState.inventory.splice(inventorySlotIndex, 1);
+    }
+  }
+
+  if (typeof computeDerivedStats === 'function') computeDerivedStats(member);
+  addCombatLog(`${member.name} equips ${item.name}.`, 'system');
+  if (typeof saveGame === 'function') saveGame();
+  renderInventoryPanel();
+  renderEquipmentPanel();
+  updatePartyUI();
+}
+
+/**
+ * Unequips an item from a party member's equipment slot and returns it
+ * to the carry inventory.  Calls computeDerivedStats and refreshes panels.
+ * @param {string} slotId  - The equipment slot key (e.g. 'chest', 'primary').
+ * @param {object} member  - The party member object to unequip from.
+ */
+function unequipItem(slotId, member) {
+  if (!member.equipment) return;
+  const itemId = member.equipment[slotId];
+  if (!itemId) return;
+
+  if (typeof addToInventory === 'function') {
+    const added = addToInventory(itemId, 1);
+    if (added === false) {
+      addCombatLog('Inventory full! Cannot unequip.', 'system');
+      return;
+    }
+  }
+
+  member.equipment[slotId] = null;
+  if (typeof computeDerivedStats === 'function') computeDerivedStats(member);
+  const item = ITEMS[itemId];
+  addCombatLog(`${member.name} unequips ${item ? item.name : itemId}.`, 'system');
+  if (typeof saveGame === 'function') saveGame();
+  renderInventoryPanel();
+  renderEquipmentPanel();
+  updatePartyUI();
+}
+
+/**
+ * Shows a right-click context menu for an inventory carry slot, offering
+ * equip-on-member and drop options.
+ * @param {MouseEvent} e          - The right-click event for positioning.
+ * @param {string}     itemId     - The item ID in the slot.
+ * @param {number}     invIndex   - Index in GameState.inventory.
+ */
+function showItemContextMenu(e, itemId, invIndex) {
+  document.querySelectorAll('.item-context-menu').forEach(m => m.remove());
+  const item = ITEMS[itemId];
+  if (!item) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'item-context-menu';
+  menu.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;`;
+
+  const livingMembers = (GameState.party || []).filter(m => m && m.isAlive);
+
+  let equipOptions = '';
+  if (item.slot) {
+    equipOptions = livingMembers.map(m => {
+      const canUse = !item.classes || item.classes.length === 0 || item.classes.includes(m.classId);
+      return `<div class="ctx-item ctx-equip${canUse ? '' : ' ctx-disabled'}" data-member-id="${m.id}"
+                   title="${canUse ? '' : 'Class restriction'}">⚔ Equip on ${m.name}</div>`;
+    }).join('');
+  }
+
+  menu.innerHTML = `
+    ${equipOptions}
+    <div class="ctx-item ctx-drop ctx-destroy">🗑 Drop</div>
+  `;
+  document.body.appendChild(menu);
+
+  menu.querySelectorAll('.ctx-equip:not(.ctx-disabled)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      menu.remove();
+      const memberId = btn.dataset.memberId;
+      const member = (GameState.party || []).find(m => m && m.id === memberId);
+      if (member) equipItemOnMember(itemId, invIndex, member);
+    });
+  });
+
+  menu.querySelector('.ctx-drop').addEventListener('click', () => {
+    menu.remove();
+    const stack = GameState.inventory[invIndex];
+    const itemName = item ? item.name : itemId;
+    if (stack && confirm(`Drop ${itemName}? This cannot be undone.`)) {
+      stack.quantity -= 1;
+      if (stack.quantity <= 0) GameState.inventory.splice(invIndex, 1);
+      addCombatLog(`Dropped ${itemName}.`, 'system');
+      if (typeof saveGame === 'function') saveGame();
+      renderInventoryPanel();
+    }
+  });
+
+  const dismiss = () => { menu.remove(); document.removeEventListener('click', dismiss); };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
+}
+
+/**
+ * Shows a right-click context menu on an equipped slot offering an Unequip option.
+ * @param {MouseEvent} e       - The right-click event for positioning.
+ * @param {string}     slotId  - The equipment slot key.
+ * @param {object}     member  - The party member to unequip from.
+ */
+function showUnequipContextMenu(e, slotId, member) {
+  document.querySelectorAll('.item-context-menu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'item-context-menu';
+  menu.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;`;
+  menu.innerHTML = `<div class="ctx-item">📤 Unequip</div>`;
+  document.body.appendChild(menu);
+
+  menu.querySelector('.ctx-item').addEventListener('click', () => {
+    menu.remove();
+    unequipItem(slotId, member);
+  });
+
+  const dismiss = () => { menu.remove(); document.removeEventListener('click', dismiss); };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
 }
 
 /**
@@ -1983,4 +2222,8 @@ if (typeof module !== 'undefined') module.exports = {
   renderCityTabContent,
   renderMonsterLogPanel,
   getItemIcon,
+  equipItemOnMember,
+  unequipItem,
+  showItemContextMenu,
+  showUnequipContextMenu,
 };
