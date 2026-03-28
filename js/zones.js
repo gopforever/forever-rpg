@@ -561,6 +561,313 @@ const ZONES = {
   <rect width="280" height="200" fill="none" stroke="#2a4466" stroke-width="2" rx="3"/>
 </svg>`,
   },
+
+  west_karana: {
+    id: 'west_karana',
+    name: 'West Karana',
+    shortName: 'WK',
+    levelRange: [20, 30],
+    xpModifier: 1.15,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'Vast rolling plains stretching west from Qeynos. Bandits and gnolls roam alongside dangerous wildlife. The horizon seems endless.',
+    enemies: [
+      'karana_bandit', 'karana_raider', 'giant_wolf', 'plains_griffon',
+      'karana_gnoll_warrior', 'plains_cyclops', 'dust_goblin',
+    ],
+    commonEnemies: [
+      'karana_bandit', 'karana_raider', 'giant_wolf', 'karana_gnoll_warrior', 'dust_goblin',
+    ],
+    rareEnemies: [
+      'plains_griffon', 'plains_cyclops',
+    ],
+    rareSpawnChance: 0.10,
+    groups: [
+      { members: ['karana_bandit', 'karana_bandit'], weight: 4 },
+      { members: ['karana_bandit', 'karana_raider'], weight: 3 },
+      { members: ['karana_gnoll_warrior', 'karana_gnoll_warrior'], weight: 3 },
+      { members: ['giant_wolf', 'giant_wolf'], weight: 2 },
+    ],
+    groupSpawnChance: 0.25,
+    respawnTime: 3500,
+    ambientColor: '#1a1a0e',
+    connections: ['qeynos_hills', 'highpass_hold'],
+    flavorLines: [
+      'The wind sweeps across endless plains, carrying the scent of distant rain.',
+      'Wagon ruts scar the road — signs of caravans that may not have made it.',
+      'A wolf howls in the distance. Then another. Then many.',
+      'Dust rises on the horizon. Riders, or something worse, approach.',
+      'The flat land offers no cover. Whatever is hunting you already sees you.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Sky/horizon -->
+  <rect width="280" height="200" fill="#2a2a14"/>
+  <!-- Rolling plains ground -->
+  <ellipse cx="70" cy="160" rx="90" ry="40" fill="#3a3318"/>
+  <ellipse cx="200" cy="155" rx="100" ry="45" fill="#3d3619"/>
+  <ellipse cx="140" cy="170" rx="120" ry="35" fill="#44391a"/>
+  <!-- Grass patches -->
+  <rect x="30" y="110" width="4" height="10" fill="#5a5c20" rx="1"/>
+  <rect x="60" y="105" width="4" height="12" fill="#5a5c20" rx="1"/>
+  <rect x="200" y="108" width="4" height="10" fill="#5a5c20" rx="1"/>
+  <rect x="230" y="112" width="3" height="8" fill="#5a5c20" rx="1"/>
+  <rect x="150" y="100" width="5" height="14" fill="#4e5018" rx="1"/>
+  <!-- Road path -->
+  <path d="M0,130 Q80,120 140,125 Q200,130 280,118" fill="none" stroke="#6b5a30" stroke-width="8" stroke-linecap="round"/>
+  <path d="M0,130 Q80,120 140,125 Q200,130 280,118" fill="none" stroke="#7a6838" stroke-width="4" stroke-linecap="round" stroke-dasharray="15,10"/>
+  <!-- Bandit camp marker -->
+  <rect x="60" y="78" width="22" height="16" fill="#2a1a08" stroke="#6a4010" stroke-width="1" rx="2"/>
+  <text x="71" y="89" text-anchor="middle" font-family="serif" font-size="6" fill="#c4962a">⚔ Camp</text>
+  <!-- Gnoll outpost marker -->
+  <rect x="190" y="72" width="30" height="16" fill="#1a2008" stroke="#405010" stroke-width="1" rx="2"/>
+  <text x="205" y="83" text-anchor="middle" font-family="serif" font-size="5.5" fill="#80b040">Gnoll Post</text>
+  <!-- Qeynos Hills connection (right) -->
+  <rect x="256" y="85" width="22" height="14" fill="#1a2a0a" stroke="#2a4a0a" stroke-width="1" rx="2"/>
+  <text x="267" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">QH ►</text>
+  <!-- Highpass connection (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#1a1008" stroke="#4a3008" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ HP</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="125" r="7" fill="#000000" opacity="0.5"/>
+  <text x="140" y="129" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="125" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#44391a" stroke-width="2" rx="3"/>
+</svg>`,
+  },
+
+  highpass_hold: {
+    id: 'highpass_hold',
+    name: 'Highpass Hold',
+    shortName: 'HP',
+    levelRange: [25, 35],
+    xpModifier: 1.2,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'A dangerous mountain pass controlled by the Highpass guards and plagued by bandits and gnoll war parties. Narrow paths wind between sheer cliffs.',
+    enemies: [
+      'highpass_guard', 'pass_bandit', 'gnoll_war_chief', 'mountain_bear',
+      'highpass_skeleton', 'rock_troll',
+    ],
+    commonEnemies: [
+      'highpass_guard', 'pass_bandit', 'mountain_bear', 'highpass_skeleton',
+    ],
+    rareEnemies: [
+      'gnoll_war_chief', 'rock_troll',
+    ],
+    rareSpawnChance: 0.12,
+    groups: [
+      { members: ['highpass_guard', 'highpass_guard'], weight: 4 },
+      { members: ['pass_bandit', 'pass_bandit'], weight: 3 },
+      { members: ['highpass_guard', 'highpass_skeleton'], weight: 2 },
+      { members: ['mountain_bear', 'highpass_skeleton'], weight: 2 },
+    ],
+    groupSpawnChance: 0.30,
+    respawnTime: 4000,
+    ambientColor: '#1a1208',
+    connections: ['west_karana', 'kithicor_forest'],
+    flavorLines: [
+      'The narrow path winds between sheer cliff faces. One wrong step means a fatal fall.',
+      'The wind screams through the pass, masking the sound of approaching danger.',
+      'Rock slides have claimed many travelers here. The bones prove it.',
+      'Gnoll war drums echo off the stone walls, growing ever louder.',
+      'The guards here don\'t look friendly. Neither do the things behind them.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Dark background -->
+  <rect width="280" height="200" fill="#141008"/>
+  <!-- Mountain silhouettes -->
+  <polygon points="0,200 40,60 80,200" fill="#2a2018"/>
+  <polygon points="50,200 100,40 150,200" fill="#2e2418"/>
+  <polygon points="130,200 180,50 230,200" fill="#2a2018"/>
+  <polygon points="200,200 250,65 280,200" fill="#262018"/>
+  <!-- Rocky pass floor -->
+  <path d="M0,155 Q70,145 140,150 Q210,155 280,145" fill="#3a3025" stroke="none"/>
+  <!-- Narrow path -->
+  <path d="M10,160 Q80,152 140,156 Q200,160 270,150" fill="none" stroke="#5a4830" stroke-width="6"/>
+  <!-- Cliff walls with stone texture -->
+  <rect x="0" y="80" width="30" height="80" fill="#302820" rx="2"/>
+  <rect x="250" y="85" width="30" height="75" fill="#302820" rx="2"/>
+  <line x1="5" y1="90" x2="25" y2="100" stroke="#403830" stroke-width="1"/>
+  <line x1="5" y1="110" x2="25" y2="118" stroke="#403830" stroke-width="1"/>
+  <line x1="255" y1="92" x2="275" y2="103" stroke="#403830" stroke-width="1"/>
+  <!-- Guard post marker -->
+  <rect x="100" y="70" width="26" height="16" fill="#182030" stroke="#304060" stroke-width="1" rx="2"/>
+  <text x="113" y="81" text-anchor="middle" font-family="serif" font-size="5.5" fill="#8ab0d0">⚔ Guard</text>
+  <!-- Troll cave marker -->
+  <rect x="180" y="75" width="26" height="16" fill="#201808" stroke="#604020" stroke-width="1" rx="2"/>
+  <text x="193" y="86" text-anchor="middle" font-family="serif" font-size="5.5" fill="#b06030">Troll Cave</text>
+  <!-- West Karana connection (right) -->
+  <rect x="256" y="85" width="22" height="14" fill="#1a2a0a" stroke="#2a4a0a" stroke-width="1" rx="2"/>
+  <text x="267" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">WK ►</text>
+  <!-- Kithicor connection (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#0a180a" stroke="#1a3010" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ KF</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="153" r="7" fill="#000000" opacity="0.5"/>
+  <text x="140" y="157" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="153" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#302820" stroke-width="2" rx="3"/>
+</svg>`,
+  },
+
+  kithicor_forest: {
+    id: 'kithicor_forest',
+    name: 'Kithicor Forest',
+    shortName: 'KF',
+    levelRange: [30, 42],
+    xpModifier: 1.25,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'Once a peaceful forest, Kithicor is now haunted by undead soldiers from a battle fought long ago. Dark magic pervades the trees at night. Incredibly dangerous for the unwary.',
+    enemies: [
+      'kithicor_skeleton', 'kithicor_zombie', 'kithicor_warrior_spirit',
+      'corrupted_treant', 'kithicor_dark_elf', 'general_kill_anaz',
+    ],
+    commonEnemies: [
+      'kithicor_skeleton', 'kithicor_zombie', 'kithicor_warrior_spirit',
+      'corrupted_treant', 'kithicor_dark_elf',
+    ],
+    rareEnemies: [
+      'general_kill_anaz',
+    ],
+    rareSpawnChance: 0.15,
+    groups: [
+      { members: ['kithicor_skeleton', 'kithicor_skeleton'], weight: 4 },
+      { members: ['kithicor_zombie', 'kithicor_skeleton'], weight: 3 },
+      { members: ['kithicor_warrior_spirit', 'kithicor_skeleton'], weight: 2 },
+      { members: ['corrupted_treant', 'kithicor_zombie'], weight: 2 },
+    ],
+    groupSpawnChance: 0.35,
+    respawnTime: 4500,
+    ambientColor: '#080e08',
+    connections: ['highpass_hold', 'commonlands'],
+    flavorLines: [
+      'The trees are wrong here. Their bark is black and their branches reach like skeletal hands.',
+      'Whispers rise from the forest floor — the voices of soldiers long dead.',
+      'A spectral light drifts between the trees. Don\'t follow it.',
+      'The air smells of old battlefields: rot, rust, and something that has no name.',
+      'Something moves in the canopy. It is watching you.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Dark background -->
+  <rect width="280" height="200" fill="#050c05"/>
+  <!-- Forest ground -->
+  <ellipse cx="140" cy="175" rx="140" ry="40" fill="#0d1a0d"/>
+  <!-- Skeletal tree silhouettes -->
+  <line x1="30" y1="170" x2="30" y2="60" stroke="#1a2a1a" stroke-width="4"/>
+  <line x1="30" y1="90" x2="10" y2="70" stroke="#1a2a1a" stroke-width="2"/>
+  <line x1="30" y1="90" x2="50" y2="65" stroke="#1a2a1a" stroke-width="2"/>
+  <line x1="30" y1="110" x2="8" y2="95" stroke="#1a2a1a" stroke-width="1.5"/>
+  <line x1="80" y1="170" x2="80" y2="50" stroke="#1e2e1a" stroke-width="5"/>
+  <line x1="80" y1="80" x2="55" y2="55" stroke="#1a2a1a" stroke-width="2.5"/>
+  <line x1="80" y1="80" x2="105" y2="58" stroke="#1a2a1a" stroke-width="2.5"/>
+  <line x1="80" y1="110" x2="60" y2="98" stroke="#1a2a1a" stroke-width="1.5"/>
+  <line x1="200" y1="170" x2="200" y2="55" stroke="#1a2a1a" stroke-width="4"/>
+  <line x1="200" y1="85" x2="178" y2="62" stroke="#1a2a1a" stroke-width="2"/>
+  <line x1="200" y1="85" x2="222" y2="60" stroke="#1a2a1a" stroke-width="2"/>
+  <line x1="240" y1="170" x2="240" y2="65" stroke="#1e2e1a" stroke-width="5"/>
+  <line x1="240" y1="95" x2="215" y2="72" stroke="#1a2a1a" stroke-width="2.5"/>
+  <line x1="240" y1="95" x2="265" y2="70" stroke="#1a2a1a" stroke-width="2.5"/>
+  <!-- Ghostly lights -->
+  <circle cx="60" cy="130" r="5" fill="#40ff80" opacity="0.3"/>
+  <circle cx="60" cy="130" r="8" fill="none" stroke="#40ff80" stroke-width="1" opacity="0.2"/>
+  <circle cx="190" cy="120" r="4" fill="#80ffff" opacity="0.25"/>
+  <circle cx="140" cy="100" r="3" fill="#c0ffb0" opacity="0.2"/>
+  <!-- Battlefield marker -->
+  <rect x="98" y="78" width="36" height="16" fill="#0a100a" stroke="#203020" stroke-width="1" rx="2"/>
+  <text x="116" y="89" text-anchor="middle" font-family="serif" font-size="5.5" fill="#60a060">☠ Battlefield</text>
+  <!-- General's tomb marker -->
+  <rect x="150" y="55" width="32" height="16" fill="#0a080a" stroke="#301830" stroke-width="1" rx="2"/>
+  <text x="166" y="66" text-anchor="middle" font-family="serif" font-size="5" fill="#a060c0">General's Tomb</text>
+  <!-- Highpass connection (right) -->
+  <rect x="256" y="85" width="22" height="14" fill="#141008" stroke="#302808" stroke-width="1" rx="2"/>
+  <text x="267" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">HP ►</text>
+  <!-- Commonlands connection (left) -->
+  <rect x="2" y="85" width="22" height="14" fill="#160e08" stroke="#3a2008" stroke-width="1" rx="2"/>
+  <text x="13" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ CL</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="145" r="7" fill="#000000" opacity="0.6"/>
+  <text x="140" y="149" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="145" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#1a2a1a" stroke-width="2" rx="3"/>
+</svg>`,
+  },
+
+  commonlands: {
+    id: 'commonlands',
+    name: 'Commonlands',
+    shortName: 'CL',
+    levelRange: [38, 50],
+    xpModifier: 1.3,
+    isDungeon: false,
+    isSafeZone: false,
+    description: 'Broad dusty plains south of the Feerrott. Orc war parties from the Crushbone stronghold march these roads, and worse things lurk in the gullies. The staging ground for mid-level adventurers.',
+    enemies: [
+      'orc_warrior', 'orc_shaman', 'orc_captain', 'commonlands_lion',
+      'dark_elf_ranger', 'crushbone_warlord', 'plague_spectre',
+    ],
+    commonEnemies: [
+      'orc_warrior', 'orc_shaman', 'orc_captain', 'commonlands_lion', 'dark_elf_ranger',
+    ],
+    rareEnemies: [
+      'crushbone_warlord', 'plague_spectre',
+    ],
+    rareSpawnChance: 0.12,
+    groups: [
+      { members: ['orc_warrior', 'orc_warrior'], weight: 4 },
+      { members: ['orc_warrior', 'orc_shaman'], weight: 3 },
+      { members: ['orc_captain', 'orc_warrior'], weight: 2 },
+      { members: ['orc_warrior', 'orc_warrior', 'orc_shaman'], weight: 1 },
+    ],
+    groupSpawnChance: 0.30,
+    respawnTime: 5000,
+    ambientColor: '#1a0e08',
+    connections: ['kithicor_forest'],
+    flavorLines: [
+      'The road is rutted by the passage of orc war parties. The dust never settles.',
+      'Orc drums beat in the distance — a war march growing closer.',
+      'The skulls of fallen adventurers line the road as a warning. Heed it.',
+      'Something enormous prowls the gully to the south, leaving massive tracks.',
+      'A dark elf scout watches from a rocky outcrop. It doesn\'t try to hide.',
+    ],
+    minimapSVG: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <!-- Dusty plains background -->
+  <rect width="280" height="200" fill="#1e1208"/>
+  <!-- Ground terrain -->
+  <ellipse cx="140" cy="180" rx="150" ry="45" fill="#2a1c0e"/>
+  <ellipse cx="50" cy="165" rx="70" ry="30" fill="#2e1e10"/>
+  <ellipse cx="230" cy="168" rx="80" ry="32" fill="#2c1c0e"/>
+  <!-- Dusty road -->
+  <path d="M0,148 Q90,140 140,144 Q190,148 280,138" fill="none" stroke="#5a4020" stroke-width="10"/>
+  <path d="M0,148 Q90,140 140,144 Q190,148 280,138" fill="none" stroke="#6a5030" stroke-width="5" stroke-dasharray="20,12"/>
+  <!-- Orc camp markers -->
+  <rect x="55" y="72" width="28" height="16" fill="#1a0e04" stroke="#4a2808" stroke-width="1" rx="2"/>
+  <text x="69" y="83" text-anchor="middle" font-family="serif" font-size="5.5" fill="#b05020">⚔ Orc Camp</text>
+  <rect x="180" y="68" width="36" height="16" fill="#1a0e04" stroke="#4a2808" stroke-width="1" rx="2"/>
+  <text x="198" y="79" text-anchor="middle" font-family="serif" font-size="5" fill="#b05020">Warlord Fortress</text>
+  <!-- Dark elf outpost -->
+  <rect x="120" y="48" width="36" height="16" fill="#10081a" stroke="#301040" stroke-width="1" rx="2"/>
+  <text x="138" y="59" text-anchor="middle" font-family="serif" font-size="5" fill="#9060c0">Dark Elf Post</text>
+  <!-- Rocky gullies -->
+  <path d="M20,175 Q60,160 80,175" fill="none" stroke="#3a2810" stroke-width="3"/>
+  <path d="M190,172 Q230,158 260,173" fill="none" stroke="#3a2810" stroke-width="3"/>
+  <!-- Skull warnings along road -->
+  <text x="40" y="145" font-family="serif" font-size="8" fill="#804020" opacity="0.8">☠</text>
+  <text x="230" y="142" font-family="serif" font-size="8" fill="#804020" opacity="0.8">☠</text>
+  <!-- Kithicor Forest connection (right) -->
+  <rect x="256" y="85" width="22" height="14" fill="#0a180a" stroke="#1a3010" stroke-width="1" rx="2"/>
+  <text x="267" y="95" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">KF ►</text>
+  <!-- You Are Here -->
+  <circle cx="140" cy="144" r="7" fill="#000000" opacity="0.5"/>
+  <text x="140" y="148" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="144" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+  <!-- Zone border -->
+  <rect width="280" height="200" fill="none" stroke="#3a2010" stroke-width="2" rx="3"/>
+</svg>`,
+  },
 };
 
 function getZone(id) {
