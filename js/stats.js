@@ -326,6 +326,7 @@ function getCurrentCarryWeight(character) {
 
 /**
  * Returns the total weight of inventory items and bag contents, accounting for weight reduction.
+ * Reads from the global `GameState.inventory`, `GameState.bags`, and `GameState.bagContents`.
  * @returns {number} Total inventory weight rounded to one decimal place.
  */
 function getInventoryWeight() {

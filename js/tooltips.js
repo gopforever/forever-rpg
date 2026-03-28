@@ -68,7 +68,7 @@ function hideTooltip() {
 
 /**
  * Attaches mouseenter/mouseleave/mousemove handlers to an element for delayed tooltip display.
- * @param {object} element - The DOM element to attach tooltip behaviour to.
+ * @param {object} element - The DOM element to attach tooltip behavior to.
  * @param {Function} getHtmlFn - A function (or HTML string) that returns the tooltip HTML.
  * @returns {void}
  */
