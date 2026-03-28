@@ -385,6 +385,7 @@ function createSingleGhost(id, name, isNew) {
       pushWorldEvent(`🌟 <strong style="color:${CLASS_COLORS[classId]}">${name}</strong> joined the server for the first time!`);
     }, 100);
   }
+  initGhostStats(ghost);
   return ghost;
 }
 
@@ -757,6 +758,11 @@ function getGhostBio(ghost) {
 }
 
 function computeGhostStats(ghost) {
+  // Use stats.js functions if available; otherwise fall back to simple formulas
+  if (typeof getMaxHP === 'function' && typeof CLASSES !== 'undefined' && CLASSES[ghost.classId]) {
+    initGhostStats(ghost);
+    return { hp: ghost.maxHP, mana: ghost.maxMana, ac: ghost.currentAC || (5 + ghost.level * 2) };
+  }
   let hp = 50 + ghost.level * 10;
   let mana = 50 + ghost.level * 8;
   let ac = 5 + ghost.level * 2;
@@ -770,6 +776,32 @@ function computeGhostStats(ghost) {
     }
   }
   return { hp, mana, ac };
+}
+
+/**
+ * Initialises or refreshes all stats on a ghost using the same stats.js formulas
+ * as the player character, so ghost HP/mana/AC scale correctly with class and level.
+ * @param {object} ghost - The ghost player object (modified in place).
+ */
+function initGhostStats(ghost) {
+  if (typeof CLASSES === 'undefined' || !CLASSES[ghost.classId]) return;
+  const cls = CLASSES[ghost.classId];
+  const level = ghost.level || 1;
+  // Apply base stats with per-level growth
+  const base = cls.baseStats || {};
+  const primary = new Set(cls.primaryStats || []);
+  for (const stat of ['STR', 'DEX', 'AGI', 'STA', 'WIS', 'INT', 'CHA']) {
+    ghost[stat] = (base[stat] || 75) + (level - 1) * (primary.has(stat) ? 2 : 1);
+  }
+  ghost.equipment = ghost.equipment || {};
+  if (typeof computeDerivedStats === 'function') {
+    computeDerivedStats(ghost);
+  } else {
+    ghost.maxHP = 50 + level * 10;
+    ghost.maxMana = 50 + level * 8;
+    ghost.hp = ghost.maxHP;
+    ghost.mana = ghost.maxMana;
+  }
 }
 
 function getItemRarityClass(item) {
@@ -1165,8 +1197,10 @@ function simulateGhostTick(ghost) {
   }
 
   if (typeof xpForLevel === 'function' && ghost.level < 60) {
+    let didLevelUp = false;
     while (ghost.level < 60 && ghost.totalXP >= xpForLevel(ghost.level + 1)) {
       ghost.level++;
+      didLevelUp = true;
       if (ghost.party) {
         for (const member of ghost.party) { member.level = ghost.level; }
       }
@@ -1184,6 +1218,8 @@ function simulateGhostTick(ghost) {
           : COMBAT_ZONES[Math.floor(Math.random() * COMBAT_ZONES.length)];
       }
     }
+    // Recalculate derived stats when the ghost gains a level
+    if (didLevelUp) initGhostStats(ghost);
   }
 
   if (!ghost.inventory) ghost.inventory = [];

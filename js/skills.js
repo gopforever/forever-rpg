@@ -324,7 +324,13 @@ function trySkillGain(member, skillName) {
   const cap = getSkillCap(member.classId, skillName, member.level);
   if (cap === 0 || current >= cap) return false;
 
-  const statName = SKILL_STAT[skillName] || 'INT';
+  let statName = SKILL_STAT[skillName] || 'INT';
+  // P99: for general skills governed by WIS or INT, use whichever is higher
+  if (statName === 'WIS' || statName === 'INT') {
+    const charWIS = (member['WIS'] || 1) + (member.statBonuses ? (member.statBonuses['WIS'] || 0) : 0);
+    const charINT = (member['INT'] || 1) + (member.statBonuses ? (member.statBonuses['INT'] || 0) : 0);
+    statName = charWIS >= charINT ? 'WIS' : 'INT';
+  }
   const statVal = (member[statName] || 1) + (member.statBonuses ? (member.statBonuses[statName] || 0) : 0);
   const chance = Math.min(1.0, (200 - current) / Math.max(1, statVal));
 
