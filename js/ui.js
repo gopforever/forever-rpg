@@ -628,24 +628,6 @@ function showPartyMemberContextMenu(e, member, charIdx) {
 }
 
 /**
- * @param {object} member - The party member object to build the tooltip for.
- * @returns {string} HTML markup for the member tooltip.
- */
-function getMemberTooltipHTML(member) {
-  const cls = CLASSES[member.classId];
-  return `<div class="tt-member">
-    <div class="tt-name" style="color:#c8a84b">${member.name}</div>
-    <div class="tt-row"><span class="tt-label">Class:</span> ${cls ? cls.name : 'Unknown'}</div>
-    <div class="tt-row"><span class="tt-label">Level:</span> ${member.level}</div>
-    <div class="tt-row"><span class="tt-label">HP:</span> ${member.hp}/${member.maxHP}</div>
-    <div class="tt-row"><span class="tt-label">Mana:</span> ${member.mana}/${member.maxMana}</div>
-    <div class="tt-row"><span class="tt-label">AC:</span> ${member.currentAC || 0}</div>
-    <div class="tt-row"><span class="tt-label">STR:</span> ${member.STR} <span class="tt-label">DEX:</span> ${member.DEX} <span class="tt-label">AGI:</span> ${member.AGI}</div>
-    <div class="tt-row"><span class="tt-label">STA:</span> ${member.STA} <span class="tt-label">WIS:</span> ${member.WIS} <span class="tt-label">INT:</span> ${member.INT}</div>
-  </div>`;
-}
-
-/**
  * Renders the kill-count panel as a sorted table listing the top 15 enemies
  * by kill count from GameState.
  * @returns {void}
