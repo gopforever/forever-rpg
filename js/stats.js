@@ -1,9 +1,15 @@
 // stats.js - P99/EverQuest-inspired stat system for Forever RPG
 // CLASSES and ITEMS are globals loaded via script tags in the browser
 
+/** EverQuest base stat cap before AA/augment effects — raw stats cannot exceed this. */
 // EverQuest base stat cap (before AA/item augment effects)
 const STAT_CAP = 255;
 
+/**
+ * Computes max HP from STA and class multiplier.
+ * @param {object} char - The character object with classId, level, STA, and optional statBonuses.
+ * @returns {number} The character's maximum hit points.
+ */
 function getMaxHP(char) {
   const cls = CLASSES[char.classId];
   const hpPerSTA = cls ? cls.hpPerSTA : 3;
@@ -11,6 +17,11 @@ function getMaxHP(char) {
   return Math.floor(30 + (sta * hpPerSTA * 0.8) + (char.level * hpPerSTA * 3));
 }
 
+/**
+ * Computes max mana from WIS/INT and class.
+ * @param {object} char - The character object with classId, level, and the relevant mana stat.
+ * @returns {number} The character's maximum mana, or 0 if the class has no mana stat.
+ */
 function getMaxMana(char) {
   const cls = CLASSES[char.classId];
   if (!cls || !cls.manaStat) return 0;
@@ -19,6 +30,11 @@ function getMaxMana(char) {
   return Math.floor(20 + (statVal * 12 * 0.3) + (char.level * 15));
 }
 
+/**
+ * Computes total armor class from equipment, AGI bonus, and defense skill.
+ * @param {object} char - The character object with equipment, AGI, statBonuses, and skills.
+ * @returns {number} The character's total armor class (minimum 0).
+ */
 // AGI < 75 = massive AC penalty: (75 - AGI) * 2
 function getAC(char) {
   let baseAC = 0;
@@ -39,6 +55,12 @@ function getAC(char) {
   return Math.max(0, baseAC + agiBonus + Math.floor(defenseSkill / 10));
 }
 
+/**
+ * Computes base melee damage from STR, weapon dmg, level, and offense skill.
+ * @param {object} attacker - The attacking character with STR, level, statBonuses, and skills.
+ * @param {object|null} weapon - The equipped weapon object with a dmg property, or null.
+ * @returns {number} The computed melee damage value (minimum 1).
+ */
 function getMeleeDamage(attacker, weapon) {
   let str = attacker.STR + (attacker.statBonuses ? attacker.statBonuses.STR || 0 : 0);
   const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(attacker) : { str: 0, agi: 0 };
@@ -54,11 +76,22 @@ function getMeleeDamage(attacker, weapon) {
   ));
 }
 
+/**
+ * Returns crit chance based on DEX (DEX / 1000).
+ * @param {object} char - The character object with DEX and optional statBonuses.
+ * @returns {number} A decimal crit chance fraction (e.g., 0.15 for 15%).
+ */
 function getCritChance(char) {
   const dex = char.DEX + (char.statBonuses ? char.statBonuses.DEX || 0 : 0);
   return dex / 1000;
 }
 
+/**
+ * Returns miss chance based on attacker DEX vs defender AGI and dodge skill.
+ * @param {object} attacker - The attacking character with DEX and optional statBonuses.
+ * @param {object} defender - The defending character with AGI, statBonuses, and skills.
+ * @returns {number} A decimal miss chance fraction (0–0.5).
+ */
 function getMissChance(attacker, defender) {
   const atkDex = attacker.DEX + (attacker.statBonuses ? attacker.statBonuses.DEX || 0 : 0);
   const defAgi = defender.AGI + (defender.statBonuses ? defender.statBonuses.AGI || 0 : 0);
@@ -67,11 +100,22 @@ function getMissChance(attacker, defender) {
   return Math.min(0.5, base + dodgeSkill / 1000);
 }
 
+/**
+ * Reduces damage by AC / 5, with a minimum of 1.
+ * @param {number} damage - The incoming damage value before mitigation.
+ * @param {object} defender - The defending character; uses currentAC or computes via getAC.
+ * @returns {number} The mitigated damage value (minimum 1).
+ */
 function applyACMitigation(damage, defender) {
   const ac = (defender.currentAC !== undefined) ? defender.currentAC : getAC(defender);
   return Math.max(1, damage - Math.floor(ac / 5));
 }
 
+/**
+ * Sums all equipment stat bonuses and resistances into one object.
+ * @param {object} char - The character object with an equipment map of slot → itemId.
+ * @returns {object} An object with STR/DEX/AGI/STA/WIS/INT/CHA bonuses and a resists sub-object.
+ */
 function computeStatBonuses(char) {
   const bonuses = { STR: 0, DEX: 0, AGI: 0, STA: 0, WIS: 0, INT: 0, CHA: 0 };
   const resists = { magic: 0, fire: 0, cold: 0, poison: 0, disease: 0 };
@@ -96,6 +140,11 @@ function computeStatBonuses(char) {
   return { ...bonuses, resists };
 }
 
+/**
+ * Recomputes all derived stats (HP, mana, AC, bonuses) on the char object in-place.
+ * @param {object} char - The character object to update; modified directly.
+ * @returns {object} The same character object with updated derived stats.
+ */
 function computeDerivedStats(char) {
   char.statBonuses = computeStatBonuses(char);
   char.maxHP = getMaxHP(char);
@@ -106,12 +155,22 @@ function computeDerivedStats(char) {
   return char;
 }
 
+/**
+ * Returns base stat plus equipment bonus, capped at STAT_CAP.
+ * @param {object} char - The character object with raw stats and optional statBonuses.
+ * @param {string} stat - The stat key to look up (e.g., 'STR', 'DEX').
+ * @returns {number} The effective stat value (base + bonus, max STAT_CAP).
+ */
 function getEffectiveStat(char, stat) {
   const base = char[stat] || 0;
   const bonus = char.statBonuses ? (char.statBonuses[stat] || 0) : 0;
   return Math.min(STAT_CAP, base + bonus);
 }
 
+/**
+ * Array of cumulative XP thresholds for each level 0–61, based on the Project 1999 experience table.
+ * @type {Array<number>}
+ */
 // ─── True P99 / EverQuest Experience Table ────────────────────────────────────
 // XP_TABLE[N] = total cumulative XP required to have reached level N.
 // Source: https://wiki.project1999.com/Experience#Experience_Requirement_by_Level
@@ -182,14 +241,21 @@ const XP_TABLE = [
   /* 61 */  669_600_000,   // sentinel — XP to complete level 60
 ];
 
+/** Maximum achievable player level (60). */
 const MAX_LEVEL = 60;
 
+/**
+ * Array of levels with disproportionately large XP requirements (EverQuest hell levels).
+ * @type {Array<number>}
+ */
 // Levels with disproportionately large XP requirements (EQ "hell levels")
 const HELL_LEVELS = [30, 35, 40, 45, 51, 54, 55, 56, 57, 58, 59];
 
 /**
  * Returns the total cumulative XP required to have reached `level`.
  * xpForLevel(1) = 0, xpForLevel(2) = 1000, etc.
+ * @param {number} level - The target level (1–60).
+ * @returns {number} Total cumulative XP needed to reach that level.
  */
 function xpForLevel(level) {
   if (level <= 1) return 0;
@@ -200,12 +266,19 @@ function xpForLevel(level) {
 /**
  * Returns the XP needed to advance from `level` to `level + 1`.
  * xpToNextLevel(1) = 1000, xpToNextLevel(30) = 5,311,000, etc.
+ * @param {number} level - The current level (1–59).
+ * @returns {number} XP required to reach the next level, or 0 if already max level.
  */
 function xpToNextLevel(level) {
   if (level >= MAX_LEVEL) return 0; // Already max level
   return xpForLevel(level + 1) - xpForLevel(level);
 }
 
+/**
+ * CHA-based price multiplier with a soft cap at 115.
+ * @param {object} char - The character object used to compute effective CHA.
+ * @returns {number} A price multiplier (>1 means worse prices, <1 means better prices).
+ */
 // CHA soft cap 115: below = worse merchant prices, above = diminishing returns
 function getMerchantPriceMultiplier(char) {
   const cha = getEffectiveStat(char, 'CHA');
@@ -213,6 +286,11 @@ function getMerchantPriceMultiplier(char) {
   return 1.0 + ((115 - cha) * 0.005);
 }
 
+/**
+ * Computes magic resist save based on WIS and gear.
+ * @param {object} char - The character object with WIS, statBonuses, and resist values.
+ * @returns {number} Magic save value (0–85).
+ */
 function getSaveVsMagic(char) {
   const wis = getEffectiveStat(char, 'WIS');
   const bonus = char.statBonuses ? (char.statBonuses.resists ? char.statBonuses.resists.magic || 0 : 0) : 0;
@@ -221,10 +299,20 @@ function getSaveVsMagic(char) {
 
 // ─── Weight & Encumbrance System ──────────────────────────────────────────────
 
+/**
+ * Returns the STR-based carry weight limit for a character.
+ * @param {object} character - The character object with a STR property.
+ * @returns {number} Maximum carry weight (minimum 10).
+ */
 function getWeightLimit(character) {
   return Math.max(10, (character.STR || 0) + 30);
 }
 
+/**
+ * Returns the total weight of all equipped items on a character.
+ * @param {object} character - The character object with an equipment map of slot → itemId.
+ * @returns {number} The total weight of equipped items.
+ */
 function getCurrentCarryWeight(character) {
   let total = 0;
   const equipment = character.equipment || {};
@@ -236,6 +324,10 @@ function getCurrentCarryWeight(character) {
   return total;
 }
 
+/**
+ * Returns the total weight of inventory items and bag contents, accounting for weight reduction.
+ * @returns {number} Total inventory weight rounded to one decimal place.
+ */
 function getInventoryWeight() {
   let total = 0;
   for (const stack of (GameState.inventory || [])) {
@@ -258,12 +350,22 @@ function getInventoryWeight() {
   return parseFloat(total.toFixed(1));
 }
 
+/**
+ * Returns true if the character's carry weight exceeds their weight limit.
+ * @param {object} character - The character object to check encumbrance for.
+ * @returns {boolean} Whether the character is currently encumbered.
+ */
 function isEncumbered(character) {
   const carried = getCurrentCarryWeight(character) + getInventoryWeight();
   const limit = getWeightLimit(character);
   return carried > limit;
 }
 
+/**
+ * Returns STR and AGI penalties applied when a character is over-encumbered.
+ * @param {object} character - The character object to compute penalties for.
+ * @returns {object} An object with str and agi penalty values (both ≤ 0).
+ */
 function getEncumbrancePenalty(character) {
   if (!isEncumbered(character)) return { str: 0, agi: 0 };
   const carried = getCurrentCarryWeight(character) + getInventoryWeight();
