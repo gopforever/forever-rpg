@@ -79,7 +79,7 @@ function getMeleeDamage(attacker, weapon, defender = null, isMainHand = true) {
   const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(attacker) : { str: 0, agi: 0 };
   str = Math.max(0, str + penalty.str);
 
-  // Step 5: Weapon Damage Cap (applied before pipeline)
+  // Pre-pipeline: Weapon Damage Cap (clamps weaponDmg before Wrath calculation)
   let weaponDmg = weapon ? weapon.dmg : 2;
   const cls = CLASSES[attacker.classId];
   const archetype = cls ? cls.archetype : 'Melee';

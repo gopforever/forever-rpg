@@ -690,6 +690,7 @@ function memberAttack(member, enemy) {
         dmg2 = Math.max(1, dmg2);
         enemy.hp = Math.max(0, enemy.hp - dmg2);
         addCombatLog(`${member.name} hits ${enemy.name} again for ${dmg2} (Double Attack)!`, 'hit');
+        if (typeof addThreat === 'function') addThreat(member, dmg2);
         trySkillGain(member, 'doubleAttack');
       }
       // Triple attack: same formula using half doubleAttack skill
