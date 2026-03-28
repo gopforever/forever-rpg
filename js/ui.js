@@ -469,6 +469,11 @@ function renderPartyPanel() {
         renderHotbar();
       });
 
+      slot.querySelector('.member-frame').addEventListener('contextmenu', e => {
+        e.preventDefault();
+        showPartyMemberContextMenu(e, member, i);
+      });
+
       attachTooltip(slot, () => getMemberTooltipHTML(member));
     } else {
       slot.innerHTML = `<div class="empty-slot">[ Empty Slot ]</div>`;
@@ -479,7 +484,105 @@ function renderPartyPanel() {
 }
 
 /**
- * Builds the HTML tooltip content for a party member showing their key stats.
+ * Shows a right-click context menu for a party member in the party roster panel.
+ * @param {MouseEvent} e        - The right-click event.
+ * @param {object}     member   - The party member object.
+ * @param {number}     charIdx  - Index of the member in GameState.party.
+ */
+function showPartyMemberContextMenu(e, member, charIdx) {
+  document.querySelectorAll('.party-member-ctx').forEach(m => m.remove());
+
+  const isDead    = !member.isAlive;
+  const hasMana   = member.maxMana > 0;
+
+  const options = [
+    {
+      label: `👁 Inspect ${member.name}`,
+      action: () => {
+        GameState.inspectedCharIndex = charIdx;
+        renderCharacterInspectPanel();
+        renderStatsPanel();
+        renderEquipmentPanel();
+        renderSpellsPanel();
+        renderHotbar();
+      },
+    },
+    isDead ? {
+      label: '💀 Revive (if able)',
+      cls: 'ctx-revive',
+      action: () => {
+        const rezzer = (GameState.party || []).find(m => m && m.isAlive && ['cleric','paladin','druid','shaman'].includes(m.classId));
+        if (!rezzer) { addCombatLog('No one can cast a resurrection right now.', 'system'); return; }
+        const rezAbility = (CLASSES[rezzer.classId]?.abilities || []).find(a => a.effect?.type === 'resurrect');
+        if (rezAbility && typeof dispatchAbilityEffect === 'function') {
+          dispatchAbilityEffect(rezzer, rezAbility, GameState.currentEnemy, GameState.enemies);
+        } else {
+          addCombatLog('No resurrection ability available.', 'system');
+        }
+      },
+    } : null,
+    hasMana ? {
+      label: member.mana === member.maxMana ? '🔵 Mana Full' : '🔵 Show Mana',
+      cls: 'ctx-info',
+      action: () => {
+        addCombatLog(`${member.name}: ${member.mana}/${member.maxMana} mana`, 'system');
+      },
+    } : null,
+    {
+      label: `📊 Show Stats`,
+      action: () => {
+        GameState.inspectedCharIndex = charIdx;
+        renderStatsPanel();
+        addCombatLog(`${member.name} — STR:${member.STR} DEX:${member.DEX} AGI:${member.AGI} STA:${member.STA} WIS:${member.WIS} INT:${member.INT}`, 'system');
+      },
+    },
+    (typeof getPetForOwner === 'function' && getPetForOwner(member.id)) ? {
+      label: '🐾 Dismiss Pet',
+      cls: 'ctx-destroy',
+      action: () => {
+        if (typeof dismissPet === 'function') dismissPet(member.id);
+      },
+    } : null,
+    !isDead && GameState.combatActive ? {
+      label: typeof getCurrentTarget === 'function' && getCurrentTarget(GameState.party) === member ? '🎯 Current Target' : '🎯 Set as Tank Target',
+      cls: 'ctx-info',
+      action: () => {
+        if (typeof addThreat === 'function') {
+          addThreat(member, 1000);
+          addCombatLog(`${member.name} draws the enemy's attention!`, 'system');
+        }
+      },
+    } : null,
+  ].filter(Boolean);
+
+  const menu = document.createElement('div');
+  menu.className = 'party-member-ctx';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;`;
+  menu.innerHTML = options.map((opt, idx) =>
+    `<div class="ctx-item${opt.cls ? ' ' + opt.cls : ''}" data-opt="${idx}">${opt.label}</div>`
+  ).join('');
+  document.body.appendChild(menu);
+
+  options.forEach((opt, idx) => {
+    menu.querySelector(`[data-opt="${idx}"]`).addEventListener('click', () => {
+      menu.remove();
+      opt.action();
+    });
+  });
+
+  // Clamp to viewport
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth)  menu.style.left = `${window.innerWidth - rect.width - 8}px`;
+  if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height - 8}px`;
+
+  const dismiss = (ev) => {
+    if (!menu.contains(ev.target)) {
+      menu.remove();
+      document.removeEventListener('click', dismiss);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
+}
  * @param {object} member - The party member object to build the tooltip for.
  * @returns {string} HTML markup for the member tooltip.
  */
@@ -1633,6 +1736,9 @@ function renderInventoryPanel() {
       if (typeof depositAllToBank === 'function') depositAllToBank();
     });
   }
+
+  // Wire drag-and-drop
+  if (typeof wireInventoryDragDrop === 'function') wireInventoryDragDrop(panel);
 }
 
 /**
@@ -1738,7 +1844,7 @@ function renderBankSlots() {
     if (stack) {
       const item = ITEMS[stack.itemId];
       const rarityClass = item ? `rarity-${item.rarity}` : '';
-      const shortName = item ? (item.name.length > 10 ? item.name.slice(0, 9) + '…' : item.name) : '?';
+      const shortName = item ? (item.name.length > 12 ? item.name.slice(0, 11) + '…' : item.name) : '?';
       slots.push(`
         <div class="inv-slot filled bank-slot-filled ${rarityClass}" data-item="${stack.itemId}" data-bank-slot="${i}" title="${item ? item.name : ''}">
           <div class="inv-slot-icon">${getItemIcon(stack.itemId)}</div>
@@ -2097,6 +2203,7 @@ function renderCityTabContent(tab) {
   if (tab === 'bank') {
     el.innerHTML = renderBankSlots();
     wireBankInteractions(el);
+    if (typeof wireInventoryDragDrop === 'function') wireInventoryDragDrop(el);
     // Wire deposit-all button
     const depositBtn = el.querySelector('#deposit-all-btn');
     if (depositBtn) {
