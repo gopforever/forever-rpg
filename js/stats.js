@@ -12,9 +12,19 @@ const STAT_CAP = 255;
  */
 function getMaxHP(char) {
   const cls = CLASSES[char.classId];
-  const hpPerSTA = cls ? cls.hpPerSTA : 3;
+  const hpPerSTA_l60 = cls ? cls.hpPerSTA_l60 : 3.0;
+  const hpPerSTA_l50 = cls ? cls.hpPerSTA_l50 : 2.5;
+  const hpPerSTA_l1  = hpPerSTA_l50 * 0.6;
+  const level = Math.max(1, Math.min(60, char.level || 1));
+  let hpPerSTAAtLevel;
+  if (level >= 50) {
+    hpPerSTAAtLevel = hpPerSTA_l50 + (hpPerSTA_l60 - hpPerSTA_l50) * ((level - 50) / 10);
+  } else {
+    hpPerSTAAtLevel = hpPerSTA_l1 + (hpPerSTA_l50 - hpPerSTA_l1) * ((level - 1) / 49);
+  }
   const sta = char.STA + (char.statBonuses ? char.statBonuses.STA || 0 : 0);
-  return Math.floor(30 + (sta * hpPerSTA * 0.8) + (char.level * hpPerSTA * 3));
+  const baseHP = 20 + level * 3;
+  return Math.floor(baseHP + (sta * hpPerSTAAtLevel));
 }
 
 /**
@@ -56,34 +66,114 @@ function getAC(char) {
 }
 
 /**
- * Computes base melee damage from STR, weapon dmg, level, and offense skill.
- * @param {object} attacker - The attacking character with STR, level, statBonuses, and skills.
- * @param {object|null} weapon - The equipped weapon object with a dmg property, or null.
+ * Computes melee damage using the P99/EverQuest pipeline:
+ * weapon damage cap → Wrath → weighted D20 → extra bonus → main-hand bonus.
+ * @param {object} attacker   - The attacking character.
+ * @param {object|null} weapon - The equipped weapon (with dmg/delay), or null.
+ * @param {object|null} defender - The defending character/enemy, or null for neutral mitigation.
+ * @param {boolean} isMainHand - Whether this is a main-hand swing (adds main-hand bonus). Default true.
  * @returns {number} The computed melee damage value (minimum 1).
  */
-function getMeleeDamage(attacker, weapon) {
+function getMeleeDamage(attacker, weapon, defender = null, isMainHand = true) {
   let str = attacker.STR + (attacker.statBonuses ? attacker.statBonuses.STR || 0 : 0);
   const penalty = typeof getEncumbrancePenalty === 'function' ? getEncumbrancePenalty(attacker) : { str: 0, agi: 0 };
   str = Math.max(0, str + penalty.str);
-  const weaponDmg = weapon ? weapon.dmg : 2;
-  const offenseSkill = attacker.skills ? (attacker.skills['offense'] || 0) : 0;
-  return Math.max(1, Math.floor(
-    ((str - 15) / 10) +
-    weaponDmg +
-    (attacker.level * 0.5) +
-    (offenseSkill / 20) +
-    Math.random() * weaponDmg
-  ));
+
+  // Step 5: Weapon Damage Cap (applied before pipeline)
+  let weaponDmg = weapon ? weapon.dmg : 2;
+  const cls = CLASSES[attacker.classId];
+  const archetype = cls ? cls.archetype : 'Melee';
+  const level = attacker.level || 1;
+  if (archetype === 'Caster') {
+    if (level < 10) weaponDmg = Math.min(weaponDmg, 6);
+    else if (level < 20) weaponDmg = Math.min(weaponDmg, 10);
+    else if (level < 30) weaponDmg = Math.min(weaponDmg, 12);
+    else if (level < 40) weaponDmg = Math.min(weaponDmg, 18);
+    else weaponDmg = Math.min(weaponDmg, 20);
+  } else if (archetype === 'Priest') {
+    if (level < 10) weaponDmg = Math.min(weaponDmg, 9);
+    else if (level < 20) weaponDmg = Math.min(weaponDmg, 12);
+    else if (level < 30) weaponDmg = Math.min(weaponDmg, 20);
+    else if (level < 40) weaponDmg = Math.min(weaponDmg, 26);
+    else weaponDmg = Math.min(weaponDmg, 40);
+  } else {
+    // Melee & Tank (includes Hybrid)
+    if (level < 10) weaponDmg = Math.min(weaponDmg, 10);
+    else if (level < 20) weaponDmg = Math.min(weaponDmg, 14);
+    else if (level < 30) weaponDmg = Math.min(weaponDmg, 30);
+    else if (level < 40) weaponDmg = Math.min(weaponDmg, 60);
+    else weaponDmg = Math.min(weaponDmg, 100);
+  }
+
+  // Step 1: Calculate Wrath
+  const strengthModifier = str >= 75 ? ((2 * str) - 150) / 3 : 0;
+  const weaponSkill = attacker.skills ? (attacker.skills['offense'] || 0) : 0;
+  const wornATK = attacker.statBonuses ? (attacker.statBonuses.ATK || 0) : 0;
+  const spellATK = attacker.spellATK || 0;
+  const wrath = weaponSkill + strengthModifier + wornATK + spellATK;
+
+  // Step 2: Roll weighted D20
+  const wrathRoll = Math.random() * (wrath + 5);
+  let defAC = 0, defDefSkill = 0, defAGI = 0;
+  if (defender) {
+    defAC = defender.currentAC !== undefined ? defender.currentAC : (defender.ac || 0);
+    defDefSkill = defender.skills ? (defender.skills['defense'] || 0) : 0;
+    defAGI = defender.AGI !== undefined ? defender.AGI : (defender.ac ? defender.ac * 3 : 0);
+  }
+  const mitigationRoll = Math.random() * (defAC + defDefSkill / 5 + defAGI / 20 + 5);
+  let averageRoll = (wrathRoll + mitigationRoll + 10) / 2;
+  if (averageRoll < 1) averageRoll = 1;
+  let rollIndex = (wrathRoll - mitigationRoll) + (averageRoll / 2);
+  if (rollIndex < 0) rollIndex = 0;
+  let weightedD20 = Math.floor((rollIndex * 20) / averageRoll);
+  weightedD20 = Math.min(19, Math.max(0, weightedD20)) + 1;
+  const rolledD20 = weightedD20 / 10;
+
+  // Step 3: Calculate DamageDone with extra bonus
+  let maxExtra, maxExtraChance, minusFactor;
+  if (archetype === 'Caster' || archetype === 'Priest') {
+    maxExtra = 210; maxExtraChance = 23; minusFactor = 80;
+  } else {
+    if (level <= 50) { maxExtra = 210; maxExtraChance = 49; minusFactor = 80; }
+    else if (level <= 55) { maxExtra = 245; maxExtraChance = 35; minusFactor = 80; }
+    else if (level <= 59) { maxExtra = 265; maxExtraChance = 28; minusFactor = 70; }
+    else { maxExtra = 285; maxExtraChance = 23; minusFactor = 65; }
+  }
+
+  let damageDone;
+  if (wrath < 115) {
+    damageDone = weaponDmg * rolledD20;
+  } else {
+    const d100 = Math.random() * 100;
+    if (d100 < maxExtraChance) {
+      damageDone = weaponDmg * rolledD20;
+    } else {
+      const baseBonus = Math.max(10, Math.floor((wrath - minusFactor) / 2));
+      const extraPercent = Math.min(maxExtra, 100 + Math.floor(baseBonus * Math.random()));
+      damageDone = Math.floor((weaponDmg * rolledD20 * extraPercent) / 100);
+    }
+  }
+
+  // Step 4: Main Hand Damage Bonus (main-hand only, not offhand or throwing)
+  if (isMainHand) {
+    const delay = weapon ? (weapon.delay || 28) : 28;
+    const mainHandBonus = Math.floor((delay / 10) * (level / 30));
+    damageDone = Math.floor(damageDone) + mainHandBonus;
+  }
+
+  return Math.max(1, Math.floor(damageDone));
 }
 
 /**
- * Returns crit chance based on DEX (DEX / 1000).
- * @param {object} char - The character object with DEX and optional statBonuses.
- * @returns {number} A decimal crit chance fraction (e.g., 0.15 for 15%).
+ * Returns crit chance for a character. Only Warriors and Berserkers can land
+ * critical melee hits in the P99/EverQuest era.
+ * @param {object} char - The character object with classId and level.
+ * @returns {number} A decimal crit chance fraction (0 for non-warrior/berserker).
  */
 function getCritChance(char) {
-  const dex = char.DEX + (char.statBonuses ? char.statBonuses.DEX || 0 : 0);
-  return dex / 1000;
+  const classId = char.classId;
+  if (classId !== 'warrior' && classId !== 'berserker') return 0;
+  return Math.min(0.15, 0.02 + (char.level * 0.001));
 }
 
 /**

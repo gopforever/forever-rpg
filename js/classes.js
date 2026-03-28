@@ -9,7 +9,8 @@
  *   archetype: string,
  *   role: string,
  *   manaStat: string|null,
- *   hpPerSTA: number,
+ *   hpPerSTA_l50: number,
+ *   hpPerSTA_l60: number,
  *   primaryStats: Array<string>,
  *   baseStats: {STR: number, DEX: number, AGI: number, STA: number, WIS: number, INT: number, CHA: number},
  *   description: string,
@@ -22,7 +23,8 @@
  * @property {string}        archetype      - Broad combat archetype: 'Melee', 'Hybrid', 'Caster', or 'Priest'.
  * @property {string}        role           - Specific combat role, e.g. 'Tank', 'DPS', or 'Support'.
  * @property {string|null}   manaStat       - Stat used to determine the mana pool ('WIS', 'INT'), or null if the class has no mana.
- * @property {number}        hpPerSTA       - HP gained per point of STA each level.
+ * @property {number}        hpPerSTA_l50   - HP gained per point of STA at level 50.
+ * @property {number}        hpPerSTA_l60   - HP gained per point of STA at level 60.
  * @property {Array<string>} primaryStats   - Stats that receive +2 on level-up; all other stats receive +1.
  * @property {object}        baseStats      - Starting stat values (STR/DEX/AGI/STA/WIS/INT/CHA).
  * @property {string}        description    - Long lore/flavour description of the class.
@@ -42,7 +44,8 @@ const CLASSES = {
     archetype: 'Melee',
     role: 'Tank',
     manaStat: null,
-    hpPerSTA: 6,
+    hpPerSTA_l50: 4.5,
+    hpPerSTA_l60: 6.0,
     primaryStats: ['STR', 'STA', 'AGI'],
     baseStats: { STR: 110, DEX: 75, AGI: 90, STA: 110, WIS: 60, INT: 60, CHA: 55 },
     description: 'Warriors are the undisputed masters of melee combat and the backbone of any adventuring group. Clad in the heaviest armors and wielding weapons of every variety, they charge headlong into the fray to protect their companions. Warriors possess no magical ability whatsoever, but more than compensate with unmatched physical resilience and combat discipline. Their taunt abilities keep monsters focused on them rather than frailer allies, and their disciplines allow them to shrug off punishment that would fell lesser fighters. Veterans of countless battles, Warriors earn their reputation as the finest tanks in Norrath through sheer determination and skill at arms.',
@@ -63,8 +66,9 @@ const CLASSES = {
     archetype: 'Hybrid',
     role: 'Tank/Healer',
     manaStat: 'WIS',
-    hpPerSTA: 5,
-    primaryStats: ['STR', 'STA', 'WIS', 'CHA'],
+    hpPerSTA_l50: 3.8,
+    hpPerSTA_l60: 5.2,
+
     baseStats: { STR: 95, DEX: 70, AGI: 80, STA: 95, WIS: 85, INT: 60, CHA: 90 },
     description: 'Paladins are holy warriors who have pledged their lives and swords to the service of their deity and the forces of good. Drawing power from their unwavering faith, Paladins blend martial prowess with divine magic to become formidable defenders of the innocent. They wear heavy plate armor and wield weapons with righteous fury, while their prayers allow them to heal wounds, stun enemies, and call upon divine protection. Paladins are especially devastating against undead and other creatures of darkness. Though their spellcasting lags behind true priests and their combat behind pure warriors, the Paladin\'s combination of healing and tankability makes them invaluable in any group.',
     abilities: [
@@ -85,8 +89,9 @@ const CLASSES = {
     archetype: 'Hybrid',
     role: 'Tank/DPS',
     manaStat: 'INT',
-    hpPerSTA: 5,
-    primaryStats: ['STR', 'STA', 'INT'],
+    hpPerSTA_l50: 3.8,
+    hpPerSTA_l60: 5.2,
+
     baseStats: { STR: 100, DEX: 70, AGI: 80, STA: 100, WIS: 60, INT: 85, CHA: 55 },
     description: 'Shadow Knights are dark champions who have forsaken the light to embrace the powers of shadow, death, and fear. Once perhaps warriors or knights of renown, they made a fateful pact with dark forces and now serve the evil deities of Norrath. They don heavy armor just as their Paladin counterparts, but instead of healing and holy magic, Shadow Knights wield dark sorcery — draining life from their enemies, spreading fear, and summoning undead servants. Their infamous Harm Touch ability lets them unleash a devastating burst of necrotic energy that can cripple even powerful foes. Shadow Knights are cunning, patient, and utterly ruthless in pursuit of their goals.',
     abilities: [
@@ -106,8 +111,9 @@ const CLASSES = {
     archetype: 'Hybrid',
     role: 'DPS',
     manaStat: 'WIS',
-    hpPerSTA: 4,
-    primaryStats: ['DEX', 'STR', 'AGI'],
+    hpPerSTA_l50: 3.3,
+    hpPerSTA_l60: 4.2,
+
     baseStats: { STR: 100, DEX: 90, AGI: 100, STA: 90, WIS: 80, INT: 70, CHA: 70 },
     description: 'Rangers are the wardens of the wild places of Norrath, equally at home in dense forest, open plains, or treacherous swamp. They combine the skills of the warrior with the nature magic of the druid to become versatile outdoorsmen capable of handling any situation. Rangers excel with a bow, raining arrows upon enemies from a distance with deadly accuracy, but they are equally dangerous in close combat with their dual-wielding fighting style. Their nature magic lets them cast snares to slow fleeing prey, accelerate their companions\' movement, and call upon the spirits of the wild for aid. Rangers are indispensable scouts and trackers in any adventuring party.',
     abilities: [
@@ -127,8 +133,9 @@ const CLASSES = {
     archetype: 'Hybrid',
     role: 'Support',
     manaStat: 'INT',
-    hpPerSTA: 4,
-    primaryStats: ['DEX', 'CHA', 'STR'],
+    hpPerSTA_l50: 3.0,
+    hpPerSTA_l60: 4.0,
+
     baseStats: { STR: 90, DEX: 100, AGI: 90, STA: 85, WIS: 70, INT: 75, CHA: 100 },
     description: 'Bards are the wandering minstrels and storytellers of Norrath, weaving powerful magic through music, song, and verse. Unlike any other class, Bards twist magic through a unique system of song-weaving, maintaining multiple songs simultaneously by cycling through them in rapid succession. Their vast repertoire includes songs that dramatically increase movement speed, enhance their allies\' combat abilities, resist spells, charm creatures, and even cause sleep. While not the strongest fighters or most powerful casters, the Bard\'s unparalleled versatility and buff stacking make them one of the most sought-after additions to any group. A skilled Bard can turn the tide of a difficult encounter with the right song at the right moment.',
     abilities: [
@@ -148,8 +155,9 @@ const CLASSES = {
     archetype: 'Hybrid',
     role: 'DPS/Support',
     manaStat: 'WIS',
-    hpPerSTA: 4,
-    primaryStats: ['STR', 'WIS', 'AGI'],
+    hpPerSTA_l50: 3.0,
+    hpPerSTA_l60: 4.0,
+
     baseStats: { STR: 100, DEX: 85, AGI: 90, STA: 90, WIS: 95, INT: 65, CHA: 65 },
     description: 'Beastlords are primal warriors who forge an unbreakable spiritual bond with a loyal animal companion called a Warder. This bond is more than simple pet ownership — it is a deep spiritual communion that allows Beastlord and Warder to fight as one, their combat instincts perfectly synchronized. Beastlords channel shamanistic magic to enhance themselves and their Warder, buff their allies, and debuff their enemies. They fight with claws and fists as readily as weapons, and their Warder adds significant additional damage to every encounter. Found primarily among the Vah Shir, Iksar, Ogre, and Troll races, Beastlords bridge the gap between warrior and shaman with unique and powerful results.',
     abilities: [
@@ -169,8 +177,9 @@ const CLASSES = {
     archetype: 'Melee',
     role: 'DPS',
     manaStat: null,
-    hpPerSTA: 5,
-    primaryStats: ['STR', 'STA', 'DEX'],
+    hpPerSTA_l50: 3.8,
+    hpPerSTA_l60: 5.2,
+
     baseStats: { STR: 115, DEX: 90, AGI: 90, STA: 105, WIS: 55, INT: 55, CHA: 55 },
     description: 'Berserkers are ferocious axe-wielding warriors who embrace a state of battle rage that makes them tremendously dangerous but difficult to control. Where Warriors fight with discipline and precision, Berserkers throw caution to the wind and surrender to primal fury, dealing massive damage at the cost of defensive awareness. They specialize in axes and two-handed weapons, using their Frenzy and Berserk abilities to achieve devastating attack combinations. Dwarven Berserkers are legendary, their battle hymns echoing through mountain halls before a charge. While they cannot match Warriors in terms of tanking ability, no class in Norrath can match the raw, terrifying damage output of a Berserker in full fury.',
     abilities: [
@@ -190,8 +199,9 @@ const CLASSES = {
     archetype: 'Melee',
     role: 'DPS',
     manaStat: null,
-    hpPerSTA: 4,
-    primaryStats: ['STR', 'AGI', 'DEX', 'WIS'],
+    hpPerSTA_l50: 3.0,
+    hpPerSTA_l60: 4.0,
+
     baseStats: { STR: 100, DEX: 100, AGI: 105, STA: 90, WIS: 80, INT: 75, CHA: 60 },
     description: 'Monks are disciplined martial artists who have spent years perfecting their bodies and minds into living weapons. Forgoing heavy armor entirely — indeed, they fight most effectively with as little equipment as possible — Monks rely on their extraordinary agility and extensive combat training to dodge attacks that would harm less nimble fighters. They fight primarily with their hands and feet, using devastating kicks and hand strikes that rival the power of many weapons. The Monk\'s signature Feign Death ability lets them drop to the ground and appear dead, causing enemies to lose interest, a tactic invaluable for escaping dangerous situations. Monks are among the fastest classes in Norrath and their pulling ability makes them prized group members.',
     abilities: [
@@ -211,8 +221,9 @@ const CLASSES = {
     archetype: 'Melee',
     role: 'DPS',
     manaStat: null,
-    hpPerSTA: 3,
-    primaryStats: ['DEX', 'AGI', 'STR'],
+    hpPerSTA_l50: 3.0,
+    hpPerSTA_l60: 4.0,
+
     baseStats: { STR: 95, DEX: 110, AGI: 105, STA: 85, WIS: 60, INT: 75, CHA: 80 },
     description: 'Rogues are cunning and opportunistic fighters who rely on stealth, positioning, and precise strikes to deal devastating damage. Masters of shadow, they can slip through a room undetected, steal a purse from a distracted merchant, or slip a blade between an enemy\'s ribs before the foe realizes what has happened. The Rogue\'s signature ability, Backstab, delivers tremendous damage when striking an unaware or flanked opponent, far exceeding what most melee classes can achieve in a single hit. Rogues also excel at picking locks, disarming traps, and applying deadly poisons to their weapons. Though lightly armored and fragile in a direct fight, a Rogue who controls the flow of combat is a terrifying opponent.',
     abilities: [
@@ -232,9 +243,9 @@ const CLASSES = {
     archetype: 'Caster',
     role: 'DPS Caster',
     manaStat: 'INT',
-    hpPerSTA: 2,
-    primaryStats: ['INT', 'WIS'],
-    baseStats: { STR: 60, DEX: 70, AGI: 70, STA: 70, WIS: 80, INT: 120, CHA: 75 },
+    hpPerSTA_l50: 2.0,
+    hpPerSTA_l60: 2.4,
+
     description: 'Wizards are the supreme masters of elemental destructive magic in Norrath, capable of unleashing blasts of fire, ice, and lightning that devastate single targets and groups of enemies alike. Blessed with the highest raw magical damage output of any class, a Wizard\'s spells can obliterate powerful enemies in seconds, but this comes at the cost of paper-thin physical defenses and a vast mana pool that drains quickly. Wizards are famous for their Gate and Teleport spells, which allow them to instantly travel across vast distances and bind themselves to safe locations for emergency escape. Intellectually driven and often eccentric, Wizards are students of pure arcane theory who push the limits of magical destruction.',
     abilities: [
       { name: 'Shock of Ice', description: 'Hurl a concentrated bolt of glacial energy at your target, encasing them in a burst of extreme cold that deals massive ice damage.', manaCost: 110, castTime: 3000, recastTime: 6000, effect: { type: 'damage', value: 200 } },
@@ -253,9 +264,9 @@ const CLASSES = {
     archetype: 'Caster',
     role: 'DPS Caster',
     manaStat: 'INT',
-    hpPerSTA: 2,
-    primaryStats: ['INT', 'WIS'],
-    baseStats: { STR: 65, DEX: 70, AGI: 70, STA: 75, WIS: 75, INT: 115, CHA: 70 },
+    hpPerSTA_l50: 2.0,
+    hpPerSTA_l60: 2.4,
+
     description: 'Magicians are conjurers who specialize in summoning and commanding elemental beings from the planes of Fire, Water, Earth, and Air. Unlike Necromancers who raise the dead, Magicians forge pacts with elemental forces and call these powerful beings into service. Their elemental pets are among the most powerful summoned companions in Norrath, capable of tanking significant damage while the Magician supports them with damaging spells and pet-enhancing buffs like Burnout. Magicians can also conjure food, water, weapons, and magical items from thin air, making them uniquely self-sufficient. In groups they provide a powerful damage-dealing pet, solid nuking spells, and the invaluable ability to summon gear to replace what has been lost.',
     abilities: [
       { name: 'Summon Companion', description: 'Open a rift to the elemental planes and call forth a powerful elemental servant to fight by your side and obey your commands.', manaCost: 100, castTime: 8000, recastTime: 30000, effect: { type: 'summon_pet', value: 1 } },
@@ -274,9 +285,9 @@ const CLASSES = {
     archetype: 'Caster',
     role: 'DPS Caster',
     manaStat: 'INT',
-    hpPerSTA: 2,
-    primaryStats: ['INT', 'WIS'],
-    baseStats: { STR: 65, DEX: 75, AGI: 75, STA: 70, WIS: 80, INT: 115, CHA: 65 },
+    hpPerSTA_l50: 2.0,
+    hpPerSTA_l60: 2.4,
+
     description: 'Necromancers are dark scholars who study the boundary between life and death, wielding the forbidden magic of mortality itself. Shunned by most societies and feared by the living, Necromancers drain life energy from their foes, reanimate corpses as undead servants, and drain the life force of enemies with devastating damage-over-time spells. Their ability to Feign Death rivals the Monk\'s, allowing them to escape dangerous situations by collapsing and appearing dead. The infamous Lich form allows powerful Necromancers to sustain themselves on necrotic energy alone. Feared and distrusted, Necromancers bring incredible sustained damage, powerful pets, and mana-sustaining abilities that make them sought after despite their dark reputation.',
     abilities: [
       { name: 'Lifetap', description: 'Drain the very life essence from your target, dealing necrotic damage while simultaneously channeling a portion of that stolen energy to restore your own hit points.', manaCost: 50, castTime: 2500, recastTime: 8000, effect: { type: 'lifetap', value: 100 } },
@@ -295,8 +306,9 @@ const CLASSES = {
     archetype: 'Caster',
     role: 'Support Caster',
     manaStat: 'INT',
-    hpPerSTA: 2,
-    primaryStats: ['INT', 'CHA', 'WIS'],
+    hpPerSTA_l50: 2.0,
+    hpPerSTA_l60: 2.4,
+
     baseStats: { STR: 60, DEX: 75, AGI: 75, STA: 70, WIS: 80, INT: 120, CHA: 105 },
     description: 'Enchanters are masters of the mind and illusion, wielding magic that affects perception, thought, and the flow of mana itself. While they deal little direct damage, Enchanters are universally considered one of the most powerful and sought-after classes in the game due to their extraordinary utility. Their Mesmerize and Charm spells can take multiple enemies completely out of a fight, their Clarity line restores mana to casters allowing them to sustain longer encounters, and their Haste spell dramatically increases ally melee speed. Enchanters can also assume the appearance of other races and creatures with illusion magic, and their Tash debuff reduces enemy magic resistance, making all spells more effective. A skilled Enchanter transforms what would be an impossible fight into a manageable one.',
     abilities: [
@@ -316,8 +328,9 @@ const CLASSES = {
     archetype: 'Priest',
     role: 'Healer',
     manaStat: 'WIS',
-    hpPerSTA: 3,
-    primaryStats: ['WIS', 'STA', 'STR'],
+    hpPerSTA_l50: 2.5,
+    hpPerSTA_l60: 3.0,
+
     baseStats: { STR: 75, DEX: 65, AGI: 70, STA: 80, WIS: 115, INT: 75, CHA: 80 },
     description: 'Clerics are the chosen servants of Norrath\'s deities, granted divine healing power in exchange for their absolute devotion and faith. They are indisputably the finest healers in the game, possessing the Complete Heal spell — a massive single-target heal that can fully restore a tank\'s health — as well as powerful group heals, wards, and resurrection spells. Clerics can raise fallen companions back to life with a portion of their experience intact, an ability of incalculable value in dangerous dungeons. While not primarily combat-oriented, Clerics wear plate armor and wield blunt weapons with reasonable competence, and their divine magic is especially devastating against undead. No group in Norrath is truly complete without a skilled Cleric.',
     abilities: [
@@ -337,8 +350,9 @@ const CLASSES = {
     archetype: 'Priest',
     role: 'Healer/DPS',
     manaStat: 'WIS',
-    hpPerSTA: 3,
-    primaryStats: ['WIS', 'INT'],
+    hpPerSTA_l50: 2.5,
+    hpPerSTA_l60: 3.0,
+
     baseStats: { STR: 70, DEX: 75, AGI: 75, STA: 75, WIS: 115, INT: 80, CHA: 75 },
     description: 'Druids are servants of nature who draw power from the living world around them, channeling the primal forces of the natural world into healing and destructive magic. Less focused on pure healing than Clerics, Druids compensate with significantly more offensive capability, including powerful damage over time spells, direct damage nukes, and snare magic to pin fleeing enemies. Druids possess the Spirit of Wolf and Teleport spells that allow rapid travel across Norrath, making them invaluable for group movement. Their nature-based healing and regeneration spells keep allies alive while their damage spells ensure enemies do not escape. Patient stewards of the wild, Druids represent the balance between restoration and destruction found in nature itself.',
     abilities: [
@@ -359,8 +373,9 @@ const CLASSES = {
     archetype: 'Priest',
     role: 'Healer/Support',
     manaStat: 'WIS',
-    hpPerSTA: 3,
-    primaryStats: ['WIS', 'STR', 'STA'],
+    hpPerSTA_l50: 2.5,
+    hpPerSTA_l60: 3.0,
+
     baseStats: { STR: 95, DEX: 75, AGI: 75, STA: 95, WIS: 110, INT: 70, CHA: 75 },
     description: 'Shamans are tribal spirit-callers who commune with the ancestors and spirit world to borrow power for the living. Physically among the sturdier priest classes, Shamans can take and deal more punishment than Clerics or Druids while also possessing a unique and powerful toolkit. Their Slow spell is one of the most impactful abilities in the entire game, dramatically reducing an enemy\'s attack speed and turning a dangerous boss into a manageable threat. Shamans also excel at buffing their allies with stat-enhancing spells and their Torpor spell provides extraordinary regeneration. The infamous Cannibalize ability lets them sacrifice their own hit points to restore mana, allowing near-infinite spellcasting. Shamans are the ultimate force multipliers, making everyone around them significantly more effective.',
     abilities: [
