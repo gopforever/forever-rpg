@@ -196,10 +196,15 @@ body {
 
 #zone-minimap {
   width: 100%;
+  height: 90px;
   overflow: hidden;
+  background: var(--bg-darkest);
   border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-#zone-minimap svg { width: 100%; height: auto; display: block; }
+#zone-minimap svg { width: 100%; height: 100%; display: block; }
 
 #zone-info {
   padding: 8px;
@@ -2457,3 +2462,125 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 }
 .equip-summary strong { color: var(--text-primary); }
 .equip-bonuses { color: var(--gold-dim); font-size: 0.65rem; font-family: 'Share Tech Mono', monospace; }
+
+/* ============================================================
+   COMBAT LOG FILTER TABS
+   ============================================================ */
+#combat-log-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 4px 0;
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--panel-border);
+}
+.log-filter-tab {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 9px;
+  font-family: 'Share Tech Mono', monospace;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background 0.15s, color 0.15s;
+}
+.log-filter-tab:hover { background: var(--panel-bg2); color: var(--text-primary); }
+.log-filter-tab.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold-dim); }
+
+/* Additional combat log entry type colours */
+.log-damage { color: var(--hit-enemy); }
+.log-cast   { color: #aa88ff; }
+.log-info   { color: var(--text-secondary); }
+.log-zone   { color: var(--text-secondary); font-style: italic; }
+.log-travel { color: var(--text-secondary); font-style: italic; }
+
+/* ============================================================
+   SPELL HOTBAR
+   ============================================================ */
+#hotbar-container {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+}
+#hotbar {
+  display: flex;
+  gap: 4px;
+}
+#hotbar-char-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.hotbar-slot {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background: var(--panel-bg2);
+  border: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  overflow: hidden;
+  text-align: center;
+  padding: 2px;
+}
+.hotbar-slot:hover { border-color: var(--gold); background: #1e1a12; }
+.hotbar-slot.hotbar-empty { cursor: default; opacity: 0.4; }
+.hotbar-slot.hotbar-cooldown { opacity: 0.5; }
+.hotbar-key {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 8px;
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1;
+}
+.hotbar-icon { font-size: 18px; line-height: 1; }
+.hotbar-name {
+  font-size: 7px;
+  color: var(--text-secondary);
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.1;
+  margin-top: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hotbar-cost {
+  font-size: 7px;
+  color: #4466bb;
+  font-family: 'Share Tech Mono', monospace;
+}
+.hotbar-empty-label { font-size: 14px; color: var(--text-dim); }
+.hotbar-cd-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  pointer-events: none;
+}
+
+/* ============================================================
+   ENEMY INCOMING ATTACK INDICATOR
+   ============================================================ */
+@keyframes incomingAttackPulse {
+  0%, 100% { border-color: var(--panel-border); box-shadow: none; }
+  50%       { border-color: #cc2222; box-shadow: 0 0 8px rgba(204,34,34,0.6); }
+}
+.enemy-card.incoming-attack {
+  animation: incomingAttackPulse 0.4s ease-in-out infinite;
+}

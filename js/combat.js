@@ -175,6 +175,7 @@ function makeLiveEnemy(enemyId) {
     hasCalledForHelp: false,
     enraged: false,
     hasFled: false,
+    _nextAttackAt: Date.now() + (template.delay || 2000),
   };
 }
 
@@ -542,6 +543,8 @@ function combatTick() {
           enemyAttack(enemy, target, party);
         }
       }
+      // Record when this enemy will next attack (used by the incoming-attack UI indicator)
+      enemy._nextAttackAt = Date.now() + (GameState.settings && GameState.settings.combatSpeed || 2000);
     }
   }
 

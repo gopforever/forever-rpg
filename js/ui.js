@@ -169,6 +169,7 @@ function initMainUI() {
   renderEquipmentPanel();
   renderSpellsPanel();
   renderInventoryPanel();
+  renderHotbar();
 
   initTooltips();
   restorePanelPositions();
@@ -182,6 +183,35 @@ function initMainUI() {
     selectEnemy(GameState.selectedEnemyId);
     updateEnemyDisplay();
   }
+
+  // Keyboard hotbar: number keys 1–8 trigger ability slots
+  document.addEventListener('keydown', (e) => {
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 8 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+      const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
+      const member = GameState.party && GameState.party[idx];
+      const cls = member && CLASSES[member.classId];
+      const abilities = (cls && cls.abilities) ? cls.abilities.slice(0, 8) : [];
+      const ability = abilities[num - 1];
+      if (ability) triggerHotbarAbility(idx, ability);
+    }
+  });
+
+  // Poll every 100ms to flash enemy cards when an attack is imminent, and to
+  // clear the indicator once the window has passed
+  let _prevAnyIncoming = false;
+  setInterval(() => {
+    if (GameState.combatActive && GameState.enemies && GameState.enemies.length > 0) {
+      const now = Date.now();
+      const anyIncoming = GameState.enemies.some(e => e && e._nextAttackAt && e._nextAttackAt - now < 600 && e._nextAttackAt - now > 0);
+      if (anyIncoming || _prevAnyIncoming) updateEnemyDisplay();
+      _prevAnyIncoming = anyIncoming;
+    } else {
+      _prevAnyIncoming = false;
+    }
+  }, 100);
 }
 
 // ─── Panel Rendering ──────────────────────────────────────────────────────────
@@ -220,6 +250,8 @@ function renderZonePanel() {
     const zone = ZONES[GameState.zone];
     if (zone && zone.minimapSVG) {
       minimapEl.innerHTML = zone.minimapSVG;
+    } else {
+      minimapEl.innerHTML = '<div style="color:var(--text-dim);font-size:10px;padding:8px">No map data</div>';
     }
   }
 
@@ -434,6 +466,7 @@ function renderPartyPanel() {
         renderStatsPanel();
         renderEquipmentPanel();
         renderSpellsPanel();
+        renderHotbar();
       });
 
       attachTooltip(slot, () => getMemberTooltipHTML(member));
@@ -583,28 +616,50 @@ function renderMonsterLogPanel() {
  * @returns {void}
  */
 function renderCombatPanel() {
+  renderCombatFilterTabs();
   renderCombatLog();
   updateEnemyDisplay();
 }
 
+function renderCombatFilterTabs() {
+  const area = document.getElementById('combat-log-tabs');
+  if (!area) return;
+  const filters = ['all', 'damage', 'spells', 'loot', 'system'];
+  const current = (GameState.settings && GameState.settings.logFilter) || 'all';
+  area.innerHTML = filters.map(f =>
+    `<button class="log-filter-tab${f === current ? ' active' : ''}" data-filter="${f}">${f.charAt(0).toUpperCase() + f.slice(1)}</button>`
+  ).join('');
+  area.querySelectorAll('.log-filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!GameState.settings) GameState.settings = {};
+      GameState.settings.logFilter = btn.dataset.filter;
+      renderCombatFilterTabs();
+      renderCombatLog();
+    });
+  });
+}
+
+const _LOG_TYPE_MAP = {
+  damage: ['damage', 'miss', 'crit', 'hit', 'enemy'],
+  spells: ['spell', 'heal', 'cast', 'buff', 'debuff'],
+  loot:   ['loot', 'xp', 'levelup'],
+  system: ['system', 'zone', 'info', 'travel', 'death', 'poison', 'cold', 'disease'],
+};
+
 /**
- * Renders the last twelve combat-log entries into the combat-log element,
- * dimming entries older than 30 seconds and auto-scrolling to the bottom.
+ * Renders combat-log entries filtered by the active log filter tab,
+ * keeping up to 200 entries and auto-scrolling to the bottom.
  * @returns {void}
  */
 function renderCombatLog() {
   const logEl = document.getElementById('combat-log');
   if (!logEl) return;
-
+  const filter = (GameState.settings && GameState.settings.logFilter) || 'all';
   const log = GameState.combatLog || [];
-  const now = Date.now();
-  logEl.innerHTML = log.slice(-12).map(entry => {
-    const secsAgo = Math.floor((now - (entry.time || now)) / 1000);
-    const isOld = secsAgo > 30;
-    const style = isOld ? ' style="opacity:0.45"' : '';
-    return `<div class="log-entry log-${entry.type || 'info'}"${style}><span class="log-timestamp">[${secsAgo}s]</span>${entry.text}</div>`;
-  }).join('');
-
+  const filtered = filter === 'all' ? log : log.filter(e => (_LOG_TYPE_MAP[filter] || []).includes(e.type));
+  logEl.innerHTML = filtered.map(entry =>
+    `<div class="log-entry log-${entry.type || 'info'}">${entry.text}</div>`
+  ).join('');
   logEl.scrollTop = logEl.scrollHeight;
 }
 
@@ -658,8 +713,11 @@ function updateEnemyDisplay() {
                   : feared  ? ' <span class="enemy-cc-tag cc-fear">FEAR</span>'
                   : '';
 
+    const msToAttack = enemy._nextAttackAt ? enemy._nextAttackAt - now : Infinity;
+    const isIncoming = msToAttack > 0 && msToAttack < 600;
+
     return `
-      <div class="enemy-card${isPrimary ? ' enemy-card-primary' : ''}${isFocused ? ' focused' : ''}" data-enemy-index="${idx}">
+      <div class="enemy-card${isPrimary ? ' enemy-card-primary' : ''}${isFocused ? ' focused' : ''}${isIncoming ? ' incoming-attack' : ''}" data-enemy-index="${idx}">
         <div class="enemy-card-header">
           <span class="con-dot con-${con.color}" title="${con.label}">●</span>
           <span class="enemy-card-name">${enemy.name}${ccLabel}</span>
@@ -1022,6 +1080,96 @@ function renderSpellsPanel() {
   });
 }
 
+function renderHotbar() {
+  const hotbarEl = document.getElementById('hotbar');
+  const labelEl = document.getElementById('hotbar-char-label');
+  if (!hotbarEl) return;
+
+  const idx = GameState.inspectedCharIndex !== undefined ? GameState.inspectedCharIndex : 0;
+  const member = GameState.party && GameState.party[idx];
+
+  if (labelEl) {
+    labelEl.textContent = member ? `${member.name} [${member.classId}]` : '';
+  }
+
+  const cls = member && CLASSES[member.classId];
+  const abilities = (cls && cls.abilities) ? cls.abilities.slice(0, 8) : [];
+
+  hotbarEl.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const ability = abilities[i] || null;
+    const slot = document.createElement('div');
+    slot.className = 'hotbar-slot' + (ability ? '' : ' hotbar-empty');
+    slot.dataset.index = i;
+    slot.dataset.key = i + 1;
+
+    if (ability) {
+      const onCd = member && member.abilityCooldowns && member.abilityCooldowns[ability.name] && member.abilityCooldowns[ability.name] > Date.now();
+      slot.classList.toggle('hotbar-cooldown', !!onCd);
+      slot.innerHTML = `
+        <div class="hotbar-key">${i + 1}</div>
+        <div class="hotbar-icon">${getAbilityIcon(ability)}</div>
+        <div class="hotbar-name">${ability.name}</div>
+        <div class="hotbar-cost">${ability.manaCost > 0 ? ability.manaCost + 'mp' : 'passive'}</div>
+        ${onCd ? '<div class="hotbar-cd-overlay"></div>' : ''}
+      `;
+      slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
+      attachTooltip(slot, () => getAbilityTooltipHTML(ability));
+    } else {
+      slot.innerHTML = `<div class="hotbar-key">${i + 1}</div><div class="hotbar-empty-label">—</div>`;
+    }
+
+    hotbarEl.appendChild(slot);
+  }
+}
+
+function getAbilityIcon(ability) {
+  if (!ability) return '?';
+  const name = (ability.name || '').toLowerCase();
+  if (name.includes('heal') || name.includes('mend')) return '✚';
+  if (name.includes('fire') || name.includes('flame') || name.includes('fireball')) return '🔥';
+  if (name.includes('ice') || name.includes('frost') || name.includes('cold')) return '❄';
+  if (name.includes('lightning') || name.includes('shock')) return '⚡';
+  if (name.includes('stun') || name.includes('bash')) return '💥';
+  if (name.includes('mez') || name.includes('charm') || name.includes('sleep')) return '💤';
+  if (name.includes('slow')) return '🐢';
+  if (name.includes('poison') || name.includes('dot')) return '☠';
+  if (name.includes('shield') || name.includes('ward') || name.includes('armor')) return '🛡';
+  if (name.includes('rune') || name.includes('buff')) return '✨';
+  if (name.includes('taunt')) return '😠';
+  if (name.includes('backstab') || name.includes('eviscerate')) return '🗡';
+  if (name.includes('kick')) return '👢';
+  if (name.includes('song') || name.includes('chant') || name.includes('aria')) return '🎵';
+  if (name.includes('summon') || name.includes('pet')) return '🐾';
+  if (name.includes('fear') || name.includes('panic')) return '👻';
+  if (name.includes('nuke') || name.includes('blast') || name.includes('bolt')) return '💫';
+  if (name.includes('snare') || name.includes('root')) return '🌿';
+  return '⚔';
+}
+
+function triggerHotbarAbility(charIdx, ability) {
+  if (!GameState.combatActive) {
+    addCombatLog(`${ability.name} can only be used in combat.`, 'system');
+    return;
+  }
+  const member = GameState.party && GameState.party[charIdx];
+  if (!member || !member.isAlive) return;
+  if (ability.manaCost > 0 && member.mana < ability.manaCost) {
+    addCombatLog(`${member.name} does not have enough mana for ${ability.name}.`, 'system');
+    return;
+  }
+  const onCd = member.abilityCooldowns && member.abilityCooldowns[ability.name] && member.abilityCooldowns[ability.name] > Date.now();
+  if (onCd) {
+    addCombatLog(`${ability.name} is not ready yet.`, 'system');
+    return;
+  }
+  if (typeof dispatchAbilityEffect === 'function') {
+    dispatchAbilityEffect(member, ability, GameState.currentEnemy, GameState.enemies);
+    addCombatLog(`${member.name} manually activates ${ability.name}.`, 'cast');
+  }
+  renderHotbar();
+}
+
 /**
  * Appends new drops to the recent-loot list and renders up to the last five
  * loot entries with rarity-coloured text in the loot-display element.
@@ -1119,8 +1267,8 @@ function showLevelUpEffect(charId) {
 function addCombatLog(text, type) {
   if (!GameState.combatLog) GameState.combatLog = [];
   GameState.combatLog.push({ text, type: type || 'info', time: Date.now() });
-  if (GameState.combatLog.length > 100) {
-    GameState.combatLog = GameState.combatLog.slice(-100);
+  if (GameState.combatLog.length > 200) {
+    GameState.combatLog = GameState.combatLog.slice(-200);
   }
   renderCombatLog();
 }
@@ -1283,6 +1431,7 @@ function updatePartyUI() {
     renderCharacterInspectPanel();
     renderStatsPanel();
   }
+  renderHotbar();
 }
 
 /**
