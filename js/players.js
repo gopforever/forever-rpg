@@ -386,6 +386,7 @@ function createSingleGhost(id, name, isNew) {
     }, 100);
   }
   initGhostStats(ghost);
+  ghost.skills = (typeof initSkills === 'function') ? initSkills(ghost.classId, ghost.level) : {};
   return ghost;
 }
 
@@ -1219,7 +1220,10 @@ function simulateGhostTick(ghost) {
       }
     }
     // Recalculate derived stats when the ghost gains a level
-    if (didLevelUp) initGhostStats(ghost);
+    if (didLevelUp) {
+      initGhostStats(ghost);
+      if (typeof unlockSkillsForLevel === 'function') unlockSkillsForLevel(ghost);
+    }
   }
 
   if (!ghost.inventory) ghost.inventory = [];

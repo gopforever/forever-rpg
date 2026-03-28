@@ -1,8 +1,5 @@
 // skills.js - P99/EverQuest-authentic per-character skill system for Forever RPG
 
-/** New characters start with 1 to this value points in each unlocked skill. */
-const INITIAL_SKILL_RANGE = 10;    // new chars start with 1–10 points in each unlocked skill
-
 /** Skill-ups are announced to the combat log at multiples of this value. */
 const SKILL_MILESTONE_INTERVAL = 25; // announce skill-ups at multiples of this value
 
@@ -284,7 +281,7 @@ const SKILL_DISPLAY_NAMES = {
 
 /**
  * Returns the current skill cap for a character given their class and level.
- * Hard cap is the class's maximum (e.g. 252). Per-level cap = multiplier * (level + 1).
+ * Hard cap is the class's maximum (e.g. 252). Per-level cap = multiplier * level.
  */
 function getSkillCap(classId, skillName, level) {
   const caps = SKILL_HARD_CAPS[classId];
@@ -292,7 +289,7 @@ function getSkillCap(classId, skillName, level) {
   const hardCap = caps[skillName];
   const tier = CLASS_TIER[classId] || 'caster';
   const mult = TIER_MULTIPLIER[tier];
-  const levelCap = mult * (level + 1);
+  const levelCap = mult * level;
   return Math.min(hardCap, levelCap);
 }
 
@@ -306,7 +303,7 @@ function initSkills(classId, level) {
   for (const [skillName, unlockLevel] of Object.entries(unlocks)) {
     if (level >= unlockLevel) {
       const cap = getSkillCap(classId, skillName, level);
-      skills[skillName] = Math.min(cap, Math.floor(Math.random() * INITIAL_SKILL_RANGE) + 1);
+      skills[skillName] = 1;
     }
   }
   return skills;
