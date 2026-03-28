@@ -98,7 +98,7 @@ function generateGhostName(usedNames) {
   }
   const pre = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
   const suf = NAME_SUFFIXES[Math.floor(Math.random() * NAME_SUFFIXES.length)];
-  return pre + suf + Math.floor(Math.random() * 99);
+  return pre + suf + (1 + Math.floor(Math.random() * 99));
 }
 
 const PARTY_MEMBER_NAMES = [
@@ -610,8 +610,8 @@ function buildChatMessage(ghost) {
   }
 
   let msg = pool[Math.floor(Math.random() * pool.length)];
-  if (isNight && Math.random() < 0.3) msg = 'good hunting out here tonight';
   if (personality === 'roleplayer' && Math.random() < 0.5) msg = `*${msg}*`;
+  if (isNight && Math.random() < 0.3) msg = 'good hunting out here tonight';
 
   msg = msg
     .replace('{zone}',  ZONES && ZONES[zoneId] ? ZONES[zoneId].shortName || ZONES[zoneId].name : zoneId)
@@ -1010,7 +1010,7 @@ function ghostSellItemToMarket(ghost) {
   price = Math.max(1, price);
   if (_marketListings.length >= 20) _marketListings.shift();
   _marketListings.push({
-    id: Date.now() + Math.random(),
+    id: `${Date.now()}_${Math.random()}`,
     itemId: item.id, itemName: item.name,
     seller: ghost.name, sellerId: ghost.id, sellerClass: ghost.classId,
     qty: 1, price,
