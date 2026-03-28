@@ -1,3 +1,44 @@
+/**
+ * Registry of all enemy templates, keyed by snake_case enemy ID.
+ *
+ * Each entry is a template used to instantiate enemy encounters. Optional
+ * fields (aoeAttack, statusProcs, callsForHelp, description) may be absent
+ * on entries that do not require them.
+ *
+ * @type {Object.<string, {
+ *   id: string,
+ *   name: string,
+ *   level: number,
+ *   hp: number,
+ *   atk: number,
+ *   ac: number,
+ *   xp: number,
+ *   type: string,
+ *   isRare: boolean,
+ *   isUndead: boolean,
+ *   aoeAttack?: boolean,
+ *   statusProcs?: Array<{chance: number, type: string, damage?: number, duration?: number}>,
+ *   lootTable: Array<{itemId: string, chance: number, quantity: [number, number]}>,
+ *   callsForHelp?: {chance: number, addIds: Array<string>},
+ *   description?: string
+ * }>}
+ *
+ * @property {string}           id            - snake_case identifier matching the registry key.
+ * @property {string}           name          - Display name shown to the player.
+ * @property {number}           level         - Enemy level; used for con-color calculation and XP scaling.
+ * @property {number}           hp            - Base hit points.
+ * @property {number}           atk           - Base attack value used in damage rolls.
+ * @property {number}           ac            - Armor class; reduces incoming damage.
+ * @property {number}           xp            - Base experience points awarded on kill.
+ * @property {string}           type          - Enemy category, e.g. 'animal', 'humanoid', 'undead'.
+ * @property {boolean}          isRare        - If true, this is a named/rare spawn with special loot.
+ * @property {boolean}          isUndead      - If true, holy abilities deal bonus damage to this enemy.
+ * @property {boolean}          [aoeAttack]   - If true, the enemy uses sweeping AoE attacks.
+ * @property {Array<object>}    [statusProcs] - On-hit proc effects; each entry has chance, type, and optional damage/duration.
+ * @property {Array<object>}    lootTable     - Possible item drops; each entry has itemId, chance (0–1), and quantity [min, max].
+ * @property {object}           [callsForHelp]- Optional call-for-help behaviour: {chance, addIds[]}.
+ * @property {string}           [description] - Optional lore/flavour text for the enemy.
+ */
 const ENEMIES = {
   mangy_rat: {
     id: 'mangy_rat',
@@ -945,14 +986,37 @@ const ENEMIES = {
   },
 };
 
+/**
+ * Retrieve a single enemy template by its ID.
+ *
+ * @param {string} id - The snake_case enemy ID to look up.
+ * @returns {object|null} The enemy definition object, or null if not found.
+ */
 function getEnemy(id) {
   return ENEMIES[id] || null;
 }
 
+/**
+ * Return all enemy templates whose level falls within an inclusive range.
+ *
+ * @param {number} min - Minimum enemy level (inclusive).
+ * @param {number} max - Maximum enemy level (inclusive).
+ * @returns {Array<object>} Array of enemy definition objects matching the range.
+ */
 function getEnemiesByLevelRange(min, max) {
   return Object.values(ENEMIES).filter(e => e.level >= min && e.level <= max);
 }
 
+/**
+ * Perform a loot roll for a defeated enemy, applying per-item drop chances.
+ *
+ * Iterates the enemy's lootTable and, for each entry, rolls against its
+ * drop chance. Successful rolls yield a random quantity within the entry's
+ * [min, max] range.
+ *
+ * @param {object} enemy - An enemy definition object (must have a lootTable).
+ * @returns {Array<{itemId: string, quantity: number}>} Array of dropped item stacks.
+ */
 function rollLoot(enemy) {
   const results = [];
   for (const entry of enemy.lootTable) {

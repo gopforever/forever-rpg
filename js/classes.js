@@ -1,3 +1,41 @@
+/**
+ * Registry of all playable classes, keyed by class ID string.
+ *
+ * Each entry defines the full configuration for a class, including its
+ * archetype, combat role, stat growth, starting equipment, lore, and abilities.
+ *
+ * @type {Object.<string, {
+ *   name: string,
+ *   archetype: string,
+ *   role: string,
+ *   manaStat: string|null,
+ *   hpPerSTA: number,
+ *   primaryStats: Array<string>,
+ *   baseStats: {STR: number, DEX: number, AGI: number, STA: number, WIS: number, INT: number, CHA: number},
+ *   description: string,
+ *   abilities: Array<{name: string, description: string, manaCost: number, castTime: number, recastTime: number, effect: object}>,
+ *   startingWeapon: string,
+ *   icon: string
+ * }>}
+ *
+ * @property {string}        name           - Display name of the class.
+ * @property {string}        archetype      - Broad combat archetype: 'Melee', 'Hybrid', 'Caster', or 'Priest'.
+ * @property {string}        role           - Specific combat role, e.g. 'Tank', 'DPS', or 'Support'.
+ * @property {string|null}   manaStat       - Stat used to determine the mana pool ('WIS', 'INT'), or null if the class has no mana.
+ * @property {number}        hpPerSTA       - HP gained per point of STA each level.
+ * @property {Array<string>} primaryStats   - Stats that receive +2 on level-up; all other stats receive +1.
+ * @property {object}        baseStats      - Starting stat values (STR/DEX/AGI/STA/WIS/INT/CHA).
+ * @property {string}        description    - Long lore/flavour description of the class.
+ * @property {Array<object>} abilities      - Ability definitions. Each entry contains:
+ *   - name {string}: ability name
+ *   - description {string}: ability flavour text
+ *   - manaCost {number}: mana consumed on use
+ *   - castTime {number}: cast time in milliseconds
+ *   - recastTime {number}: cooldown in milliseconds
+ *   - effect {object}: structured effect payload (type, stat, value, etc.)
+ * @property {string}        startingWeapon - Item ID of the weapon the class begins with.
+ * @property {string}        icon           - Emoji icon representing the class in the UI.
+ */
 const CLASSES = {
   warrior: {
     name: 'Warrior',
