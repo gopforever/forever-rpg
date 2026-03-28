@@ -152,7 +152,7 @@ const TANK_CLASSES   = ['warrior','paladin','shadowknight'];
  *
  * @type {Array<string>}
  */
-const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos'];
+const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands'];
 
 // Non-city zones used for ghost activity
 /**
@@ -160,13 +160,17 @@ const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos'];
  *
  * @type {Array<string>}
  */
-const COMBAT_ZONES = ['qeynos_hills','blackburrow'];
+const COMBAT_ZONES = ['qeynos_hills','blackburrow','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands'];
 
 // Enemy names by zone for flavor text
 const ZONE_ENEMIES = {
   qeynos_hills: ['a Gnoll Scout','a Gray Wolf','a Brown Bear','a Giant Rat','a Bandit','Varsoon the Undying','a Fire Beetle','a Decaying Skeleton'],
   blackburrow:  ['a Gnoll Guard','a Burly Gnoll','a Gnoll Shaman','Lord Elgnub','a Plague Rat','a Giant Snake','the Gnoll Commander','the Gnoll High Shaman'],
   qeynos:       [],
+  west_karana:  ['a Karana Bandit','a Giant Wolf','a Plains Griffon','a Karana Raider','a Dust Goblin','a Plains Cyclops','a Karana Gnoll Warrior'],
+  highpass_hold: ['a Highpass Guard','a Pass Bandit','a Mountain Bear','a Highpass Skeleton','a Rock Troll','a Gnoll War Chief'],
+  kithicor_forest: ['a Kithicor Skeleton','a Kithicor Zombie','a Warrior Spirit','a Corrupted Treant','a Kithicor Dark Elf','General Kill-Anaz'],
+  commonlands:  ['an Orc Warrior','an Orc Shaman','an Orc Captain','a Commonlands Lion','a Dark Elf Ranger','Crushbone Warlord','a Plague Spectre'],
 };
 
 // Chat message templates
@@ -198,6 +202,10 @@ const ZONE_LOCS = {
   qeynos_hills: ['gnoll camp','wolf den','pond','ruins','Qeynos gate','the hill','the creek'],
   blackburrow:  ['upper tunnels','flooded area','deep chamber','gnoll brewery','the trap room','lower level'],
   qeynos:       ['the bank','the guild hall','the market','the temple','south district'],
+  west_karana:  ['the road','the bandit camp','the gnoll outpost','the griffon roost','the cyclops fields','the river crossing'],
+  highpass_hold: ['the mountain pass','the guard post','the bandit hideout','the troll cave','the gnoll war camp','the cliffside'],
+  kithicor_forest: ['the dark grove','the haunted clearing','the old battlefield','the treant grove','the dark elf camp','the general\'s tomb'],
+  commonlands:  ['the orc camp','the dark elf outpost','the lion plains','the road south','the warlord\'s fortress','the plagued gully'],
 };
 
 // Sellable item names for chat / market (grabbed dynamically, cached here)
