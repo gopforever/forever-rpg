@@ -209,10 +209,6 @@ function recordWorldFirst(eventKey, who, detail) {
 
 // ─── Achievement Checking ──────────────────────────────────────────────────────────
 
-const HEALER_CLASSES  = ['cleric', 'druid', 'shaman'];
-const CASTER_CLASSES  = ['wizard', 'magician', 'necromancer', 'enchanter'];
-const HYBRID_CLASSES  = ['paladin', 'shadowknight', 'ranger', 'bard', 'monk', 'beastlord', 'berserker'];
-
 // Zone-id → achievement-id mapping
 const ZONE_ACH_MAP = {
   qeynos_hills:     'zone_qeynos_hills',

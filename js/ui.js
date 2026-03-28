@@ -202,7 +202,6 @@ function updateRacePreview(raceId, previewEl) {
     <div class="preview-zone">📍 Starts in: Qeynos</div>
   `;
 }
-}
 
 /**
  * Updates a class-preview element with the icon, name, role, description
