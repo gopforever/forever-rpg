@@ -2975,3 +2975,96 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   background: rgba(40, 0, 30, 0.6);
   color: #cc88cc;
 }
+
+/* ─── DPS Meter ─────────────────────────────────────────────────────────────── */
+
+.dps-meter {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 6px 0;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.dps-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.dps-reset-btn {
+  background: rgba(200,168,75,0.15);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-dim);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.dps-reset-btn:hover { background: rgba(200,168,75,0.3); }
+
+.dps-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 65px 50px;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(74,56,32,0.2);
+}
+
+.dps-row:last-child { border-bottom: none; }
+
+.dps-name { color: var(--text-primary); font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dps-bar-wrap { background: rgba(255,255,255,0.05); border-radius: 2px; height: 8px; overflow: hidden; }
+.dps-bar { height: 100%; background: linear-gradient(90deg, #c8a84b, #ff9f00); border-radius: 2px; transition: width 0.3s; }
+.dps-dmg { color: var(--text-secondary); font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; text-align: right; }
+.dps-rate { color: var(--gold-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; text-align: right; }
+
+/* ─── Tooltip Stat Comparison Deltas ────────────────────────────────────────── */
+
+.tt-delta-up { color: #44ff88; font-size: 0.7em; }
+.tt-delta-down { color: #ff4444; font-size: 0.7em; }
+.tt-compare-hint { color: #888; font-size: 0.7em; margin-bottom: 4px; }
+
+/* ─── Market List Input ──────────────────────────────────────────────────────── */
+
+.market-price-input {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* ─── Examine Modal ──────────────────────────────────────────────────────────── */
+
+#examine-modal.modal {
+  align-items: center;
+  justify-content: center;
+}
+
+#examine-modal .modal-content {
+  min-width: 300px;
+  max-width: 420px;
+  padding: 16px;
+}
+
+.examine-body {
+  margin-top: 8px;
+}
+
+.examine-body .tt-item {
+  display: block;
+  background: transparent;
+  border: none;
+  padding: 0;
+}

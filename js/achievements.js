@@ -30,14 +30,16 @@ const ACHIEVEMENTS = [
   { id: 'class_hybrid',       category: 'class',       name: 'Jack of All Trades',    desc: 'Play as a hybrid class' },
 
   // Keys (Zones)
-  { id: 'zone_qeynos_hills',  category: 'keys',        name: 'Rolling Hills',         desc: 'Visit Qeynos Hills' },
-  { id: 'zone_blackburrow',   category: 'keys',        name: 'Into the Dark',         desc: 'Visit Blackburrow' },
-  { id: 'zone_everfrost',     category: 'keys',        name: 'Frozen Peaks',          desc: 'Visit Everfrost Peaks' },
-  { id: 'zone_west_karana',   category: 'keys',        name: 'The Open Plains',       desc: 'Visit West Karana' },
-  { id: 'zone_highpass',      category: 'keys',        name: 'Mountain Pass',         desc: 'Visit Highpass Hold' },
-  { id: 'zone_kithicor',      category: 'keys',        name: 'Cursed Forest',         desc: 'Visit Kithicor Forest' },
-  { id: 'zone_commonlands',   category: 'keys',        name: 'The Commonlands',       desc: 'Visit Commonlands' },
-  { id: 'all_zones',          category: 'keys',        name: 'World Traveler',        desc: 'Visit all zones' },
+  { id: 'zone_qeynos_hills',    category: 'keys',        name: 'Rolling Hills',         desc: 'Visit Qeynos Hills' },
+  { id: 'zone_blackburrow',     category: 'keys',        name: 'Into the Dark',         desc: 'Visit Blackburrow' },
+  { id: 'zone_everfrost',       category: 'keys',        name: 'Frozen Peaks',          desc: 'Visit Everfrost Peaks' },
+  { id: 'zone_west_karana',     category: 'keys',        name: 'The Open Plains',       desc: 'Visit West Karana' },
+  { id: 'zone_highpass',        category: 'keys',        name: 'Mountain Pass',         desc: 'Visit Highpass Hold' },
+  { id: 'zone_kithicor',        category: 'keys',        name: 'Cursed Forest',         desc: 'Visit Kithicor Forest' },
+  { id: 'zone_commonlands',     category: 'keys',        name: 'The Commonlands',       desc: 'Visit Commonlands' },
+  { id: 'zone_plane_of_fear',   category: 'keys',        name: 'Into the Plane of Fear', desc: 'Visit the Plane of Fear' },
+  { id: 'zone_lake_of_ill_omen',category: 'keys',        name: 'Ill Omens',             desc: 'Visit the Lake of Ill Omen' },
+  { id: 'all_zones',            category: 'keys',        name: 'World Traveler',        desc: 'Visit all zones' },
 
   // Level (Kill counts)
   { id: 'kill_10',            category: 'level',       name: 'Slayer',                desc: 'Kill 10 enemies',          threshold: 10 },
@@ -64,6 +66,7 @@ const ACHIEVEMENTS = [
 
   // Special
   { id: 'buy_from_market',    category: 'special',     name: 'Savvy Shopper',         desc: 'Buy from the player marketplace' },
+  { id: 'sell_on_market',     category: 'special',     name: 'Merchant',              desc: 'List an item on the Player Marketplace' },
   { id: 'gold_1000',          category: 'special',     name: 'Coin Collector',        desc: 'Accumulate 1,000 copper (or equivalent)', threshold: 1000 },
   { id: 'gold_10000',         category: 'special',     name: 'Merchant Prince',       desc: 'Accumulate 10,000 copper', threshold: 10000 },
   { id: 'survive_rare',       category: 'special',     name: 'Against the Odds',      desc: 'Kill a rare/named enemy at lower level than it' },
@@ -212,13 +215,15 @@ const HYBRID_CLASSES  = ['paladin', 'shadowknight', 'ranger', 'bard', 'monk', 'b
 
 // Zone-id → achievement-id mapping
 const ZONE_ACH_MAP = {
-  qeynos_hills: 'zone_qeynos_hills',
-  blackburrow:  'zone_blackburrow',
-  everfrost:    'zone_everfrost',
-  west_karana:  'zone_west_karana',
-  highpass:     'zone_highpass',
-  kithicor:     'zone_kithicor',
-  commonlands:  'zone_commonlands',
+  qeynos_hills:     'zone_qeynos_hills',
+  blackburrow:      'zone_blackburrow',
+  everfrost_peaks:  'zone_everfrost',
+  west_karana:      'zone_west_karana',
+  highpass_hold:    'zone_highpass',
+  kithicor_forest:  'zone_kithicor',
+  commonlands:      'zone_commonlands',
+  plane_of_fear:    'zone_plane_of_fear',
+  lake_of_ill_omen: 'zone_lake_of_ill_omen',
 };
 
 // All zone IDs that must be visited for "World Traveler"
@@ -280,6 +285,21 @@ function checkAchievements(event, data) {
     case 'loot': {
       unlockAchievement('first_loot');
 
+      // Check full equipment set for party leader
+      if (typeof GameState !== 'undefined' && GameState.party && GameState.party.length) {
+        const leader = GameState.party[0];
+        const equip  = leader.equipment || {};
+        const SLOTS  = ['head','face','ear1','ear2','neck','shoulders','back','chest',
+                        'wrist_l','wrist_r','hands','waist','legs','feet',
+                        'primary','secondary','range','ammo','ring1','ring2'];
+        if (SLOTS.every(s => equip[s])) {
+          unlockAchievement('equip_full_set');
+        }
+      }
+      break;
+    }
+
+    case 'equip': {
       const { item } = data || {};
       if (item && (item.rarity === 'rare' || item.rarity === 'named')) {
         unlockAchievement('equip_rare');
@@ -370,6 +390,10 @@ function checkAchievements(event, data) {
 
     case 'market_buy':
       unlockAchievement('buy_from_market');
+      break;
+
+    case 'market_sell':
+      unlockAchievement('sell_on_market');
       break;
 
     case 'inspect':
