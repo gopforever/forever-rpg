@@ -46,6 +46,7 @@ function createCharacter(name, classId, level = 1) {
     abilityCooldowns: {},
     castingAbility: null,
     isCasting: false,
+    nextSwingAt: 0,
   };
 
   // Equip starting gear
