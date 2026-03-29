@@ -39,6 +39,7 @@ function saveGame() {
     totalXPEarned: GameState.totalXPEarned || 0,
     namedKills: GameState.namedKills || 0,
     chatMessagesSeen: GameState.chatMessagesSeen || 0,
+    questState: GameState.quests || {},
   };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
@@ -182,6 +183,7 @@ function applyLoadedSave(data) {
   GameState.totalXPEarned = data.totalXPEarned || 0;
   GameState.namedKills = data.namedKills || 0;
   GameState.chatMessagesSeen = data.chatMessagesSeen || 0;
+  GameState.quests = data.questState || {};
 }
 
 /**
