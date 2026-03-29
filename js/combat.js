@@ -1959,6 +1959,48 @@ function depositAllToBank() {
 }
 
 /**
+ * Sweeps all coin items (copper_coin, silver_coin, gold_coin, platinum_coin)
+ * from the main inventory, converts them to copper at the standard rate
+ * (10c = 1s, 10s = 1g, 10g = 1p), adds the total to the wallet, and
+ * normalises the result.
+ * @returns {void}
+ */
+function depositCoinsToBank() {
+  if (!GameState.inventory) return;
+  const COIN_VALUES = {
+    copper_coin:   1,
+    silver_coin:   10,
+    gold_coin:     100,
+    platinum_coin: 1000,
+  };
+  let totalCopperGained = 0;
+  const keep = [];
+  for (const stack of GameState.inventory) {
+    if (!stack) continue;
+    const value = COIN_VALUES[stack.itemId];
+    if (value !== undefined) {
+      totalCopperGained += value * stack.quantity;
+    } else {
+      keep.push(stack);
+    }
+  }
+  if (totalCopperGained === 0) {
+    if (typeof addCombatLog === 'function') addCombatLog('No coin items to deposit.', 'system');
+    return;
+  }
+  GameState.inventory = keep;
+  GameState.copper = (GameState.copper || 0) + totalCopperGained;
+  if (typeof normalizeCoins === 'function') normalizeCoins();
+  const coinStr = typeof formatCoins === 'function' ? formatCoins(totalCopperGained) : `${totalCopperGained}c`;
+  if (typeof addCombatLog === 'function') {
+    addCombatLog(`Deposited coins (${coinStr} total) to wallet.`, 'loot');
+  }
+  if (typeof saveGame === 'function') saveGame();
+  if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+  if (typeof renderTopBar === 'function') renderTopBar();
+}
+
+/**
  * Ticks mana regeneration for all living party members with a mana pool.
  * Regen rate depends on sit/combat state:
  *   sitting (out of combat): 3 + level×0.5 + meditationSkill/25 (gains meditation)
@@ -2195,4 +2237,4 @@ function tickBardSongs() {
   if (typeof trySkillGain === 'function') trySkillGain(bard, 'singing');
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp, pullEnemy, setCamp, breakCamp, tickBardSongs };
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, depositCoinsToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp, pullEnemy, setCamp, breakCamp, tickBardSongs };

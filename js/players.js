@@ -1095,14 +1095,22 @@ function ghostBuyFromMarket(ghost) {
       // If the seller is the real player, credit them gold
       if (listing.sellerId === 'player' && typeof GameState !== 'undefined') {
         GameState.copper = (GameState.copper || 0) + price;
-        // Normalize coins
-        if (GameState.copper >= 100) {
-          GameState.silver = (GameState.silver || 0) + Math.floor(GameState.copper / 100);
-          GameState.copper = GameState.copper % 100;
-        }
-        if (GameState.silver >= 10) {
-          GameState.gold = (GameState.gold || 0) + Math.floor(GameState.silver / 10);
-          GameState.silver = GameState.silver % 10;
+        // Normalize coins (10c = 1s, 10s = 1g, 10g = 1p)
+        if (typeof normalizeCoins === 'function') {
+          normalizeCoins();
+        } else {
+          if (GameState.copper >= 10) {
+            GameState.silver = (GameState.silver || 0) + Math.floor(GameState.copper / 10);
+            GameState.copper = GameState.copper % 10;
+          }
+          if (GameState.silver >= 10) {
+            GameState.gold = (GameState.gold || 0) + Math.floor(GameState.silver / 10);
+            GameState.silver = GameState.silver % 10;
+          }
+          if (GameState.gold >= 10) {
+            GameState.platinum = (GameState.platinum || 0) + Math.floor(GameState.gold / 10);
+            GameState.gold = GameState.gold % 10;
+          }
         }
         if (typeof addCombatLog === 'function') addCombatLog(`💰 Your item [${itemName}] sold on the market for ${price}c!`, 'loot');
         if (typeof renderTopBar === 'function') renderTopBar();
