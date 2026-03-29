@@ -256,6 +256,8 @@ body {
    ============================================================ */
 #rank-table-wrapper {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
   border: 1px solid var(--panel-border);
   border-radius: 4px;
   background: var(--panel-bg);
@@ -273,7 +275,7 @@ body {
 #rank-table thead {
   background: linear-gradient(180deg, #2d1f0e 0%, #1a1005 100%);
   position: sticky;
-  top: var(--top-bar-height);
+  top: 0;
   z-index: 10;
 }
 
