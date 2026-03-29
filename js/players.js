@@ -6,7 +6,7 @@
 const GHOST_SAVE_KEY     = 'foreverRPG_ghosts';
 const GHOST_TICK_KEY     = 'foreverRPG_ghostTick';
 const GHOST_VERSION_KEY  = 'foreverRPG_ghostsVersion';
-const GHOST_PLAYERS_VERSION = 3;
+const GHOST_PLAYERS_VERSION = 4;
 const MARKET_SAVE_KEY    = 'foreverRPG_market';
 const FIRST_PLAYED_KEY   = 'foreverRPG_firstPlayed';
 const GHOST_POP_CAP      = 200;
@@ -257,6 +257,20 @@ function seededPick(arr, seed) {
   return arr[Math.floor(seededRand(seed) * arr.length)];
 }
 
+/**
+ * Returns a race ID that is valid for the given classId, seeded by ghostId
+ * so the result is stable across page reloads.
+ * Falls back to 'human' if RACES is unavailable or no race supports the class.
+ */
+function pickGhostRace(ghostId, classId) {
+  if (typeof RACES === 'undefined') return 'human';
+  const eligible = Object.keys(RACES).filter(raceId =>
+    RACES[raceId].availableClasses.includes(classId)
+  );
+  if (!eligible.length) return 'human';
+  return eligible[Math.floor(seededRand(ghostSeed(ghostId, 5)) * eligible.length)];
+}
+
 function weightedLevel() {
   const r = Math.random();
   if (r < 0.15) return Math.floor(Math.random() * 9) + 1;
@@ -368,11 +382,12 @@ const BEGINNER_ZONES = ['qeynos_hills', 'blackburrow'];
 
 function createSingleGhost(id, name, isNew) {
   const classId     = GHOST_CLASSES[Math.floor(Math.random() * GHOST_CLASSES.length)];
+  const raceId      = pickGhostRace(id, classId);
   const zone        = 'qeynos';
   const xpRate      = 0.8 + Math.random() * 0.7;
   const personality = PERSONALITY_TYPES[Math.floor(Math.random() * PERSONALITY_TYPES.length)];
   const ghost = {
-    id, name, classId, level: 1, zone, kills: 0, totalXP: 0, gold: 0,
+    id, name, classId, race: raceId, level: 1, zone, kills: 0, totalXP: 0, gold: 0,
     xpRate, personality, inventory: [], equipment: {},
     lastActive: Date.now(),
     lastZoneChange: 0,
@@ -708,6 +723,8 @@ function renderWhoOnlinePanel() {
     const color = CLASS_COLORS[g.classId] || '#e8d5a0';
     const personality = g.personality || 'grinder';
     const pIcon = PERSONALITY_ICONS[personality] || '';
+    const raceData = (typeof RACES !== 'undefined' && g.race) ? RACES[g.race] : null;
+    const raceIcon = raceData ? `<span class="who-race-icon" title="${raceData.name}">${raceData.icon}</span>` : '';
     const partyIconsHtml = g.party
       ? g.party.map(m => {
           const ic  = CLASS_ICONS[m.classId] || '⚔';
@@ -717,7 +734,7 @@ function renderWhoOnlinePanel() {
       : `<span style="color:${color}">${CLASS_ICONS[g.classId] || '⚔'}</span>`;
     const status = getGhostStatus(g);
     return `<div class="who-online-row" data-ghost-id="${g.id}" style="cursor:pointer" title="Left-click to inspect · Right-click for options">
-      <span class="who-name" style="color:${color}">${g.name}</span>
+      <span class="who-name" style="color:${color}">${g.name}</span>${raceIcon}
       <span class="personality-icon" title="${PERSONALITY_LABELS[personality] || personality}">${pIcon}</span>
       <span class="party-icons">${partyIconsHtml}</span>
       <span class="who-level">Lv.${g.level}</span>
@@ -789,12 +806,19 @@ function initGhostStats(ghost) {
   if (typeof CLASSES === 'undefined' || !CLASSES[ghost.classId]) return;
   const cls = CLASSES[ghost.classId];
   const level = ghost.level || 1;
-  // Apply base stats with per-level growth
-  const base = cls.baseStats || {};
+
+  // Blend class + race base stats (same formula as party.js createCharacter)
+  const classBase = cls.baseStats || {};
+  const raceBase  = (typeof RACES !== 'undefined' && ghost.race && RACES[ghost.race])
+    ? RACES[ghost.race].baseStats
+    : {};
+
   const primary = new Set(cls.primaryStats || []);
   for (const stat of ['STR', 'DEX', 'AGI', 'STA', 'WIS', 'INT', 'CHA']) {
-    ghost[stat] = (base[stat] || 75) + (level - 1) * (primary.has(stat) ? 2 : 1);
+    const blended = Math.round(((classBase[stat] || 75) + (raceBase[stat] || 75)) / 2);
+    ghost[stat] = blended + (level - 1) * (primary.has(stat) ? 2 : 1);
   }
+
   ghost.equipment = ghost.equipment || {};
   if (typeof computeDerivedStats === 'function') {
     computeDerivedStats(ghost);
@@ -832,6 +856,10 @@ function showGhostInspectModal(ghost) {
   const classNameStr = ghost.classId.charAt(0).toUpperCase() + ghost.classId.slice(1);
   const classColor   = CLASS_COLORS[ghost.classId] || '#e8d5a0';
   const classIcon    = CLASS_ICONS[ghost.classId] || '⚔';
+  const raceData     = (typeof RACES !== 'undefined' && ghost.race) ? RACES[ghost.race] : null;
+  const raceIcon     = raceData ? raceData.icon  : '';
+  const raceName     = raceData ? raceData.name  : '';
+  const raceDisplay  = raceData ? `${raceIcon} ${raceName} · ` : '';
 
   const partyRows = party.map(member => {
     const icon      = CLASS_ICONS[member.classId] || '⚔';
@@ -885,7 +913,7 @@ function showGhostInspectModal(ghost) {
       <span class="ghost-inspect-classicon" style="color:${classColor}">${classIcon}</span>
       <div class="ghost-inspect-nameblock">
         <h2 style="color:${classColor}">${ghost.name}</h2>
-        <div class="ghost-inspect-subtitle">${classNameStr} · Level ${ghost.level}</div>
+        <div class="ghost-inspect-subtitle">${raceDisplay}${classNameStr} · Level ${ghost.level}</div>
         <div class="ghost-inspect-badge"><span class="personality-badge">${pIcon} ${pLabel}</span> · <em>${title}</em></div>
       </div>
     </div>
@@ -1437,6 +1465,7 @@ function initGhostPlayers() {
     if (!g.equipment)   g.equipment   = {};
     if (!g.spellBook)   g.spellBook   = [];
     if (!g.actionBar)   g.actionBar   = [];
+    if (!g.race)        g.race        = pickGhostRace(g.id, g.classId);
   }
 
   ghosts = simulateOfflineProgression(ghosts);
