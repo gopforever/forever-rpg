@@ -1087,6 +1087,7 @@ function completeQuest(id) {
   if (typeof saveGame === 'function') saveGame();
   if (typeof renderTopBar === 'function') renderTopBar();
   if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+  if (typeof renderQuestLogPanel === 'function') renderQuestLogPanel();
 }
 
 // ─── Module Export ────────────────────────────────────────────────────────────

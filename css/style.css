@@ -4121,3 +4121,167 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   font-size: 0.68rem;
   font-weight: 600;
 }
+
+/* ============================================================
+   QUEST LOG
+   ============================================================ */
+
+/* Tab bar */
+.quest-log-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--panel-border);
+  background: #0d0a06;
+}
+
+.quest-log-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  padding: 7px 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.3px;
+}
+
+.quest-log-tab-btn:last-child { border-right: none; }
+
+.quest-log-tab-btn:hover {
+  background: var(--panel-header);
+  color: var(--gold);
+}
+
+.quest-log-tab-btn.active {
+  background: var(--panel-bg2);
+  color: var(--gold-bright);
+  border-bottom: 2px solid var(--gold);
+  font-weight: 600;
+}
+
+/* Tab content area */
+.quest-log-tab-content {
+  padding: 6px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+/* Individual quest card */
+.quest-card {
+  background: var(--bg-darkest);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.quest-card:last-child { margin-bottom: 0; }
+
+.quest-card-completed {
+  opacity: 0.75;
+  border-color: var(--gold-dim);
+}
+
+.quest-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 3px;
+}
+
+.quest-card-zone {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+
+.quest-card-desc {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+/* Progress */
+.quest-card-progress {
+  margin-bottom: 5px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.quest-progress-bar-wrap {
+  height: 4px;
+  background: var(--bg-dark);
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.quest-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Kill-all-types checklist */
+.quest-kill-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.quest-kill-type {
+  font-size: 0.67rem;
+  color: var(--text-dim);
+  background: var(--panel-bg2);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.quest-kill-type.done {
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+
+/* Reward summary */
+.quest-card-reward {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+/* Accept button */
+.quest-accept-btn {
+  background: linear-gradient(180deg, #4a3000, #2a1a00);
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  color: var(--gold-bright);
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  transition: all 0.15s ease;
+  margin-top: 2px;
+}
+
+.quest-accept-btn:hover {
+  background: linear-gradient(180deg, #6a4400, #3a2400);
+  border-color: var(--gold);
+}
+
+/* Empty state */
+.quest-empty {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
