@@ -469,6 +469,19 @@ function changeZone(zoneId) {
 
   stopCombat();
   GameState.zone = zoneId;
+
+  // Achievement hook: zone change
+  if (typeof checkAchievements === 'function') {
+    if (!GameState.visitedZones) GameState.visitedZones = [];
+    if (!GameState.visitedZones.includes(zoneId)) {
+      GameState.visitedZones.push(zoneId);
+    }
+    checkAchievements('zone_change', {
+      zoneId,
+      visitedZones: new Set(GameState.visitedZones),
+    });
+  }
+
   GameState.selectedEnemyId = null;
 
   // Reset dungeon floor state whenever the zone changes
@@ -1524,6 +1537,8 @@ function triggerHotbarAbility(charIdx, ability) {
   if (typeof dispatchAbilityEffect === 'function') {
     dispatchAbilityEffect(member, ability, GameState.currentEnemy, GameState.enemies);
     addCombatLog(`${member.name} manually activates ${ability.name}.`, 'cast');
+    // Achievement hook: ability use
+    if (typeof checkAchievements === 'function') checkAchievements('ability_use', {});
   }
   renderHotbar();
 }
@@ -2839,6 +2854,8 @@ function renderCityTabContent(tab) {
         const charIdx = parseInt(btn.dataset.charIdx, 10);
         GameState.inspectedCharIndex = charIdx;
         if (typeof buySpell === 'function') buySpell(btn.dataset.buySpell);
+        // Achievement hook: spell purchase
+        if (typeof checkAchievements === 'function') checkAchievements('spell_buy', {});
         renderCityTabContent('guild');
         // Refresh spell panel if open
         if (typeof renderSpellsPanel === 'function') renderSpellsPanel();
