@@ -140,6 +140,8 @@ function applyLoadedSave(data) {
     // Spell book / action bar — initialize for older saves that pre-date this system
     if (!charData.spellBook) charData.spellBook = [];
     if (!charData.actionBar) charData.actionBar = Array(10).fill(null);
+    // Tradeskills — initialize for older saves (safe to call multiple times)
+    if (typeof initTradeskills === 'function') initTradeskills(charData);
     return charData;
   });
 

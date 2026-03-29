@@ -1302,6 +1302,11 @@ function simulateGhostTick(ghost) {
     tickGuildProgress(ghost, killsPerTick, xpPerTick);
   }
 
+  // Tradeskill crafting: ghost attempts a craft once per tick
+  if (typeof ghostCraft === 'function' && Math.random() < 0.5) {
+    ghostCraft(ghost);
+  }
+
   ghost.lastActive = Date.now();
   return ghost;
 }
