@@ -340,7 +340,7 @@ const TRADESKILL_RECIPES = [
       50: { actionTimeReduction: 0.10 },
       99: { neverFails: true },
     },
-    description: 'A dense, magical loaf that sustains a traveller for an entire day. Sacred recipe of the Elddar Forest.',
+    description: 'A dense, magical loaf that sustains a traveler for an entire day. Sacred recipe of the Elddar Forest.',
   },
 
   // ── Brewing ────────────────────────────────────────────────────────────────
@@ -831,7 +831,7 @@ const TRADESKILL_MATERIALS = {
   ts_herb_biscuit:     { id: 'ts_herb_biscuit',     name: 'Herb Biscuit',      icon: '🥐', description: 'Light biscuits infused with Karana herbs.' },
   ts_honey_cake:       { id: 'ts_honey_cake',       name: 'Honey Cake',        icon: '🍰', description: 'A golden honey cake baked to perfection.' },
   ts_meat_pie:         { id: 'ts_meat_pie',         name: 'Meat Pie',          icon: '🥧', description: 'A hearty meat pie that restores vigour.' },
-  ts_lembas_loaf:      { id: 'ts_lembas_loaf',      name: 'Lembas Loaf',       icon: '🍞', description: 'A dense magical loaf that sustains a traveller for a day.' },
+  ts_lembas_loaf:      { id: 'ts_lembas_loaf',      name: 'Lembas Loaf',       icon: '🍞', description: 'A dense magical loaf that sustains a traveler for a day.' },
   ts_short_beer:       { id: 'ts_short_beer',       name: 'Short Beer',        icon: '🍺', description: 'A quick, frothy brew knocked back in taverns.' },
   ts_mead_clarity:     { id: 'ts_mead_clarity',     name: 'Mead of Clarity',   icon: '🍯', description: 'A golden mead that clears the mind.' },
   ts_velious_ale:      { id: 'ts_velious_ale',      name: 'Velious Ale',       icon: '🍺', description: 'A glacial ale brewed with Velious ice crystals.' },

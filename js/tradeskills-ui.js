@@ -196,7 +196,7 @@ function _buildRecipeCard(char, recipe) {
     </div>
     <div class="ts-card-meta">
       <span class="ts-trivial-level" title="Trivial at level ${recipe.trivialLevel}">Trivial: ${recipe.trivialLevel}</span>
-      <span class="ts-action-time">⏱ ${(recipe.actionTime / 1000).toFixed(1)}s${isTrivial ? '' : ''}</span>
+      <span class="ts-action-time">⏱ ${(recipe.actionTime / 1000).toFixed(1)}s</span>
       <span class="ts-xp-badge">+${recipe.skillXp} XP</span>
     </div>
     <div class="ts-card-actions">
