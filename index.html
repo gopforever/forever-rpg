@@ -31,7 +31,11 @@
   </div>
   <div id="top-right">
     <div id="wallet"><span class="gold-amount">0g</span><span class="silver-amount">0s</span><span class="copper-amount">0c</span></div>
-    <a href="ranking.html" target="_blank" class="top-btn">🏆 Rankings</a>
+    <!-- NOTE: This game must be served via a local HTTP server (e.g. VS Code Live Server,
+         `npx serve`, or `python -m http.server`) — do NOT open index.html directly as a
+         file:// URL, as browsers treat every file:// path as a unique security origin and
+         may block cross-origin loads and other features. -->
+    <a href="ranking.html" target="_blank" rel="noopener noreferrer" class="top-btn">🏆 Rankings</a>
     <button class="top-btn" id="settings-btn">⚙ Settings</button>
     <button class="top-btn" id="save-btn">💾 Save</button>
     <span id="save-indicator"></span>
