@@ -263,9 +263,8 @@ const ZONES = {
     id: 'blackburrow',
     name: 'Blackburrow',
     shortName: 'BB',
-    levelRange: [4, 15],
+    levelRange: [4, 16],
     xpModifier: 1.1,
-    isDungeon: true,
     isSafeZone: false,
     description: 'A vast underground gnoll warren carved beneath the Qeynos Hills. Multi-level tunnels crawl with gnoll defenders and their vermin allies. Famous for deadly trains and treacherous flooded passages.',
     flavorLines: [
@@ -439,35 +438,6 @@ const ZONES = {
   <!-- Zone border frame -->
   <rect width="280" height="200" fill="none" stroke="#4a2a08" stroke-width="2" rx="3"/>
 </svg>`,
-    connections: ['qeynos_hills', 'everfrost'],
-    levelRange: [4, 16],
-    xpModifier: 1.0,
-    description: 'A sprawling gnoll dungeon connecting Qeynos Hills to Everfrost Peaks. Multiple winding tunnels descend into darkness around a massive central pit. Famous for gnoll trains and valuable loot.',
-    enemies: [
-      'gnoll_pup', 'a_scrawny_gnoll', 'a_gnoll_guard', 'a_burly_gnoll', 'a_gnoll_shaman',
-      'a_gnoll_guard_elite', 'a_giant_plague_rat', 'a_giant_snake_bb', 'lord_elgnub',
-      'gnoll_high_shaman', 'gnoll_brewer', 'gnoll_commander', 'gnoll_high_shaman_bb',
-      'gnoll_commander_bb', 'master_brewer', 'burly_gnoll', 'gnoll_guard',
-      'giant_snake_bb', 'gnoll_shaman', 'tranixx_darkpaw',
-    ],
-    commonEnemies: [
-      'gnoll_pup',
-      'a_scrawny_gnoll',
-      'a_gnoll_guard',
-      'a_burly_gnoll',
-      'a_gnoll_shaman',
-      'a_gnoll_guard_elite',
-      'a_giant_plague_rat',
-      'a_giant_snake_bb',
-    ],
-    rareEnemies: [
-      'gnoll_brewer',
-      'gnoll_commander',
-      'gnoll_high_shaman',
-      'lord_elgnub',
-      'tranixx_darkpaw',
-    ],
-    rareSpawnChance: 0.12,
     groups: [
       { members: ['a_scrawny_gnoll', 'a_gnoll_guard'], weight: 4 },
       { members: ['a_gnoll_guard', 'a_burly_gnoll'], weight: 3 },
@@ -475,9 +445,7 @@ const ZONES = {
       { members: ['a_burly_gnoll', 'a_gnoll_guard_elite'], weight: 1 },
     ],
     groupSpawnChance: 0.40,
-    ambientColor: '#1a1008',
     connections: ['qeynos_hills', 'everfrost_peaks'],
-    respawnTime: 22000,
   },
 
   befallen: {
