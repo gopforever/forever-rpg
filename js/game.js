@@ -169,6 +169,9 @@ function updateSaveIndicator() {
  * @returns {void}
  */
 function init() {
+  // Initialize achievement system FIRST so hooks work during UI init and button wiring
+  if (typeof initAchievements === 'function') initAchievements();
+
   // Check for existing save
   if (typeof hasSave === 'function' && hasSave()) {
     const saveData = loadGame();
@@ -198,8 +201,7 @@ function init() {
   // Wire up all button handlers
   wireUpButtons();
   
-  // Initialize achievement and guild systems
-  if (typeof initAchievements === 'function') initAchievements();
+  // Initialize guild system
   if (typeof initGuilds === 'function') initGuilds();
 
   // Initialize ghost player simulation

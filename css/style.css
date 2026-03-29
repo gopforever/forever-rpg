@@ -2923,7 +2923,7 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 
 .ach-row {
   display: grid;
-  grid-template-columns: 28px 1fr 60px;
+  grid-template-columns: 28px 1fr 60px 48px;
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
@@ -2939,7 +2939,8 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .ach-icon { font-size: 1rem; text-align: center; }
 .ach-name { font-size: 0.76rem; font-weight: 600; font-family: 'Cinzel', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ach-desc { font-size: 0.65rem; color: var(--text-dim); margin-top: 1px; }
-.ach-date { font-size: 0.62rem; color: var(--gold-dim); text-align: right; font-family: 'Share Tech Mono', monospace; }
+.ach-date, .ach-points { font-size: 0.62rem; color: var(--gold-dim); text-align: right; font-family: 'Share Tech Mono', monospace; }
+.ach-points { white-space: nowrap; }
 
 .ach-progress-bar {
   height: 3px;
