@@ -75,7 +75,7 @@ function getAC(char) {
   let agiBonus = Math.floor((agi - 75) * 0.5);
   if (agi < 75) agiBonus = -((75 - agi) * 2);
   const defenseSkill = char.skills ? (char.skills['defense'] || 0) : 0;
-  return Math.max(0, baseAC + agiBonus + Math.floor(defenseSkill / 10));
+  return Math.max(0, baseAC + agiBonus + Math.floor(defenseSkill / 3));
 }
 
 /**
@@ -133,7 +133,7 @@ function getMeleeDamage(attacker, weapon, defender = null, isMainHand = true) {
     defDefSkill = defender.skills ? (defender.skills['defense'] || 0) : 0;
     defAGI = defender.AGI !== undefined ? defender.AGI : (defender.ac ? defender.ac * 3 : 0);
   }
-  const mitigationRoll = Math.random() * (defAC + defDefSkill / 5 + defAGI / 20 + 5);
+  const mitigationRoll = Math.random() * (defAC + defDefSkill / 3 + defAGI / 20 + 5);
   let averageRoll = (wrathRoll + mitigationRoll + 10) / 2;
   if (averageRoll < 1) averageRoll = 1;
   let rollIndex = (wrathRoll - mitigationRoll) + (averageRoll / 2);
@@ -203,14 +203,14 @@ function getMissChance(attacker, defender) {
 }
 
 /**
- * Reduces damage by AC / 8, with a minimum of 1.
+ * Reduces damage by AC / 5 (P99 mitigation standard), with a minimum of 1.
  * @param {number} damage - The incoming damage value before mitigation.
  * @param {object} defender - The defending character; uses currentAC or computes via getAC.
  * @returns {number} The mitigated damage value (minimum 1).
  */
 function applyACMitigation(damage, defender) {
   const ac = (defender.currentAC !== undefined) ? defender.currentAC : getAC(defender);
-  return Math.max(1, damage - Math.floor(ac / 8));
+  return Math.max(1, damage - Math.floor(ac / 5));
 }
 
 /**
