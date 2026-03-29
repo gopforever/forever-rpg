@@ -154,13 +154,31 @@ function _buildGSNodeCard(char, node, skillLevel, active) {
     return `<span class="ts-ingredient" title="${name} ×${out.qty}">${icon} ${name} ×${out.qty}</span>`;
   }).join('');
 
-  const masteryBonusesList = Object.entries(node.masteryBonuses || {}).map(([threshold, bonus]) => {
+  // Build mastery bonuses display with ✅/🔒 indicators
+  const masteryThresholds = Object.entries(node.masteryBonuses || {})
+    .sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10));
+
+  const masteryBonusesHtml = masteryThresholds.map(([threshold, bonus]) => {
+    const needed = parseInt(threshold, 10);
+    const active_ = masteryLevel >= needed;
     const parts = [];
-    if (bonus.bonusYieldChance) parts.push(`+${(bonus.bonusYieldChance * 100).toFixed(0)}% bonus yield`);
-    if (bonus.actionTimeReduction) parts.push(`${(bonus.actionTimeReduction * 100).toFixed(0)}% faster`);
+    if (bonus.bonusYieldChance) parts.push(`+${(bonus.bonusYieldChance * 100).toFixed(0)}% yield`);
+    if (bonus.actionTimeReduction) parts.push(`-${(bonus.actionTimeReduction * 100).toFixed(0)}% time`);
     if (bonus.neverFails) parts.push('Never fails');
-    return `Mastery ${threshold}: ${parts.join(', ')}`;
-  }).join('\n');
+    const label = parts.join(', ');
+    const icon = active_ ? '✅' : '🔒';
+    const cls  = active_ ? 'gs-mastery-bonus-active' : 'gs-mastery-bonus-locked';
+    return `<div class="${cls}">${icon} <span class="gs-mastery-threshold">Mastery ${needed}</span>: ${label}</div>`;
+  }).join('');
+
+  const masteryPct = Math.min(100, (masteryLevel / 99) * 100).toFixed(1);
+
+  const masteryBlockHtml = `
+    <div class="gs-mastery-block">
+      <div class="gs-mastery-label">Mastery: <strong>${masteryLevel}</strong> / 99</div>
+      <div class="gs-mastery-track"><div class="gs-mastery-fill" style="width:${masteryPct}%"></div></div>
+      ${masteryBonusesHtml}
+    </div>`;
 
   const actionBtn = locked
     ? `<button class="ts-craft-btn ts-craft-disabled" disabled>🔒 Level ${node.levelReq} Required</button>`
@@ -173,10 +191,11 @@ function _buildGSNodeCard(char, node, skillLevel, active) {
   return `<div class="tradeskills-recipe-card${isActive ? ' ts-active-node' : ''}${locked ? ' ts-trivial' : ''}">
     <div class="ts-card-header">
       <span class="ts-card-name">${disc.icon} ${node.name}</span>
-      <span class="tradeskills-mastery-badge" title="${masteryBonusesList}">M${masteryLevel}</span>
+      <span class="tradeskills-mastery-badge">M${masteryLevel}</span>
     </div>
     <div class="ts-card-desc">${node.description}</div>
     <div class="ts-card-desc" style="color:#a0b8d0;font-size:0.85em">📍 ${node.zone}</div>
+    ${masteryBlockHtml}
     <div class="ts-card-ingredients">
       <span class="ts-label">Yields: </span>${outputsHtml}
     </div>

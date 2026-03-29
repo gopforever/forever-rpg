@@ -900,6 +900,17 @@ function tickGathering(character, nowMs) {
     active.startTime += speed;
   }
 
+  // Fire achievement checks after all actions are processed
+  if (typeof checkAchievements === 'function') {
+    const newLevel = getGatheringLevel(character, node.skill);
+    const newMasteryLevel = getNodeMasteryLevel(character, node.id);
+    checkAchievements('gathering_action', {
+      discipline: node.skill,
+      newLevel,
+      masteryLevel: newMasteryLevel,
+    });
+  }
+
   return true;
 }
 

@@ -38,6 +38,7 @@ function showAchievementToast(achievement) {
       <div class="achievement-toast-title">Achievement Unlocked!</div>
       <div class="achievement-toast-name">${achievement.name}</div>
       <div class="achievement-toast-cat">${catLabel} · ${achievement.desc || ''}</div>
+      ${achievement.points ? `<div class="achievement-toast-pts">+${achievement.points} pts</div>` : ''}
     </div>
   `;
   container.appendChild(toast);
@@ -3368,15 +3369,16 @@ function _renderLbPane(pane, containerEl) {
     `;
 
   } else if (pane === 'achievements') {
-    const categories = ['general','advancement','class','keys','level','progression','skills','special','vanity','dungeon'];
+    const categories = ['general','advancement','class','keys','level','progression','skills','special','vanity','dungeon','gathering'];
     const catLabels  = {
       general:'General', advancement:'Advancement', class:'Class',
       keys:'Keys', level:'Level', progression:'Progression',
-      skills:'Skills', special:'Special', vanity:'Vanity', dungeon:'Dungeon',
+      skills:'Skills', special:'Special', vanity:'Vanity', dungeon:'Dungeon', gathering:'Gathering',
     };
     const unlockedCount = typeof getUnlockedCount === 'function' ? getUnlockedCount() : 0;
     const totalCount = typeof getTotalCount === 'function' ? getTotalCount() : 0;
     const totalScore = typeof getTotalScore === 'function' ? getTotalScore() : 0;
+    const totalPossible = typeof getTotalPossiblePoints === 'function' ? getTotalPossiblePoints() : 0;
 
     const catListHtml = categories.map((cat, i) => `
       <div class="ach-cat ${i === 0 ? 'active' : ''}" data-cat="${cat}">${catLabels[cat]}</div>
@@ -3389,7 +3391,7 @@ function _renderLbPane(pane, containerEl) {
           <div class="ach-cat-list">${catListHtml}</div>
         </div>
         <div class="ach-content-wrap">
-          <div class="ach-content-header">Total Score: ${totalScore} Points | ${unlockedCount} / ${totalCount} Achievements Unlocked</div>
+          <div class="ach-content-header">🏆 ${totalScore} / ${totalPossible} pts &nbsp;|&nbsp; ${unlockedCount} / ${totalCount} Achievements Unlocked</div>
           <div class="ach-content" id="ach-content-pane"></div>
         </div>
       </div>

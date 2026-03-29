@@ -124,6 +124,23 @@ const ACHIEVEMENTS = [
   { id: 'bef_bone_claymore',     category: 'dungeon', name: 'The Bone Blade',                  desc: 'Loot the Bone Bladed Claymore from Gynok Moltor',                                points: 10 },
   { id: 'bef_train_survivor',    category: 'dungeon', name: 'Shadow Train',                    desc: 'Win a fight against 4 or more Befallen enemies at once',                         points: 10 },
   { id: 'bef_disease_survivor',  category: 'dungeon', name: 'Plague Resistant',                desc: 'Survive a disease proc from a Befallen undead and still win the fight',           points: 10 },
+
+  // Gathering
+  { id: 'gathering_first',             category: 'gathering', name: 'Gatherer',               desc: 'Complete your first gathering action',                                      points: 10 },
+  { id: 'gathering_mining_50',         category: 'gathering', name: 'Rock Solid',             desc: 'Reach Mining level 50',             threshold: 50,                         points: 15 },
+  { id: 'gathering_mining_100',        category: 'gathering', name: 'Master Miner',           desc: 'Reach Mining level 100',            threshold: 100,                        points: 25 },
+  { id: 'gathering_mining_200',        category: 'gathering', name: 'Legend of the Deep',     desc: 'Reach Mining level 200 (max)',      threshold: 200,                        points: 50 },
+  { id: 'gathering_lumberjacking_50',  category: 'gathering', name: 'Timber!',                desc: 'Reach Lumberjacking level 50',      threshold: 50,                         points: 15 },
+  { id: 'gathering_lumberjacking_100', category: 'gathering', name: 'Master Lumberjack',      desc: 'Reach Lumberjacking level 100',     threshold: 100,                        points: 25 },
+  { id: 'gathering_foraging_50',       category: 'gathering', name: 'Herbalist',              desc: 'Reach Foraging level 50',           threshold: 50,                         points: 15 },
+  { id: 'gathering_foraging_100',      category: 'gathering', name: 'Master Forager',         desc: 'Reach Foraging level 100',          threshold: 100,                        points: 25 },
+  { id: 'gathering_hunting_50',        category: 'gathering', name: 'Big Game Hunter',        desc: 'Reach Hunting level 50',            threshold: 50,                         points: 15 },
+  { id: 'gathering_hunting_100',       category: 'gathering', name: 'Master Hunter',          desc: 'Reach Hunting level 100',           threshold: 100,                        points: 25 },
+  { id: 'gathering_farming_50',        category: 'gathering', name: 'Green Thumb',            desc: 'Reach Farming level 50',            threshold: 50,                         points: 15 },
+  { id: 'gathering_farming_100',       category: 'gathering', name: 'Master Farmer',          desc: 'Reach Farming level 100',           threshold: 100,                        points: 25 },
+  { id: 'gathering_all_max',           category: 'gathering', name: 'Renaissance Gatherer',   desc: 'Reach level 200 in all 5 gathering disciplines',                            points: 100 },
+  { id: 'gathering_mastery_25',        category: 'gathering', name: 'Node Expert',            desc: 'Reach mastery level 25 on any gathering node',  threshold: 25,             points: 10 },
+  { id: 'gathering_mastery_99',        category: 'gathering', name: 'Node Master',            desc: 'Reach mastery level 99 on any gathering node',  threshold: 99,             points: 25 },
 ];
 
 // ─── Class groups (derived from CLASSES archetype field in classes.js) ───────────
@@ -659,6 +676,41 @@ function checkAchievements(event, data) {
       break;
     }
 
+    case 'gathering_action': {
+      const { discipline, newLevel, masteryLevel } = data || {};
+      unlockAchievement('gathering_first');
+
+      const levelMap = {
+        mining:        { 50: 'gathering_mining_50',        100: 'gathering_mining_100',        200: 'gathering_mining_200' },
+        lumberjacking: { 50: 'gathering_lumberjacking_50', 100: 'gathering_lumberjacking_100' },
+        foraging:      { 50: 'gathering_foraging_50',      100: 'gathering_foraging_100' },
+        hunting:       { 50: 'gathering_hunting_50',       100: 'gathering_hunting_100' },
+        farming:       { 50: 'gathering_farming_50',       100: 'gathering_farming_100' },
+      };
+      if (discipline && newLevel && levelMap[discipline] && levelMap[discipline][newLevel]) {
+        unlockAchievement(levelMap[discipline][newLevel]);
+      }
+
+      // All gathering skills at max (200)
+      if (typeof GameState !== 'undefined' && GameState.party && GameState.party.length) {
+        const leader = GameState.party[0];
+        if (leader.gathering) {
+          const allMax = ['mining', 'lumberjacking', 'foraging', 'hunting', 'farming'].every(d => {
+            const gs = leader.gathering[d];
+            return gs && gs.level >= 200;
+          });
+          if (allMax) unlockAchievement('gathering_all_max');
+        }
+      }
+
+      // Mastery milestones
+      if (masteryLevel !== undefined) {
+        if (masteryLevel >= 25) updateAchievementProgress('gathering_mastery_25', masteryLevel);
+        if (masteryLevel >= 99) updateAchievementProgress('gathering_mastery_99', masteryLevel);
+      }
+      break;
+    }
+
     default:
       break;
   }
@@ -731,6 +783,14 @@ function getTotalScore() {
     }, 0);
 }
 
+function getAchievementPoints() {
+  return getTotalScore();
+}
+
+function getTotalPossiblePoints() {
+  return ACHIEVEMENTS.reduce((sum, def) => sum + (def.points || 0), 0);
+}
+
 // ─── Module Export ──────────────────────────────────────────────────────────────────
 
 if (typeof module !== 'undefined') module.exports = {
@@ -743,6 +803,8 @@ if (typeof module !== 'undefined') module.exports = {
   getUnlockedCount,
   getTotalCount,
   getTotalScore,
+  getAchievementPoints,
+  getTotalPossiblePoints,
   unlockAchievement,
   loadAchievements,
   ACHIEVEMENTS,

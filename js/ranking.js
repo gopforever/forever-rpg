@@ -141,6 +141,44 @@ const RC_EQUIP_SLOTS = [
   'primary','secondary','range','ammo','ring1','ring2',
 ];
 
+// ─── Achievement Points Lookup (inlined from achievements.js) ─────────────────
+// ranking.js is a standalone page without access to game scripts, so point values
+// are inlined here. Keep in sync with ACHIEVEMENTS definitions in achievements.js.
+
+const RC_ACHIEVEMENT_POINTS = {
+  first_login:10, first_kill:10, first_death:10, first_loot:10, first_group:10,
+  survive_10_fights:10, reach_qeynos:10,
+  level_5:10, level_10:15, level_20:20, level_30:25, level_50:30, level_60:50,
+  earn_1000_xp:10, earn_100k_xp:10,
+  class_warrior:10, class_caster:10, class_healer:10, class_hybrid:10,
+  zone_qeynos_hills:10, zone_blackburrow:10, zone_everfrost:10, zone_west_karana:10,
+  zone_highpass:10, zone_kithicor:10, zone_commonlands:10, zone_plane_of_fear:10,
+  zone_lake_of_ill_omen:10, zone_befallen:10, all_zones:25,
+  kill_10:10, kill_100:15, kill_500:20, kill_1000:25, kill_5000:50,
+  kill_one_of_each:25, kill_rare:10, named_5:15,
+  equip_rare:10, equip_full_set:25, bank_10_items:10, buy_spell:10, use_ability:10,
+  skill_25:10, skill_50:10, skill_100:10, skill_200:10,
+  buy_from_market:10, sell_on_market:10, gold_1000:10, gold_10000:10,
+  survive_rare:10, win_without_healer:10,
+  inspect_ghost:10, zone_chat_10:10, world_first_witness:10,
+  bb_enter:10, bb_floor2:10, bb_floor3:10, bb_floor4:10, bb_floor5:10,
+  bb_clear:25, bb_brewer_slain:10, bb_master_brewer:10, bb_high_shaman:10,
+  bb_lord_elgnub:10, bb_tranixx:10, bb_no_deaths:25, bb_all_floors_solo:25,
+  bb_speed_clear:25, bb_stout_collector:10, bb_gnoll_genocide:10,
+  bb_pelt_collector:10, bb_poisoned_survivor:10, bb_train_survivor:10, bb_tranixx_loot:10,
+  bef_enter:10, bef_floor2:10, bef_floor3:10, bef_floor4:10, bef_floor5:10, bef_floor6:10,
+  bef_clear:25, bef_boondin:10, bef_lrodd:10, bef_elf_skeleton:10, bef_windstream:10,
+  bef_amiaz:10, bef_thaumaturgist:10, bef_gynok:10, bef_no_deaths:25, bef_solo:25,
+  bef_speed_clear:25, bef_undead_slayer:10, bef_all_named:10, bef_cursed_loot:10,
+  bef_bone_claymore:10, bef_train_survivor:10, bef_disease_survivor:10,
+  gathering_first:10, gathering_mining_50:15, gathering_mining_100:25, gathering_mining_200:50,
+  gathering_lumberjacking_50:15, gathering_lumberjacking_100:25,
+  gathering_foraging_50:15, gathering_foraging_100:25,
+  gathering_hunting_50:15, gathering_hunting_100:25,
+  gathering_farming_50:15, gathering_farming_100:25,
+  gathering_all_max:100, gathering_mastery_25:10, gathering_mastery_99:25,
+};
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 let rcGhosts = [];
@@ -165,6 +203,65 @@ function rcLoadData() {
   } catch (_) {
     rcGhosts = [];
   }
+
+  // Load real player's party and inject as ghost-compatible entries
+  try {
+    const raw = localStorage.getItem('foreverRPG_save');
+    if (raw) {
+      const save = JSON.parse(raw);
+      const data = save && save.data;
+      if (data && Array.isArray(data.party) && data.party.length) {
+        // Compute total kills and gold for real player
+        const totalKills = Object.values(data.killCounts || {}).reduce((s, v) => s + v, 0);
+        const totalGold  = (data.gold || 0) * 100 + (data.silver || 0) * 10 + (data.copper || 0);
+        const zoneId     = (data.zone && data.zone.id) ? data.zone.id : (data.zone || '');
+
+        // Compute real-player achievement points from their save data
+        let playerAchPts = 0;
+        try {
+          const achRaw = localStorage.getItem('foreverRPG_achievements');
+          if (achRaw) {
+            const achArr = JSON.parse(achRaw);
+            if (Array.isArray(achArr)) {
+              for (const rec of achArr) {
+                if (rec.unlockedAt !== null && RC_ACHIEVEMENT_POINTS[rec.id]) {
+                  playerAchPts += RC_ACHIEVEMENT_POINTS[rec.id];
+                }
+              }
+            }
+          }
+        } catch (_) {}
+
+        // Build ghost-compatible objects for each party member (negative IDs)
+        const playerGhosts = data.party.map((member, idx) => ({
+          id:           -(idx + 1),
+          name:         member.name,
+          classId:      member.classId,
+          level:        member.level || 1,
+          kills:        totalKills,
+          totalXP:      member.xp || member.totalXP || data.totalXPEarned || 0,
+          gold:         totalGold,
+          zone:         zoneId,
+          personality:  member.personality || 'grinder',
+          race:         member.race || '',
+          maxHP:        member.maxHP || 0,
+          maxMana:      member.maxMana || 0,
+          currentAC:    member.currentAC || member.ac || 0,
+          STR: member.STR, DEX: member.DEX, AGI: member.AGI, STA: member.STA,
+          WIS: member.WIS, INT: member.INT, CHA: member.CHA,
+          equipment:    member.equipment || {},
+          party:        data.party
+            .filter((_, i) => i !== idx)
+            .map(m => ({ name: m.name, classId: m.classId, level: m.level || 1 })),
+          isRealPlayer: true,
+          achievementPts: playerAchPts,
+        }));
+
+        // Inject real player entries at the start so they appear first by default
+        rcGhosts = [...playerGhosts, ...rcGhosts];
+      }
+    }
+  } catch (_) {}
 
   // Load guilds
   rcGuilds  = [];
@@ -205,15 +302,16 @@ function rcSortedGhosts(list) {
 
   const val = g => {
     switch (field) {
-      case 'level':  return g.level || 0;
-      case 'kills':  return g.kills || 0;
-      case 'xp':     return g.totalXP || 0;
-      case 'gold':   return g.gold || 0;
-      case 'aa':     return 0; // not tracked yet
-      case 'hp':     return rcGetHP(g);
-      case 'mana':   return rcGetMana(g);
-      case 'ac':     return rcGetAC(g);
-      default:       return g.level || 0;
+      case 'level':        return g.level || 0;
+      case 'kills':        return g.kills || 0;
+      case 'xp':           return g.totalXP || 0;
+      case 'gold':         return g.gold || 0;
+      case 'aa':           return 0; // not tracked yet
+      case 'hp':           return rcGetHP(g);
+      case 'mana':         return rcGetMana(g);
+      case 'ac':           return rcGetAC(g);
+      case 'achievementPts': return g.achievementPts || 0;
+      default:             return g.level || 0;
     }
   };
 
@@ -322,6 +420,7 @@ function rcRender() {
             <th class="sortable col-mana" data-sort="mana">Mana <span class="sort-arrow">${rcSortArrow('mana')}</span></th>
             <th class="sortable col-ac" data-sort="ac">AC <span class="sort-arrow">${rcSortArrow('ac')}</span></th>
             <th class="sortable col-xp" data-sort="xp">XP <span class="sort-arrow">${rcSortArrow('xp')}</span></th>
+            <th class="sortable col-achvpts" data-sort="achievementPts">Achv Pts <span class="sort-arrow">${rcSortArrow('achievementPts')}</span></th>
             <th class="col-personality">Personality</th>
           </tr>
         </thead>
@@ -343,12 +442,22 @@ function rcRender() {
     const ac        = rcGetAC(ghost).toLocaleString();
     const xp        = (ghost.totalXP || 0).toLocaleString();
     const kills     = (ghost.kills || 0).toLocaleString();
+    let achvPts;
+    if (ghost.isRealPlayer) {
+      achvPts = (ghost.achievementPts || 0).toLocaleString();
+    } else {
+      achvPts = '—';
+    }
     const isExpanded = rcExpandedId === ghost.id;
+    const youBadge  = ghost.isRealPlayer
+      ? ' <span class="rank-you-badge">⭐ YOU</span>'
+      : '';
+    const rowClass  = `rc-ghost-row${isExpanded ? ' row-expanded' : ''}${ghost.isRealPlayer ? ' rank-row-you' : ''}`;
 
     html += `
-          <tr class="rc-ghost-row${isExpanded ? ' row-expanded' : ''}" data-ghost-id="${ghost.id}">
+          <tr class="${rowClass}" data-ghost-id="${ghost.id}">
             <td class="rank-num${rank <= 3 ? ' top3' : ''}">${rank}</td>
-            <td class="rank-name" style="color:${color}">${rcEscape(ghost.name)}</td>
+            <td class="rank-name" style="color:${color}">${rcEscape(ghost.name)}${youBadge}</td>
             <td class="rank-class"><span style="color:${color}">${classIcon}</span> ${className}</td>
             <td class="rank-guild col-guild">${guildText}</td>
             <td class="rank-zone col-zone">${rcEscape(zoneName)}</td>
@@ -358,6 +467,7 @@ function rcRender() {
             <td class="rank-num-col col-mana">${mana}</td>
             <td class="rank-num-col col-ac">${ac}</td>
             <td class="rank-num-col col-xp">${xp}</td>
+            <td class="rank-num-col col-achvpts">${achvPts}</td>
             <td class="rank-personality col-personality"><span class="personality-badge">${pIcon} ${rcEscape(pLabel)}</span></td>
           </tr>`;
 
@@ -419,6 +529,9 @@ function rcSortArrow(field) {
 
 function rcDetailRow(ghost, color) {
   const bio = rcGetBio(ghost);
+  const youNote = ghost.isRealPlayer
+    ? '<div class="rank-you-note">⭐ This is your character</div>'
+    : '';
 
   // Stats
   const stats = [
@@ -462,8 +575,9 @@ function rcDetailRow(ghost, color) {
 
   return `
     <tr class="rank-detail-row">
-      <td colspan="12">
+      <td colspan="13">
         <div class="rank-detail-inner">
+          ${youNote}
           <div class="rank-detail-bio">${rcEscape(bio)}</div>
           ${ghost.race ? `<div class="rank-detail-section"><h4>🧬 Race</h4><div>${RC_RACE_ICONS[ghost.race] || ''} ${rcEscape(RC_RACE_NAMES[ghost.race] || ghost.race)}</div></div>` : ''}
           <div class="rank-detail-section">
@@ -491,6 +605,45 @@ function rcEscape(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ─── World Firsts ─────────────────────────────────────────────────────────────
+
+function rcRenderWorldFirsts() {
+  const el = document.getElementById('rank-world-firsts');
+  if (!el) return;
+
+  let wf = {};
+  try {
+    const raw = localStorage.getItem('foreverRPG_worldFirsts');
+    if (raw) wf = JSON.parse(raw);
+  } catch (_) {}
+
+  const entries = Object.entries(wf)
+    .sort((a, b) => (b[1].when || 0) - (a[1].when || 0))
+    .slice(0, 10);
+
+  if (!entries.length) {
+    el.innerHTML = `
+      <div class="wf-header">🌟 World Firsts</div>
+      <div class="wf-empty">No world firsts yet — be the first!</div>`;
+    return;
+  }
+
+  const rows = entries.map(([, record]) => {
+    const d = new Date(record.when || 0);
+    const timeStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })
+      + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="wf-entry">
+      <span class="wf-star">🌟</span>
+      <span class="wf-detail">${rcEscape(record.detail || '')}</span>
+      <span class="wf-meta">${rcEscape(record.who || '?')} — ${timeStr}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="wf-header">🌟 World Firsts</div>
+    <div class="wf-list">${rows}</div>`;
+}
+
 // ─── Timestamp ────────────────────────────────────────────────────────────────
 
 function rcUpdateTimestamp() {
@@ -511,6 +664,7 @@ function rcInit() {
   rcLoadData();
   rcPopulateFilters();
   rcRender();
+  rcRenderWorldFirsts();
   rcUpdateTimestamp();
   rcUpdateSortDirBtn();
 
@@ -597,6 +751,7 @@ function rcInit() {
       rcLoadData();
       rcPopulateFilters();
       rcRender();
+      rcRenderWorldFirsts();
       rcUpdateTimestamp();
     });
   }
