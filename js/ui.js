@@ -2028,16 +2028,25 @@ function renderDPSMeter() {
   el.style.display = 'block';
   const elapsed = dps.sessionStart ? Math.max(1, (Date.now() - dps.sessionStart) / 1000) : 1;
   const entries = Object.entries(dps.damageByMember)
-    .map(([name, dmg]) => ({ name, dmg, dps: (dmg / elapsed).toFixed(1) }))
-    .sort((a, b) => b.dmg - a.dmg);
-  const maxDmg = entries[0] ? entries[0].dmg : 1;
+    .map(([name, val]) => {
+      const total = typeof val === 'number' ? val : (val.total || 0);
+      const type  = typeof val === 'object' ? (val.type || 'melee') : 'melee';
+      return { name, total, type, dps: (total / elapsed).toFixed(1) };
+    })
+    .filter(e => e.total > 0)
+    .sort((a, b) => b.total - a.total);
+  const maxDmg = entries[0] ? entries[0].total : 1;
 
   const rows = entries.map(e => {
-    const pct = Math.round((e.dmg / maxDmg) * 100);
-    return `<div class="dps-row">
+    const pct = Math.round((e.total / maxDmg) * 100);
+    const safeType = ['melee', 'spell', 'pet'].includes(e.type) ? e.type : 'melee';
+    const typeBadge = `<span class="dps-type dps-type--${safeType}">${safeType}</span>`;
+    const rowClass  = safeType === 'pet' ? 'dps-row dps-row--pet' : 'dps-row';
+    return `<div class="${rowClass}">
       <span class="dps-name">${e.name}</span>
-      <div class="dps-bar-wrap"><div class="dps-bar" style="width:${pct}%"></div></div>
-      <span class="dps-dmg">${e.dmg.toLocaleString()}</span>
+      <div class="dps-bar-wrap"><div class="dps-bar dps-bar--${safeType}" style="width:${pct}%"></div></div>
+      ${typeBadge}
+      <span class="dps-dmg">${e.total.toLocaleString()}</span>
       <span class="dps-rate">${e.dps}/s</span>
     </div>`;
   }).join('');

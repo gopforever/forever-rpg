@@ -163,6 +163,17 @@ function petAttack(pet, enemy) {
   const dmg = Math.max(1, pet.atk + Math.floor(Math.random() * PET_DMG_VARIANCE) - 1);
   enemy.hp = Math.max(0, enemy.hp - dmg);
 
+  // DPS tracking — pets
+  if (typeof GameState !== 'undefined') {
+    if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+    GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+    const petKey = `${pet.name} (${pet.ownerName})`;
+    if (!GameState.combatDPS.damageByMember[petKey]) {
+      GameState.combatDPS.damageByMember[petKey] = { total: 0, type: 'pet' };
+    }
+    GameState.combatDPS.damageByMember[petKey].total += dmg;
+  }
+
   if (typeof addCombatLog === 'function') {
     addCombatLog(`${pet.name} attacks ${enemy.name} for ${dmg}!`, 'hit');
   }

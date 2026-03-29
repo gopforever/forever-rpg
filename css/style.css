@@ -3133,7 +3133,7 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 
 .dps-row {
   display: grid;
-  grid-template-columns: 90px 1fr 65px 50px;
+  grid-template-columns: 90px 1fr 42px 60px 48px;
   gap: 4px;
   align-items: center;
   padding: 2px 0;
@@ -3145,8 +3145,31 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .dps-name { color: var(--text-primary); font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dps-bar-wrap { background: rgba(255,255,255,0.05); border-radius: 2px; height: 8px; overflow: hidden; }
 .dps-bar { height: 100%; background: linear-gradient(90deg, #c8a84b, #ff9f00); border-radius: 2px; transition: width 0.3s; }
+.dps-bar--melee { background: linear-gradient(90deg, #c8a84b, #ff9f00); }
+.dps-bar--spell { background: linear-gradient(90deg, #6495ed, #8a2be2); }
+.dps-bar--pet   { background: linear-gradient(90deg, #50c878, #00e676); }
 .dps-dmg { color: var(--text-secondary); font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; text-align: right; }
 .dps-rate { color: var(--gold-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; text-align: right; }
+
+/* Pet row variant */
+.dps-row--pet .dps-name {
+  padding-left: 10px;
+  color: #80e0a0;
+}
+
+/* Damage-type badges */
+.dps-type {
+  font-size: 0.58rem;
+  font-family: 'Share Tech Mono', monospace;
+  border-radius: 3px;
+  padding: 1px 4px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.dps-type--melee { background: rgba(200,168,75,0.2);  color: #c8a84b; border: 1px solid rgba(200,168,75,0.4); }
+.dps-type--spell { background: rgba(100,140,255,0.2); color: #8aacff; border: 1px solid rgba(100,140,255,0.4); }
+.dps-type--pet   { background: rgba(80,200,120,0.2);  color: #50c878; border: 1px solid rgba(80,200,120,0.4); }
 
 /* ─── Tooltip Stat Comparison Deltas ────────────────────────────────────────── */
 

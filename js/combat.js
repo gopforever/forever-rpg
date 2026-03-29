@@ -677,7 +677,12 @@ function memberAttack(member, enemy) {
   if (typeof GameState !== 'undefined') {
     if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
     GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
-    GameState.combatDPS.damageByMember[member.name] = (GameState.combatDPS.damageByMember[member.name] || 0) + damage;
+    const existingMelee = GameState.combatDPS.damageByMember[member.name];
+    if (!existingMelee || typeof existingMelee === 'number') {
+      GameState.combatDPS.damageByMember[member.name] = { total: (typeof existingMelee === 'number' ? existingMelee : 0) + damage, type: 'melee' };
+    } else {
+      existingMelee.total += damage;
+    }
   }
 
   const logType = isCrit ? 'crit' : 'hit';
@@ -1428,7 +1433,12 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       if (typeof GameState !== 'undefined') {
         if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
         GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
-        GameState.combatDPS.damageByMember[caster.name] = (GameState.combatDPS.damageByMember[caster.name] || 0) + backstabDmg;
+        const existingBackstab = GameState.combatDPS.damageByMember[caster.name];
+        if (!existingBackstab || typeof existingBackstab === 'number') {
+          GameState.combatDPS.damageByMember[caster.name] = { total: (typeof existingBackstab === 'number' ? existingBackstab : 0) + backstabDmg, type: 'melee' };
+        } else {
+          existingBackstab.total += backstabDmg;
+        }
       }
       if (typeof trySkillGain === 'function') trySkillGain(caster, 'backstab');
       break;
@@ -1461,7 +1471,12 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       if (typeof GameState !== 'undefined') {
         if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
         GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
-        GameState.combatDPS.damageByMember[caster.name] = (GameState.combatDPS.damageByMember[caster.name] || 0) + dmg;
+        const existingSpell = GameState.combatDPS.damageByMember[caster.name];
+        if (!existingSpell || typeof existingSpell === 'number') {
+          GameState.combatDPS.damageByMember[caster.name] = { total: (typeof existingSpell === 'number' ? existingSpell : 0) + dmg, type: 'spell' };
+        } else {
+          existingSpell.total += dmg;
+        }
       }
       addCombatLog(`${caster.name} hits ${enemy.name} for ${dmg} magic damage!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg * 1.5);
@@ -1490,6 +1505,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       }
       const dmg = Math.max(1, getEffectDamageValue(effect));
       enemy.hp = Math.max(0, enemy.hp - dmg);
+      // DPS tracking
+      if (typeof GameState !== 'undefined') {
+        if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+        GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+        const existingAoe = GameState.combatDPS.damageByMember[caster.name];
+        if (!existingAoe || typeof existingAoe === 'number') {
+          GameState.combatDPS.damageByMember[caster.name] = { total: (typeof existingAoe === 'number' ? existingAoe : 0) + dmg, type: 'spell' };
+        } else {
+          existingAoe.total += dmg;
+        }
+      }
       addCombatLog(`${caster.name} detonates an AoE for ${dmg} damage on ${enemy.name}!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg);
       if (typeof trySkillGain === 'function') trySkillGain(caster, 'evocation');
@@ -1504,6 +1530,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       }
       const dmg = Math.max(1, effect.value || 0);
       enemy.hp = Math.max(0, enemy.hp - dmg);
+      // DPS tracking
+      if (typeof GameState !== 'undefined') {
+        if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+        GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+        const existingUndead = GameState.combatDPS.damageByMember[caster.name];
+        if (!existingUndead || typeof existingUndead === 'number') {
+          GameState.combatDPS.damageByMember[caster.name] = { total: (typeof existingUndead === 'number' ? existingUndead : 0) + dmg, type: 'spell' };
+        } else {
+          existingUndead.total += dmg;
+        }
+      }
       addCombatLog(`${caster.name} smites ${enemy.name} with holy light for ${dmg}!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg);
       break;
@@ -1533,6 +1570,17 @@ function dispatchAbilityEffect(caster, ability, enemy, party) {
       let dmg = Math.max(1, Math.floor(getEffectDamageValue(effect) * (1 - resistPct)));
       enemy.hp = Math.max(0, enemy.hp - dmg);
       caster.hp = Math.min(caster.maxHP, caster.hp + dmg);
+      // DPS tracking
+      if (typeof GameState !== 'undefined') {
+        if (!GameState.combatDPS) GameState.combatDPS = { sessionStart: null, damageByMember: {}, lastReset: null };
+        GameState.combatDPS.sessionStart = GameState.combatDPS.sessionStart || Date.now();
+        const existingLifetap = GameState.combatDPS.damageByMember[caster.name];
+        if (!existingLifetap || typeof existingLifetap === 'number') {
+          GameState.combatDPS.damageByMember[caster.name] = { total: (typeof existingLifetap === 'number' ? existingLifetap : 0) + dmg, type: 'spell' };
+        } else {
+          existingLifetap.total += dmg;
+        }
+      }
       addCombatLog(`${caster.name} lifetaps ${enemy.name} for ${dmg}!`, 'spell');
       if (typeof addThreat === 'function') addThreat(caster, dmg);
       if (typeof trySkillGain === 'function') trySkillGain(caster, 'alteration');
