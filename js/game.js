@@ -145,6 +145,13 @@ function gameTick() {
       if (decayHappened && typeof updatePartyUI === 'function') updatePartyUI();
     }
   }
+
+  // Tradeskill crafting tick (always active, not limited to out-of-combat)
+  if (typeof tickTradeskills === 'function' && GameState.party.length > 0) {
+    for (const member of GameState.party) {
+      tickTradeskills(member, now);
+    }
+  }
 }
 
 /**
@@ -188,6 +195,13 @@ function init() {
       // Apply offline progress and show modal
       if (offline) {
         const levelUps = applyOfflineProgress(offline);
+        // Apply offline tradeskill crafting for each party member
+        if (typeof processTradeskillOffline === 'function') {
+          const offlineMs = offline.offlineHours * 3600000;
+          for (const member of GameState.party) {
+            processTradeskillOffline(member, offlineMs);
+          }
+        }
         showOfflineProgressModal(offline);
         if (typeof updatePartyUI === 'function') updatePartyUI();
       }
