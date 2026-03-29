@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 Forever RPG — Rankings</title>
+<link rel="stylesheet" href="css/ranking.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="rank-top-bar">
+  <a id="rank-logo" href="index.html">⚔ FOREVER RPG ⚔</a>
+  <div id="rank-title">🏆 Rankings</div>
+  <div id="rank-top-right">
+    <a href="index.html" class="rank-top-btn">▶ Play Game</a>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div id="rank-filter-bar">
+
+  <div class="rank-filter-group">
+    <label for="rc-filter-class">Class</label>
+    <select id="rc-filter-class" class="rank-select">
+      <option value="">All Classes</option>
+      <option value="warrior">⚔️ Warrior</option>
+      <option value="paladin">🛡️ Paladin</option>
+      <option value="shadowknight">💀 Shadowknight</option>
+      <option value="ranger">🏹 Ranger</option>
+      <option value="rogue">🗡️ Rogue</option>
+      <option value="bard">🎵 Bard</option>
+      <option value="monk">👊 Monk</option>
+      <option value="wizard">🔮 Wizard</option>
+      <option value="magician">✨ Magician</option>
+      <option value="enchanter">💫 Enchanter</option>
+      <option value="necromancer">☠️ Necromancer</option>
+      <option value="cleric">✝️ Cleric</option>
+      <option value="druid">🌿 Druid</option>
+      <option value="shaman">🦴 Shaman</option>
+      <option value="beastlord">🐾 Beastlord</option>
+      <option value="berserker">🪓 Berserker</option>
+    </select>
+  </div>
+
+  <div class="rank-filter-group">
+    <label for="rc-filter-zone">Zone</label>
+    <select id="rc-filter-zone" class="rank-select">
+      <option value="">All Zones</option>
+    </select>
+  </div>
+
+  <div class="rank-filter-group">
+    <label for="rc-filter-guild">Guild</label>
+    <select id="rc-filter-guild" class="rank-select">
+      <option value="">All Guilds</option>
+    </select>
+  </div>
+
+  <div class="rank-filter-group">
+    <label for="rc-sort-by">Sort By</label>
+    <select id="rc-sort-by" class="rank-select">
+      <option value="level">Level</option>
+      <option value="kills">Kills</option>
+      <option value="xp">XP</option>
+      <option value="gold">Gold</option>
+      <option value="aa" disabled>AA (not tracked)</option>
+      <option value="hp">HP</option>
+      <option value="mana">Mana</option>
+      <option value="ac">AC</option>
+    </select>
+  </div>
+
+  <button id="rank-sort-dir-btn">▼ Desc</button>
+
+  <div class="rank-filter-group">
+    <label for="rc-search">Search Name</label>
+    <input id="rc-search" class="rank-input" type="text" placeholder="Character name…">
+  </div>
+
+  <button id="rank-reset-btn">↺ Reset</button>
+  <button id="rank-refresh-btn">🔄 Refresh</button>
+
+</div>
+
+<!-- NOTICE BAR -->
+<div id="rank-notice">
+  <span>Rankings pulled from your local game save. Play the game to populate data.</span>
+  <span id="rank-last-updated">Last updated: —</span>
+</div>
+
+<!-- MAIN CONTENT (table injected here by JS) -->
+<div id="rank-main">
+  <div id="rc-content"></div>
+</div>
+
+<!-- PAGINATION -->
+<div id="rank-pagination" style="display:none">
+  <button class="rank-page-btn" id="rc-prev-btn" disabled>◀ Prev</button>
+  <span id="rank-page-indicator">Page 1 of 1</span>
+  <button class="rank-page-btn" id="rc-next-btn" disabled>Next ▶</button>
+</div>
+
+<script src="js/ranking.js"></script>
+</body>
+</html>

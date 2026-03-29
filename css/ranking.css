@@ -1,0 +1,514 @@
+/* ============================================================
+   FOREVER RPG — Rankings Page Stylesheet
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg-darkest: #050508;
+  --bg-dark: #0a0a0f;
+  --panel-bg: #12100d;
+  --panel-bg2: #1a1510;
+  --panel-border: #4a3820;
+  --panel-header: #2d1f0e;
+  --gold: #c8a84b;
+  --gold-bright: #ffd700;
+  --gold-dim: #7a6530;
+  --text-primary: #e8d5a0;
+  --text-secondary: #a09060;
+  --text-dim: #6a6040;
+  --row-hover: #2a2010;
+  --row-alt: #0f0e0b;
+  --sort-active: #c8a84b;
+  --top-bar-height: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-darkest);
+  color: var(--text-primary);
+  font-family: 'Cinzel', serif, Georgia, 'Times New Roman';
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+#rank-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #1a1208 0%, #0d0a05 100%);
+  border-bottom: 2px solid var(--panel-border);
+  padding: 8px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  height: var(--top-bar-height);
+}
+
+#rank-logo {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 1.1rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px rgba(200,168,75,0.7);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+#rank-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+#rank-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-top-btn {
+  background: var(--panel-header);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s;
+}
+.rank-top-btn:hover { background: #3a2a12; border-color: var(--gold); color: var(--gold); }
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+#rank-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+#rank-filter-bar label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rank-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rank-select,
+.rank-input {
+  background: #1a1510;
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  min-width: 120px;
+}
+.rank-select:focus,
+.rank-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.rank-input::placeholder { color: var(--text-dim); }
+
+#rank-sort-dir-btn {
+  background: var(--panel-header);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  align-self: flex-end;
+  transition: background 0.2s;
+}
+#rank-sort-dir-btn:hover { background: #3a2a12; border-color: var(--gold); }
+
+#rank-reset-btn {
+  background: transparent;
+  border: 1px solid #4a3020;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  align-self: flex-end;
+  transition: background 0.2s, color 0.2s;
+}
+#rank-reset-btn:hover { background: #2a1a08; color: var(--gold); border-color: var(--gold); }
+
+#rank-refresh-btn {
+  background: transparent;
+  border: 1px solid #4a3020;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  align-self: flex-end;
+  transition: background 0.2s, color 0.2s;
+}
+#rank-refresh-btn:hover { background: #0a2010; color: #6f6; border-color: #4a8040; }
+
+/* ============================================================
+   NOTICE BAR
+   ============================================================ */
+#rank-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px;
+  background: #0f0e0b;
+  border-bottom: 1px solid #2a2010;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+#rank-last-updated {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--gold-dim);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+#rank-main {
+  padding: 16px 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+#rank-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 20px;
+  text-align: center;
+}
+
+#rank-empty-state .empty-icon {
+  font-size: 4rem;
+  opacity: 0.4;
+}
+
+#rank-empty-state h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+}
+
+#rank-empty-state p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.rank-play-btn {
+  background: linear-gradient(180deg, #3a2a0e 0%, #1a1208 100%);
+  border: 1px solid var(--gold);
+  color: var(--gold-bright);
+  padding: 10px 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.rank-play-btn:hover { background: linear-gradient(180deg, #4a3a1e 0%, #2a2010 100%); }
+
+/* ============================================================
+   TABLE WRAPPER (scrollable)
+   ============================================================ */
+#rank-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: var(--panel-bg);
+}
+
+/* ============================================================
+   RANKINGS TABLE
+   ============================================================ */
+#rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+#rank-table thead {
+  background: linear-gradient(180deg, #2d1f0e 0%, #1a1005 100%);
+  position: sticky;
+  top: var(--top-bar-height);
+  z-index: 10;
+}
+
+#rank-table thead th {
+  padding: 9px 10px;
+  text-align: left;
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--panel-border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+#rank-table thead th.sortable {
+  cursor: pointer;
+}
+#rank-table thead th.sortable:hover {
+  color: var(--gold-bright);
+  background: rgba(200,168,75,0.08);
+}
+#rank-table thead th.sort-active {
+  color: var(--gold-bright);
+}
+#rank-table thead th .sort-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.65rem;
+  opacity: 0.5;
+}
+#rank-table thead th.sort-active .sort-arrow {
+  opacity: 1;
+  color: var(--gold-bright);
+}
+
+#rank-table tbody tr {
+  border-bottom: 1px solid #1e1a10;
+  transition: background 0.12s;
+  cursor: pointer;
+}
+#rank-table tbody tr:nth-child(even) {
+  background: var(--row-alt);
+}
+#rank-table tbody tr:hover {
+  background: var(--row-hover);
+}
+#rank-table tbody tr.row-expanded {
+  background: #1e1610 !important;
+}
+
+#rank-table tbody td {
+  padding: 7px 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+td.rank-num {
+  color: var(--gold-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  min-width: 36px;
+}
+td.rank-num.top3 {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+td.rank-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  min-width: 100px;
+}
+
+td.rank-class {
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+td.rank-guild {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+td.rank-zone {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+td.rank-num-col {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.82rem;
+  text-align: right;
+  min-width: 58px;
+}
+
+td.rank-personality {
+  font-size: 0.8rem;
+}
+
+.personality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(200,168,75,0.12);
+  border: 1px solid #3a3020;
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   EXPANDED DETAIL ROW
+   ============================================================ */
+.rank-detail-row td {
+  padding: 0 !important;
+  background: #0d0c09 !important;
+  cursor: default;
+}
+
+.rank-detail-inner {
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--panel-border);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.rank-detail-section h4 {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #2a2010;
+  padding-bottom: 4px;
+}
+
+.rank-detail-bio {
+  grid-column: 1 / -1;
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  padding: 8px 12px;
+  background: rgba(200,168,75,0.04);
+  border-left: 3px solid var(--gold-dim);
+  border-radius: 0 3px 3px 0;
+  margin-bottom: 4px;
+}
+
+.rank-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 12px;
+}
+
+.rank-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+.rank-stat-row .stat-label { color: var(--text-secondary); }
+.rank-stat-row .stat-val   { color: var(--text-primary); font-family: 'Share Tech Mono', monospace; }
+
+.rank-equip-row,
+.rank-party-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+  padding: 2px 0;
+  border-bottom: 1px solid #1a1510;
+}
+.rank-equip-row:last-child,
+.rank-party-row:last-child { border-bottom: none; }
+
+.rank-equip-slot { color: var(--text-secondary); }
+.rank-equip-item { color: var(--text-primary); }
+.rank-equip-empty { color: var(--text-dim); }
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+#rank-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 0 4px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.rank-page-btn {
+  background: var(--panel-header);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 5px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  transition: background 0.2s;
+}
+.rank-page-btn:hover:not(:disabled) { background: #3a2a12; border-color: var(--gold); }
+.rank-page-btn:disabled { opacity: 0.35; cursor: default; }
+
+#rank-page-indicator {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--gold-dim);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  #rank-top-bar { padding: 8px 12px; }
+  #rank-logo { font-size: 0.85rem; }
+  #rank-title { font-size: 0.9rem; }
+  #rank-main { padding: 10px 8px; }
+  #rank-filter-bar { padding: 8px 10px; }
+
+  /* Hide less-critical columns on small screens */
+  .col-xp,
+  .col-ac,
+  .col-personality { display: none; }
+}
+
+@media (max-width: 600px) {
+  .col-zone,
+  .col-guild { display: none; }
+  #rank-title { display: none; }
+}
