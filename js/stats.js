@@ -204,6 +204,7 @@ function getMissChance(attacker, defender) {
 
 /**
  * Reduces damage by AC / 5 (P99 mitigation standard), with a minimum of 1.
+ * Matches the pipeline step documented in combat.js: `applyACMitigation: dmg - floor(AC/5)`.
  * @param {number} damage - The incoming damage value before mitigation.
  * @param {object} defender - The defending character; uses currentAC or computes via getAC.
  * @returns {number} The mitigated damage value (minimum 1).
