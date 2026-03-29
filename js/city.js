@@ -798,37 +798,48 @@ function deductCopper(amount) {
 }
 
 /**
- * Purchases a spell from the guild and adds it to the learned spells list.
+ * Purchases a spell from the guild and adds it to the character's spell book.
+ * The zone must be 'qeynos', the spell's class must match the character's class,
+ * and the character must not already own the spell.
+ * The spell is NOT automatically added to the action bar — the player must do that manually.
  * @param {string} spellId - The ID of the spell to purchase.
  * @returns {boolean} True if the purchase succeeded, false otherwise.
  */
 function buySpell(spellId) {
-  const spell = GUILD_SPELLS.find(s => s.id === spellId);
-  if (!spell) { addCombatLog('Unknown spell.', 'system'); return false; }
-
-  GameState.learnedSpells = GameState.learnedSpells || [];
-  if (GameState.learnedSpells.includes(spellId)) {
-    addCombatLog(`You already know ${spell.name}.`, 'system');
+  if (typeof GameState !== 'undefined' && GameState.zone !== 'qeynos') {
+    if (typeof addCombatLog === 'function') addCombatLog('You must be in Qeynos to purchase spells.', 'system');
     return false;
   }
 
+  const spell = GUILD_SPELLS.find(s => s.id === spellId);
+  if (!spell) { if (typeof addCombatLog === 'function') addCombatLog('Unknown spell.', 'system'); return false; }
+
   const char = GameState.party[GameState.inspectedCharIndex || 0];
-  if (!char || char.classId !== spell.classId) {
-    addCombatLog(`Your character cannot learn ${spell.name}.`, 'system');
+  if (!char) { if (typeof addCombatLog === 'function') addCombatLog('No character selected.', 'system'); return false; }
+
+  if (char.classId !== spell.classId) {
+    if (typeof addCombatLog === 'function') addCombatLog(`${char.name} cannot learn ${spell.name} (wrong class).`, 'system');
     return false;
   }
   if (char.level < spell.level) {
-    addCombatLog(`You need to be level ${spell.level} to learn ${spell.name}.`, 'system');
+    if (typeof addCombatLog === 'function') addCombatLog(`You need to be level ${spell.level} to learn ${spell.name}.`, 'system');
+    return false;
+  }
+
+  if (!char.spellBook) char.spellBook = [];
+  if (char.spellBook.includes(spellId)) {
+    if (typeof addCombatLog === 'function') addCombatLog(`${char.name} already knows ${spell.name}.`, 'system');
     return false;
   }
 
   if (!deductCopper(spell.buyPrice)) {
-    addCombatLog(`Not enough coin to buy ${spell.name} (${formatCoins(spell.buyPrice)}).`, 'system');
+    if (typeof addCombatLog === 'function') addCombatLog(`Not enough coin to buy ${spell.name} (${formatCoins(spell.buyPrice)}).`, 'system');
     return false;
   }
 
-  GameState.learnedSpells.push(spellId);
-  addCombatLog(`You learned ${spell.name}!`, 'levelup');
+  char.spellBook.push(spellId);
+  if (typeof addCombatLog === 'function') addCombatLog(`${char.name} learned ${spell.name}! Add it to the action bar to use it.`, 'levelup');
+  if (typeof saveGame === 'function') saveGame();
   if (typeof renderTopBar === 'function') renderTopBar();
   // Achievement hook
   if (typeof checkAchievements === 'function') checkAchievements('spell_buy', {});

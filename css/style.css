@@ -3132,3 +3132,142 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   color: #7a9a6a;
   font-style: italic;
 }
+
+/* ============================================================
+   SPELL BOOK SYSTEM
+   ============================================================ */
+
+/* Empty spell book state */
+.spellbook-empty {
+  font-style: italic;
+  color: var(--text-dim, #8a7050);
+  padding: 10px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Class group header in the guild marketplace */
+.spellbook-header {
+  font-weight: bold;
+  color: var(--gold, #c8a84b);
+  border-bottom: 1px solid var(--panel-border, #4a3820);
+  margin: 10px 0 4px 0;
+  padding: 4px 0 2px 0;
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* "Action Bar: X / 10 slots" label */
+.spellbook-slot-count {
+  font-size: 10px;
+  color: var(--text-dim, #8a7050);
+  font-family: 'Share Tech Mono', monospace;
+  margin: 2px 0 6px 0;
+  padding: 0 4px;
+}
+
+/* Spell-on-bar highlight row */
+.spell-row.spell-on-bar {
+  background: rgba(60, 140, 60, 0.10);
+  border-color: rgba(60, 200, 60, 0.25);
+}
+
+/* Badge for spells that are on the action bar */
+.spell-on-bar-badge {
+  font-size: 9px;
+  color: #66cc44;
+  font-family: 'Share Tech Mono', monospace;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Badge for spells that are already learned (in marketplace) */
+.spell-learned-badge {
+  font-size: 9px;
+  color: #66cc44;
+  font-family: 'Share Tech Mono', monospace;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Level requirement notice */
+.spell-level-req {
+  font-size: 9px;
+  color: var(--text-dim, #8a7050);
+  font-style: italic;
+}
+
+/* Locked spell row (below required level) */
+.spell-row.spell-locked {
+  opacity: 0.5;
+}
+
+/* Spell action buttons area */
+.spell-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Add to Action Bar button */
+.add-to-bar-btn {
+  background: #2a5a2a;
+  color: #aaffaa;
+  border: 1px solid #44aa44;
+  padding: 2px 7px;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: 'Share Tech Mono', monospace;
+  transition: background 0.15s;
+}
+.add-to-bar-btn:hover { background: #3a7a3a; }
+
+/* Remove from Action Bar button */
+.remove-from-bar-btn {
+  background: #5a1a1a;
+  color: #ffaaaa;
+  border: 1px solid #aa2222;
+  padding: 2px 7px;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: 'Share Tech Mono', monospace;
+  transition: background 0.15s;
+}
+.remove-from-bar-btn:hover { background: #7a2222; }
+
+/* "Bar full" notice */
+.spell-bar-full {
+  font-size: 9px;
+  color: var(--text-dim, #8a7050);
+  font-style: italic;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Guild character selector tabs */
+.guild-char-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.char-tab-btn {
+  background: var(--panel-bg2, #13100c);
+  color: var(--text-secondary, #c0a060);
+  border: 1px solid var(--panel-border, #4a3820);
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  transition: background 0.15s, border-color 0.15s;
+}
+.char-tab-btn:hover { background: #1e1a12; border-color: var(--gold-dim, #8a6a2a); }
+.char-tab-btn.active {
+  background: #2a2010;
+  border-color: var(--gold, #c8a84b);
+  color: var(--gold, #c8a84b);
+}
