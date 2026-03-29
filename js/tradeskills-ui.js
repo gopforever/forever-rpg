@@ -39,11 +39,14 @@ function renderTradeskillsTab() {
           <div class="tradeskills-queue-panel" id="ts-queue-panel"></div>
         </div>
       </div>
+      <div class="city-section-title">🎒 Tradeskill Inventory</div>
+      <div class="ts-inv-panel" id="ts-inv-panel"></div>
     </div>
   `;
 
   renderRecipeList(_tsSelectedDiscipline);
   renderCraftQueue(char);
+  renderTradeskillInventory(char);
   _wireDisciplineButtons(el, char);
   _startProgressAnimation();
 }
@@ -333,6 +336,53 @@ function _showTSFeedback(message, type) {
   setTimeout(() => el.remove(), 3000);
 }
 
+// ─── Tradeskill Inventory Panel ───────────────────────────────────────────────
+
+/**
+ * Render the tradeskill inventory panel into #ts-inv-panel.
+ * @param {object} character
+ */
+function renderTradeskillInventory(character) {
+  const panel = document.getElementById('ts-inv-panel');
+  if (!panel) return;
+
+  const inv = (character && character.tradeskillInventory) || {};
+  const entries = Object.entries(inv).filter(([, qty]) => qty > 0);
+
+  if (!entries.length) {
+    panel.innerHTML = '<div class="city-empty">No items in tradeskill inventory.</div>';
+    return;
+  }
+
+  const materials = [];
+  const products = [];
+
+  entries.forEach(([itemId, qty]) => {
+    const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
+    const icon = item ? (item.icon || '📦') : '📦';
+    const name = typeof _esc === 'function'
+      ? _esc(item ? item.name : itemId)
+      : (item ? item.name : itemId);
+    const card = `<div class="ts-inv-item" title="${name}">
+      <span class="ts-inv-icon">${icon}</span>
+      <span class="ts-inv-name">${name}</span>
+      <span class="ts-inv-qty">×${qty}</span>
+    </div>`;
+    if (typeof TRADESKILL_MATERIALS !== 'undefined' && TRADESKILL_MATERIALS[itemId]) {
+      materials.push(card);
+    } else {
+      products.push(card);
+    }
+  });
+
+  const buildGroup = (label, cards) =>
+    `<div class="ts-inv-group-label">${label}</div><div class="ts-inv-grid">${cards.join('')}</div>`;
+
+  panel.innerHTML =
+    (products.length ? buildGroup('Crafted Items', products) : '') +
+    (materials.length ? buildGroup('Materials', materials) : '');
+}
+
 // ─── Progress Bar Animation ───────────────────────────────────────────────────
 
 /**
@@ -366,6 +416,7 @@ function updateTradeskillsUI() {
   const renderedEntries = panel.querySelectorAll('.tradeskills-queue-entry').length;
   if (renderedEntries !== queue.length) {
     renderCraftQueue(char);
+    renderTradeskillInventory(char);
   }
 }
 
@@ -396,6 +447,7 @@ if (typeof module !== 'undefined') {
     renderTradeskillsTab,
     renderRecipeList,
     renderCraftQueue,
+    renderTradeskillInventory,
     startCraftUI,
     updateTradeskillsUI,
   };
