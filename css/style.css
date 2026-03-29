@@ -1440,6 +1440,52 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   background: #0d0a06;
 }
 
+#city-revive-section {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(80, 20, 20, 0.3);
+}
+
+.city-revive-header {
+  font-family: 'Cinzel', serif;
+  font-size: 0.82rem;
+  color: #cc4444;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.city-revive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.city-revive-name {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.city-revive-btn {
+  background: #1a2a10;
+  border: 1px solid #2a5a1a;
+  color: #66cc44;
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.city-revive-btn:hover {
+  background: #2a3a18;
+  border-color: #66cc44;
+}
+
 .city-tab-btn {
   flex: 1;
   background: transparent;

@@ -2536,20 +2536,57 @@ function renderCityPanel() {
   // so use a flag approach)
   if (!cityPanel.dataset.tabsWired) {
     cityPanel.addEventListener('click', (e) => {
-      const btn = e.target.closest('.city-tab-btn');
-      if (btn) {
+      const tab = e.target.closest('.city-tab-btn');
+      if (tab) {
         cityPanel.querySelectorAll('.city-tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        tab.classList.add('active');
         cityPanel.querySelectorAll('.city-tab-content').forEach(c => c.style.display = 'none');
-        const target = document.getElementById(`city-tab-${btn.dataset.cityTab}`);
+        const target = document.getElementById(`city-tab-${tab.dataset.cityTab}`);
         if (target) target.style.display = '';
-        renderCityTabContent(btn.dataset.cityTab);
+        renderCityTabContent(tab.dataset.cityTab);
+      }
+      const reviveBtn = e.target.closest('.city-revive-btn');
+      if (reviveBtn) {
+        const name = reviveBtn.dataset.reviveName;
+        const member = (GameState.party || []).find(m => m.name === name);
+        if (!member) return;
+        member.isAlive = true;
+        member.hp = member.maxHP;
+        member.mana = member.maxMana;
+        member.statusEffects = [];
+        member.statusEffectMap = {};
+        member.isCasting = false;
+        member.castingAbility = null;
+        if (typeof addCombatLog === 'function') {
+          addCombatLog(`${member.name} has been revived at the city!`, 'heal');
+        }
+        if (typeof updatePartyUI === 'function') updatePartyUI();
+        renderCityPanel();
+        if (typeof saveGame === 'function') saveGame();
       }
     });
     cityPanel.dataset.tabsWired = '1';
   }
 
   renderCityTabContent(activeTab);
+
+  // Render the "Revive Fallen" section for dead party members
+  const reviveSection = document.getElementById('city-revive-section');
+  if (reviveSection) {
+    const deadMembers = (GameState.party || []).filter(m => !m.isAlive);
+    if (deadMembers.length === 0) {
+      reviveSection.innerHTML = '';
+    } else {
+      const rows = deadMembers.map(member => {
+        const icon = member.classIcon || '⚔';
+        return `<div class="city-revive-row">
+          <span class="city-revive-name">${icon} ${member.name}</span>
+          <button class="city-revive-btn" data-revive-name="${member.name}">Revive (Free)</button>
+        </div>`;
+      }).join('');
+      reviveSection.innerHTML = `<div class="city-revive-header">⚕ Revive Fallen</div>${rows}`;
+    }
+  }
 }
 
 /**
