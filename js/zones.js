@@ -484,7 +484,7 @@ const ZONES = {
     id: 'befallen',
     name: 'Befallen',
     shortName: 'BEF',
-    levelRange: [7, 25],
+    levelRange: [7, 26],
     xpModifier: 1.2,
     isDungeon: true,
     isSafeZone: false,
@@ -517,7 +517,6 @@ const ZONES = {
     rareSpawnChance: 0.08,
     ambientColor: '#0d0a1a',
     respawnTime: 22000,
-    isDungeon: true,
     currentFloor: 1,
     floors: [
       {
