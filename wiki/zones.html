@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zones &amp; World — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Zones &amp; World</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <!-- Infobox -->
+    <div class="infobox">
+      <div class="infobox-title">🌍 The World of Norrath</div>
+      <table>
+        <tr><td>Setting</td><td>Norrath</td></tr>
+        <tr><td>Hub City</td><td>Qeynos — The City of Honor</td></tr>
+        <tr><td>Starting Zone</td><td>Qeynos Hills (lvl 2–12)</td></tr>
+        <tr><td>Total Zones</td><td>11 (as of current build)</td></tr>
+        <tr><td>Highest Zone</td><td>Plane of Fear (lvl 45–55)</td></tr>
+        <tr><td>Zone Data</td><td><code>js/zones.js</code></td></tr>
+      </table>
+    </div>
+
+    <p>
+      <b>Forever RPG</b> is set in <b>Norrath</b>, a vast and ancient world of magic, danger, and wonder.
+      The game world is divided into <b>zones</b> — distinct regions with their own enemies, terrain,
+      atmosphere, and level requirements. All characters begin their journey in
+      <a href="#qeynos">Qeynos — The City of Honor</a> and venture outward from there.
+    </p>
+
+    <div class="article-section" id="world-overview">
+      <h2>World Overview <a href="#world-overview" class="edit-link">edit</a></h2>
+      <p>
+        Norrath is a world of classic high fantasy — rolling green hills, ancient dungeons, frozen wastelands,
+        haunted forests, and even the planes of the gods themselves. The game's zone progression leads players
+        from the relatively safe outskirts of Qeynos into increasingly hostile territories.
+      </p>
+      <p>
+        Each zone has a <b>level range</b> indicating the recommended character levels for that area.
+        Entering a zone above your level is possible but dangerous — enemies will be much stronger than you.
+        The zone's <code>xpModifier</code> affects how much experience characters earn there.
+      </p>
+    </div>
+
+    <div class="article-section" id="qeynos">
+      <h2>Qeynos — The City of Honor <a href="#qeynos" class="edit-link">edit</a></h2>
+      <p>
+        <b>Qeynos</b> is the hub city of Forever RPG and the starting point for all adventurers. It is a
+        safe zone (no combat) where characters can access city services, manage their gear, trade, and
+        socialize with other players.
+      </p>
+      <p>The City panel (accessible from the center panel when in Qeynos) has five tabs:</p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Tab</th><th>Function</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>🏦 Bank</b></td>
+            <td>Store items you don't need in your active inventory. The bank provides essentially unlimited storage — stash crafting materials, spare weapons, or seasonal gear here.</td>
+          </tr>
+          <tr>
+            <td><b>🏪 Market</b></td>
+            <td>The player-driven economy. List items for sale, browse other players' listings, and purchase gear. Prices are set in gold/silver/copper. Market data is persisted in localStorage and shared across sessions.</td>
+          </tr>
+          <tr>
+            <td><b>⚔️ Guild</b></td>
+            <td>Create or manage your guild, view guild roster, and access guild-specific features. See <a href="./guilds.html">Guilds &amp; Community</a>.</td>
+          </tr>
+          <tr>
+            <td><b>👥 Players</b></td>
+            <td>Browse ghost characters from other players currently in the world. Click a ghost to open the Ghost Inspect modal and view their equipment and stats.</td>
+          </tr>
+          <tr>
+            <td><b>🏆 Rankings</b></td>
+            <td>View the global leaderboard — top players sorted by level, kills, or achievements. Links to the standalone <a href="../ranking.html">ranking.html</a> page.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="zone-list">
+      <h2>Zone List <a href="#zone-list" class="edit-link">edit</a></h2>
+      <div class="hatnote">Zone data sourced from <code>js/zones.js</code>. Rare spawn chance is 8% per pull for all zones unless noted.</div>
+
+      <table class="wiki-table">
+        <thead>
+          <tr>
+            <th>Zone</th>
+            <th>Short Name</th>
+            <th>Type</th>
+            <th>Level Range</th>
+            <th>Description</th>
+            <th>Notable Enemies</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Qeynos</b></td>
+            <td>QEY</td>
+            <td>🏙️ City Hub</td>
+            <td>1–60 (safe)</td>
+            <td>The City of Honor. A safe haven for adventurers. Access to Bank, Market, Guild, Players, and Rankings.</td>
+            <td>None (safe zone)</td>
+          </tr>
+          <tr>
+            <td><b>Qeynos Hills</b></td>
+            <td>QH</td>
+            <td>🌿 Wilderness</td>
+            <td>2–12</td>
+            <td>Rolling green hills outside the great city of Qeynos. Home to wolves, bears, gnolls, and worse. The classic newbie hunting ground.</td>
+            <td>Mangy Rat, Gray Wolf, Gnoll, Brown Bear, Bandit; Rare: King Snake, Hadden, Varsoon the Undying</td>
+          </tr>
+          <tr>
+            <td><b>Blackburrow</b></td>
+            <td>BB</td>
+            <td>🕳️ Dungeon</td>
+            <td>4–16</td>
+            <td>A vast underground gnoll warren carved beneath the Qeynos Hills. Multi-level tunnels crawl with gnoll defenders and their war leaders.</td>
+            <td>Gnoll Warriors, Gnoll Shamans; Rare: Gnoll Chief</td>
+          </tr>
+          <tr>
+            <td><b>Befallen</b></td>
+            <td>BEF</td>
+            <td>🏚️ Dungeon</td>
+            <td>7–26</td>
+            <td>A crumbling tower of stone and shadow, once a fortress of light, now a stronghold of undead, necromancers, and dark magic.</td>
+            <td>Undead, Skeletons, Necromancers; Rare: Named Undead Lords</td>
+          </tr>
+          <tr>
+            <td><b>Everfrost Peaks</b></td>
+            <td>EFP</td>
+            <td>❄️ Wilderness</td>
+            <td>10–20</td>
+            <td>A frozen wasteland of jagged ice and howling blizzards. The undead walk here, and worse things lurk beneath the snow.</td>
+            <td>Ice Goblins, Frost Giants (rare), Undead; Rare: Permafrost Named</td>
+          </tr>
+          <tr>
+            <td><b>Lake of Ill Omen</b></td>
+            <td>LOIO</td>
+            <td>🌊 Wilderness</td>
+            <td>25–35</td>
+            <td>A vast, murky lake on the continent of Kunark, fouled by Sarnak activity and goblin encampments along its shores.</td>
+            <td>Sarnaks, Goblins, Frogloks; Rare: Sarnak Commander</td>
+          </tr>
+          <tr>
+            <td><b>West Karana</b></td>
+            <td>WK</td>
+            <td>🌾 Wilderness</td>
+            <td>20–30</td>
+            <td>Vast rolling plains stretching west from Qeynos. Bandits and gnolls roam alongside dangerous wildlife.</td>
+            <td>Plains Bandits, Gnoll War Parties, Giant Snakes; Rare: Named Bandit Leaders</td>
+          </tr>
+          <tr>
+            <td><b>Highpass Hold</b></td>
+            <td>HPH</td>
+            <td>⛰️ Wilderness</td>
+            <td>25–35</td>
+            <td>A dangerous mountain pass controlled by the Highpass guards and plagued by bandits and gnoll war parties. Narrow paths wind between deadly drops.</td>
+            <td>Highpass Guards (hostile), Gnoll Hunters, Bandits; Rare: Named Gnoll Shaman</td>
+          </tr>
+          <tr>
+            <td><b>Kithicor Forest</b></td>
+            <td>KC</td>
+            <td>🌲 Wilderness</td>
+            <td>30–42</td>
+            <td>Once a peaceful forest, Kithicor is now haunted by undead soldiers from a battle fought long ago. Dark magic pervades the trees at night.</td>
+            <td>Undead Soldiers, Spectres, Dark Elves; Rare: Undead Knight Champions</td>
+          </tr>
+          <tr>
+            <td><b>Commonlands</b></td>
+            <td>COM</td>
+            <td>🏜️ Wilderness</td>
+            <td>38–50</td>
+            <td>Broad dusty plains south of the Feerrott. Orc war parties from the Crushbone stronghold march these roads alongside dangerous wildlife.</td>
+            <td>Orc Warriors, Orc Shamans, Hill Giants; Rare: Orc Warlord, Cyclops</td>
+          </tr>
+          <tr>
+            <td><b>Plane of Fear</b></td>
+            <td>POF</td>
+            <td>🔥 Plane</td>
+            <td>45–55</td>
+            <td>The realm of Cazic-Thule, the Faceless — a dimension of pure dread where mortals are unmade by terror. For veteran adventurers only.</td>
+            <td>Gargoyles, Amygdalans, Shades; Rare: Named Plane bosses, Cazic-Thule himself</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="zone-navigation">
+      <h2>Zone Navigation <a href="#zone-navigation" class="edit-link">edit</a></h2>
+
+      <h3 id="minimap">Zone Minimap</h3>
+      <p>
+        The left sidebar's <b>Zone panel</b> displays a minimap of your current zone — an SVG illustration
+        showing terrain features like hills, water, roads, and points of interest. The minimap also shows
+        your current camp location if one has been set.
+      </p>
+
+      <h3 id="zone-info">Zone Information</h3>
+      <p>
+        Below the minimap, the zone panel shows the zone's name, level range, and a brief description.
+        The top bar always shows the current zone name, keeping you oriented as you explore.
+      </p>
+
+      <h3 id="zone-travel">Traveling Between Zones</h3>
+      <p>
+        Zone travel is handled through the game's zone selection UI. Zones unlock progressively as your
+        party grows stronger. Traveling to a new zone changes the available enemy pool and ambient music/color.
+        All characters in your party move together — there is no individual zone separation.
+      </p>
+
+      <h3 id="zone-chat">Zone Chat</h3>
+      <p>
+        Each zone has its own chat channel visible in the <b>Zone Chat</b> tab of the combat log area.
+        This is a real-time chat shared among all players currently active in that zone. See
+        <a href="./guilds.html#zone-chat">Zone Chat</a> for more details.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

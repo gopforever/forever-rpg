@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guilds &amp; Community — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Guilds &amp; Community</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      Forever RPG features a rich community layer built around guilds, parties, and a persistent
+      ghost-player system that makes the world feel alive even when you're the only one online.
+      Community features span <code>js/guilds.js</code>, <code>js/party.js</code>, and
+      <code>js/players.js</code>.
+    </p>
+
+    <div class="article-section" id="guild-system">
+      <h2>Guild System <a href="#guild-system" class="edit-link">edit</a></h2>
+      <p>
+        Guilds are player-organized groups that persist across sessions. Joining a guild gives your
+        characters a guild tag displayed next to their name and contributes their kills and XP to the
+        guild's cumulative totals for the <a href="./achievements.html#rankings">Rankings</a>.
+      </p>
+
+      <h3 id="seed-guilds">Seed Guilds</h3>
+      <p>
+        Five guilds are pre-seeded into the world and available for players to join:
+      </p>
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Guild Name</th><th>Tag</th><th>Motto (MOTD)</th><th>Theme</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Crusaders of Norrath</b></td><td>[CoN]</td><td>"Honor above all."</td><td>Paladin / good-aligned focus</td></tr>
+          <tr><td><b>The Dark Covenant</b></td><td>[TDC]</td><td>"Power through shadow."</td><td>Shadow Knight / evil-aligned</td></tr>
+          <tr><td><b>Arcane Society</b></td><td>[AS]</td><td>"Knowledge is power."</td><td>Spellcasters &amp; scholars</td></tr>
+          <tr><td><b>Ironforge Brotherhood</b></td><td>[IFB]</td><td>"Steel and sweat."</td><td>Warriors &amp; melee fighters</td></tr>
+          <tr><td><b>Order of the Vale</b></td><td>[OtV]</td><td>"Nature guides us."</td><td>Druids, Rangers &amp; nature classes</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Ghost players from the community are distributed across these guilds (3–12 members each),
+        giving the guilds life even without manually enrolled players.
+      </p>
+
+      <h3 id="guild-ranks">Guild Ranks</h3>
+      <p>Every guild uses a four-tier rank system:</p>
+      <ol>
+        <li><b>Recruit</b> — New member, limited permissions</li>
+        <li><b>Member</b> — Full member with access to guild bank (future feature)</li>
+        <li><b>Officer</b> — Can invite new members and manage Recruits</li>
+        <li><b>Leader</b> — Full control; can promote, demote, and disband the guild</li>
+      </ol>
+
+      <h3 id="creating-guild">Creating a Guild</h3>
+      <p>
+        To create your own guild, open the <b>Guild tab</b> in the Qeynos City panel and click
+        <b>Create Guild</b>. You'll be prompted for a guild name and tag. The founding character
+        becomes the <em>Leader</em>. Your new guild appears in the guild browser for other players to join.
+      </p>
+
+      <h3 id="joining-guild">Joining a Guild</h3>
+      <p>
+        Browse available guilds in the Guild tab, select one, and click <b>Join Guild</b>. You'll
+        enter as a <em>Recruit</em>. Guild data is saved to <code>localStorage</code> under the key
+        <code>foreverRPG_playerGuilds</code>.
+      </p>
+
+      <h3 id="guild-stats">Guild Stats</h3>
+      <p>
+        Each guild tracks cumulative statistics across all members:
+      </p>
+      <ul>
+        <li><b>Total Kills</b> — Combined enemy kills by all guild members</li>
+        <li><b>Total XP</b> — Combined experience earned</li>
+        <li><b>World Firsts</b> — Number of World First achievements earned by guild members</li>
+        <li><b>Member Count</b> — Active and ghost members</li>
+        <li><b>Founded</b> — The date the guild was created</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="party-system">
+      <h2>Party System <a href="#party-system" class="edit-link">edit</a></h2>
+      <p>
+        The <b>party system</b> (<code>js/party.js</code>) manages your group of adventuring characters.
+        Unlike guilds (which are persistent social organizations), a party is your active combat group
+        that you directly control.
+      </p>
+
+      <h3 id="party-roster">Party Roster</h3>
+      <p>
+        The <b>Party Roster</b> panel on the left sidebar shows all current party members with:
+      </p>
+      <ul>
+        <li>Character name, race icon, and class icon</li>
+        <li>Current level</li>
+        <li>HP bar (current / max)</li>
+        <li>Mana bar (current / max, if the class has mana)</li>
+        <li>Status indicator (alive, sitting, dead)</li>
+      </ul>
+      <p>
+        Click a party member in the roster to select them as the active character — the right sidebar
+        updates to show that character's stats, equipment, abilities, and inventory.
+      </p>
+
+      <h3 id="party-size">Party Size</h3>
+      <p>
+        A party can contain up to <b>6 characters</b>. You can adventure with a smaller party or even
+        solo (1 character), but larger parties are necessary for the most dangerous zones. Characters
+        are added during <a href="./getting-started.html#character-creation">character creation</a> and
+        cannot be added mid-session without creating a new character slot.
+      </p>
+
+      <h3 id="party-combat-roles">Combat Roles</h3>
+      <p>
+        See <a href="./classes.html#party-roles">Party Roles</a> in the Classes article for recommended
+        party compositions. The party system automatically routes enemy attacks to the character with
+        the highest aggro, and the Taunt ability lets tanks redirect attacks away from healers and DPS.
+      </p>
+    </div>
+
+    <div class="article-section" id="whos-online">
+      <h2>Who's Online <a href="#whos-online" class="edit-link">edit</a></h2>
+      <p>
+        The <b>Who's Online</b> panel (left sidebar) shows a list of ghost players currently present
+        in the game world. These are characters from other players who have logged into the game —
+        their data is shared through the <code>localStorage</code> ghost system.
+      </p>
+      <p>
+        Each entry in Who's Online shows:
+      </p>
+      <ul>
+        <li>Character name and class icon</li>
+        <li>Current zone</li>
+        <li>Level</li>
+        <li>Guild tag (if in a guild)</li>
+        <li>Online/offline status (ghosts persist up to 72 hours after last login)</li>
+      </ul>
+      <p>
+        The ghost system updates every <b>30 seconds</b> (<code>TICK_SECONDS = 30</code>) while you
+        are active. Ghost data is stored in <code>localStorage</code> under the key
+        <code>foreverRPG_ghosts</code>, with tick timestamps in <code>foreverRPG_ghostTick</code>.
+        After 72 hours offline (<code>MAX_OFFLINE_TICKS = 8640</code> ticks), a ghost expires and
+        is removed from the world.
+      </p>
+    </div>
+
+    <div class="article-section" id="ghost-inspect">
+      <h2>Ghost Inspect <a href="#ghost-inspect" class="edit-link">edit</a></h2>
+      <p>
+        The <b>Ghost Inspect</b> feature allows you to examine another player's character in detail.
+        Open it by clicking a ghost in the <b>Players tab</b> in Qeynos or from the Who's Online panel.
+      </p>
+      <p>The Ghost Inspect modal shows:</p>
+      <ul>
+        <li>Character name, race, class, level, and guild</li>
+        <li>Full equipment set with item names and tooltips</li>
+        <li>Character stats (STR, DEX, AGI, STA, WIS, INT, CHA and derived stats)</li>
+        <li>When the character was last seen online</li>
+      </ul>
+      <p>
+        Inspecting a ghost player earns you the <a href="./achievements.html#vanity">People Watcher</a>
+        achievement.
+      </p>
+    </div>
+
+    <div class="article-section" id="zone-chat">
+      <h2>Zone Chat <a href="#zone-chat" class="edit-link">edit</a></h2>
+      <p>
+        <b>Zone Chat</b> is a shared text channel for all players currently in the same zone. It appears
+        as a tab in the combat log area of the center panel. Zone chat messages from ghost players appear
+        alongside your own, creating a sense of a populated world.
+      </p>
+      <p>
+        Zone chat messages are part of the ghost data — active players' chat contributions are included
+        in their ghost snapshots and visible to others in the same zone. Seeing 10 zone chat messages
+        earns the <em>Social Butterfly</em> achievement.
+      </p>
+    </div>
+
+    <div class="article-section" id="world-feed">
+      <h2>World Feed <a href="#world-feed" class="edit-link">edit</a></h2>
+      <p>
+        The <b>World Feed</b> is a global activity stream visible in the center panel. It shows notable
+        events happening across Norrath:
+      </p>
+      <ul>
+        <li>Players entering or leaving zones</li>
+        <li>Level-up announcements</li>
+        <li>World First achievement announcements</li>
+        <li>Named enemy kills by other players</li>
+        <li>Guild formation announcements</li>
+      </ul>
+      <p>
+        The World Feed uses ghost data to generate realistic-looking activity from the broader player community,
+        making the world feel active and alive even in a single-player session.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<!-- ── Top Navigation Bar ─────────────────────────────────── -->
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- ── Page Body ──────────────────────────────────────────── -->
+<div class="wiki-body">
+
+  <!-- Left Sidebar -->
+  <aside class="wiki-sidebar">
+
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">
+        Getting Started <span class="toggle-icon">▼</span>
+      </div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">
+        Game Systems <span class="toggle-icon">▼</span>
+      </div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">
+        World <span class="toggle-icon">▼</span>
+      </div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">
+        Community <span class="toggle-icon">▼</span>
+      </div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Main Content -->
+  <main class="wiki-content">
+
+    <h1>⚔ Forever RPG Wiki — Main Page</h1>
+
+    <!-- Infobox -->
+    <div class="infobox">
+      <div class="infobox-title">⚔ Forever RPG</div>
+      <table>
+        <tr><td>Name</td><td>Forever RPG</td></tr>
+        <tr><td>Developer</td><td><a href="https://github.com/gopforever" target="_blank" rel="noopener">gopforever</a></td></tr>
+        <tr><td>Platform</td><td>Web Browser</td></tr>
+        <tr><td>Engine</td><td>Vanilla JavaScript</td></tr>
+        <tr><td>Setting</td><td>Norrath</td></tr>
+        <tr><td>Hub City</td><td><a href="./zones.html#qeynos">Qeynos — The City of Honor</a></td></tr>
+        <tr><td>Status</td><td>🟢 Active Development</td></tr>
+        <tr><td>Source</td><td><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub Repository</a></td></tr>
+      </table>
+    </div>
+
+    <p>
+      Welcome to the <b>Forever RPG Wiki</b>, the community reference for <b>⚔ Forever RPG</b> — a browser-based,
+      multiplayer-flavored RPG set in the lands of <b>Norrath</b>. All information is drawn from the open-source
+      game code available on <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a>.
+    </p>
+
+    <!-- Featured Articles -->
+    <div class="article-section" id="featured">
+      <h2>Featured Articles <a href="#featured" class="edit-link">edit</a></h2>
+      <div class="featured-article-grid">
+        <div class="featured-card">
+          <div class="featured-icon">🧬</div>
+          <h3><a href="./races.html">Races</a></h3>
+          <p>Choose from 14 playable races — from noble Humans and wise High Elves to fearsome Ogres and regenerating Trolls. Each race brings unique base stats and available class combinations.</p>
+          <a href="./races.html">Read more →</a>
+        </div>
+        <div class="featured-card">
+          <div class="featured-icon">⚔️</div>
+          <h3><a href="./classes.html">Classes</a></h3>
+          <p>16 distinct classes spanning four archetypes — Melee, Hybrid, Caster, and Priest. Master the Warrior's disciplines, the Necromancer's dark arts, or the Bard's inspiring songs.</p>
+          <a href="./classes.html">Read more →</a>
+        </div>
+        <div class="featured-card">
+          <div class="featured-icon">⚡</div>
+          <h3><a href="./combat.html">Combat System</a></h3>
+          <p>Tick-based combat with a configurable speed slider (500–5000 ms). Pull enemies, manage your party's roles, cast spells from the hotbar, and loot fallen foes automatically.</p>
+          <a href="./combat.html">Read more →</a>
+        </div>
+        <div class="featured-card">
+          <div class="featured-icon">🗺️</div>
+          <h3><a href="./zones.html">Zones &amp; World</a></h3>
+          <p>Explore the world of Norrath from the safety of Qeynos Hills to the horrors of the Plane of Fear. Each zone has its own level range, enemy types, and rare spawns.</p>
+          <a href="./zones.html">Read more →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="article-section" id="quick-links">
+      <h2>All Articles <a href="#quick-links" class="edit-link">edit</a></h2>
+      <ul>
+        <li><a href="./getting-started.html">Getting Started</a> — How to run the game, create characters, and navigate the UI</li>
+        <li><a href="./races.html">Races</a> — All 14 playable races with stat tables</li>
+        <li><a href="./classes.html">Classes</a> — All 16 classes with roles, archetypes, and abilities</li>
+        <li><a href="./combat.html">Combat System</a> — Full combat mechanics reference</li>
+        <li><a href="./zones.html">Zones &amp; World</a> — Norrath world overview and zone guide</li>
+        <li><a href="./items.html">Items &amp; Equipment</a> — Gear, loot, currency, Bank &amp; Market</li>
+        <li><a href="./achievements.html">Achievements</a> — Achievement system and Rankings leaderboard</li>
+        <li><a href="./guilds.html">Guilds &amp; Community</a> — Guilds, parties, Who's Online, Zone Chat</li>
+      </ul>
+    </div>
+
+    <!-- Did You Know -->
+    <div class="did-you-know">
+      <h3>📜 Did You Know?</h3>
+      <ul>
+        <li>Ogres have a base STR of 130 — the highest of any race in Norrath.</li>
+        <li>The combat speed slider ranges from 500 ms (lightning fast) to 5000 ms (slow and deliberate).</li>
+        <li>Erudites have the highest base INT (107) of any race, making them the premier spellcasters.</li>
+        <li>All characters start their journey in <a href="./zones.html#qeynos">Qeynos — The City of Honor</a>.</li>
+        <li>The Plane of Fear is the highest-level zone, recommended for veterans only.</li>
+        <li>Ghost characters persist for up to 72 hours in the world after a player logs off.</li>
+        <li>The Bard class can inspire allies with songs that provide ongoing buffs during combat.</li>
+        <li>Paladins possess the ultimate survival tool — <em>Lay on Hands</em> — usable once per day.</li>
+      </ul>
+    </div>
+
+    <!-- Recent Changes stub -->
+    <div class="article-section" id="recent-changes">
+      <h2>About This Wiki <a href="#recent-changes" class="edit-link">edit</a></h2>
+      <p>
+        This wiki is a static, read-only reference generated from the Forever RPG source code.
+        All data (races, classes, zones, abilities) is sourced directly from the JavaScript data files
+        in the <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub repository</a>.
+        For corrections or additions, please open an issue or pull request on GitHub.
+      </p>
+      <p>
+        The wiki is served as plain HTML/CSS/JS with no external dependencies — browse it from a local HTTP server
+        alongside the game itself.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

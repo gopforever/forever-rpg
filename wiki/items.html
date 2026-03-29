@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Items &amp; Equipment — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Items &amp; Equipment</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      The item system in Forever RPG covers everything from the simple <em>Short Sword</em> you start with
+      to legendary <em>Named</em> rarity drops from the Plane of Fear. Items are defined in <code>js/items.js</code>
+      and displayed with rich tooltips powered by <code>js/tooltips.js</code>.
+    </p>
+
+    <div class="article-section" id="item-categories">
+      <h2>Item Categories <a href="#item-categories" class="edit-link">edit</a></h2>
+      <p>Every item has a <code>type</code> field that determines how it behaves:</p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Type</th><th>Description</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>weapon</b></td>
+            <td>Equippable in the primary or secondary slot. Has <code>dmg</code> (damage), <code>delay</code> (attack speed in tenths of a second), and <code>weaponType</code> (slash/pierce/blunt/hand_to_hand).</td>
+            <td>Short Sword, Dagger, Hatchet, Staff of Shielding</td>
+          </tr>
+          <tr>
+            <td><b>armor</b></td>
+            <td>Equippable in body slots. Provides armor class (<code>ac</code>) and optional stat bonuses. Class and race restrictions apply.</td>
+            <td>Leather Tunic, Chain Hauberk, Plate Breastplate, Ringmail</td>
+          </tr>
+          <tr>
+            <td><b>consumable</b></td>
+            <td>Single-use items that provide a temporary effect when activated. Includes potions, food, and drink.</td>
+            <td>Minor Healing Potion, Bread, Water Flask</td>
+          </tr>
+          <tr>
+            <td><b>bag</b></td>
+            <td>Containers that expand inventory capacity. Has a <code>capacity</code> (number of slots) and optionally a <code>weightReduction</code> percentage.</td>
+            <td>Small Bag, Traveler's Pack, Extraplanar Trade Satchel</td>
+          </tr>
+          <tr>
+            <td><b>tradeskill</b></td>
+            <td>Components used in crafting and trade skill recipes. Not currently equippable.</td>
+            <td>Ore, Pelts, Vials of Various Substances</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="rarity">
+      <h2>Item Rarity <a href="#rarity" class="edit-link">edit</a></h2>
+      <p>Items come in four rarity tiers, indicated by name color in the UI:</p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Rarity</th><th>Color</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Common</b></td><td style="color:#333">⬛ Grey/White</td><td>Basic gear available from vendors or low-level drops. No special properties beyond base stats.</td></tr>
+          <tr><td><b>Magic</b></td><td style="color:#0645ad">🔵 Blue</td><td>Has at least one magical property — stat bonuses, resists, or a worn/use effect. The backbone of mid-game progression.</td></tr>
+          <tr><td><b>Rare</b></td><td style="color:#8b4513">🟤 Orange/Brown</td><td>Powerful items with multiple bonuses. Often from named enemies or deep dungeon encounters.</td></tr>
+          <tr><td><b>Named</b></td><td style="color:#7a0000">🔴 Red</td><td>The finest items in Norrath — typically <em>Lore</em> and/or <em>NoDrop</em>. Dropped by boss-tier named enemies.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="item-flags">Item Flags</h3>
+      <ul>
+        <li><b>Lore</b> — You may only carry one copy of a Lore item at a time. Attempting to pick up a second gives an error.</li>
+        <li><b>NoDrop</b> — The item cannot be traded to other players, sold on the Market, or banked. It stays with the character who looted it.</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="equipment-slots">
+      <h2>Equipment Slots <a href="#equipment-slots" class="edit-link">edit</a></h2>
+      <p>
+        Each character has a full set of equipment slots visible in the <b>Equipment</b> panel on the right sidebar.
+        The slot names correspond to the <code>slot</code> field in item definitions:
+      </p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Slot</th><th>Typical Items</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>primary</b></td><td>Main-hand weapon (sword, staff, axe, fist wraps)</td></tr>
+          <tr><td><b>secondary</b></td><td>Off-hand weapon, shield, or focus item</td></tr>
+          <tr><td><b>head</b></td><td>Helmets, hoods, caps</td></tr>
+          <tr><td><b>chest</b></td><td>Breastplates, tunics, robes — the largest armor piece</td></tr>
+          <tr><td><b>legs</b></td><td>Leggings, greaves, pants</td></tr>
+          <tr><td><b>feet</b></td><td>Boots, sandals, sabatons</td></tr>
+          <tr><td><b>hands</b></td><td>Gloves, gauntlets, handwraps</td></tr>
+          <tr><td><b>wrist</b> (×2)</td><td>Bracer, bracelet (two slots available)</td></tr>
+          <tr><td><b>finger</b> (×2)</td><td>Rings (two finger slots available)</td></tr>
+          <tr><td><b>neck</b></td><td>Amulets, cloaks, gorgets</td></tr>
+          <tr><td><b>waist</b></td><td>Belts, sashes, girdles</td></tr>
+          <tr><td><b>back</b></td><td>Cloaks, mantles, backpacks</td></tr>
+          <tr><td><b>ear</b> (×2)</td><td>Earrings (two ear slots available)</td></tr>
+          <tr><td><b>range</b></td><td>Bow, thrown weapon, instrument</td></tr>
+          <tr><td><b>bag</b> (×8)</td><td>Inventory bags expanding carry capacity</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="drag-and-drop">
+      <h2>Drag-and-Drop Equipping <a href="#drag-and-drop" class="edit-link">edit</a></h2>
+      <p>
+        Forever RPG supports full drag-and-drop interaction for managing equipment, powered by <code>js/drag.js</code>:
+      </p>
+      <ul>
+        <li>Drag an item from your <b>Inventory</b> panel to an equipment slot to equip it.</li>
+        <li>Drag an equipped item to an inventory slot to unequip it.</li>
+        <li>Drag between inventory slots to reorganize your bag.</li>
+        <li>Drag an item to the <b>Bank</b> panel (when in Qeynos) to deposit it.</li>
+        <li>Drag from the Bank to Inventory to withdraw an item.</li>
+      </ul>
+      <p>
+        Class and race restrictions are enforced on drop — if your character cannot use the item, the drop is rejected.
+      </p>
+    </div>
+
+    <div class="article-section" id="tooltips">
+      <h2>Item Tooltips <a href="#tooltips" class="edit-link">edit</a></h2>
+      <p>
+        Hovering over any item — in your inventory, equipment slots, bank, or market — shows a detailed tooltip
+        rendered by <code>js/tooltips.js</code>. The tooltip includes:
+      </p>
+      <ul>
+        <li>Item name (colored by rarity) and Lore/NoDrop flags</li>
+        <li>Slot, type, and weight</li>
+        <li>For weapons: Damage, Delay, and weapon type</li>
+        <li>For armor: Armor Class value</li>
+        <li>Stat bonuses (STR +5, STA +10, etc.)</li>
+        <li>Resist bonuses (Magic, Fire, Cold, Poison, Disease)</li>
+        <li>Worn/Use effect name</li>
+        <li>Class and race restrictions</li>
+        <li>Flavor text (in italic)</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="loot-drops">
+      <h2>Loot &amp; Drops <a href="#loot-drops" class="edit-link">edit</a></h2>
+      <p>
+        Enemies drop loot when defeated. Each enemy in <code>js/enemies.js</code> has a defined loot table
+        specifying which items can drop and at what probability. Higher-rarity items drop less frequently.
+      </p>
+      <p>
+        The <a href="./combat.html#loot-system">Combat System article</a> covers the Auto-Loot toggle and
+        manual loot pickup in detail.
+      </p>
+    </div>
+
+    <div class="article-section" id="bank-market">
+      <h2>Bank &amp; Market <a href="#bank-market" class="edit-link">edit</a></h2>
+
+      <h3 id="bank">Bank</h3>
+      <p>
+        The <b>Bank</b> (accessible from the City panel in <a href="./zones.html#qeynos">Qeynos</a>) provides
+        unlimited item storage. Items in the bank are safe from loss on death and persist across all sessions.
+        Use the bank to store rare drops, trade skill materials, or items you plan to sell later.
+      </p>
+
+      <h3 id="market">Market</h3>
+      <p>
+        The <b>Market</b> is the player-driven economy of Norrath. List your items for sale at any price in
+        gold/silver/copper. Other players can browse listings and purchase items. Market data is stored in
+        <code>localStorage</code> (key <code>foreverRPG_market</code>) and shared through the ghost system.
+      </p>
+    </div>
+
+    <div class="article-section" id="currency">
+      <h2>Currency <a href="#currency" class="edit-link">edit</a></h2>
+      <p>
+        Forever RPG uses the classic three-tier currency system of Norrath:
+      </p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Currency</th><th>Symbol</th><th>Conversion</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Copper</b></td><td>c</td><td>Base unit. 10 copper = 1 silver.</td></tr>
+          <tr><td><b>Silver</b></td><td>s</td><td>10 silver = 1 gold.</td></tr>
+          <tr><td><b>Gold</b></td><td>g</td><td>Highest denomination. 1 gold = 100 copper.</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        Your current wallet balance (gold / silver / copper) is always visible in the top bar.
+        Currency looted from enemies is automatically added to your wallet regardless of the Auto-Loot setting.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>
