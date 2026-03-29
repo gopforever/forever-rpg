@@ -248,11 +248,25 @@ function computeStatBonuses(char) {
  * @param {object} char - The character object to update; modified directly.
  * @returns {object} The same character object with updated derived stats.
  */
+function getATK(char) {
+  const str = char.STR + (char.statBonuses ? char.statBonuses.STR || 0 : 0);
+  // Mirrors the Wrath (ATK) formula used in getMeleeDamage: STR modifier kicks in above 75
+  const strengthModifier = str >= 75 ? Math.floor(((2 * str) - 150) / 3) : 0;
+  const weaponSkill = char.skills ? (char.skills['offense'] || 0) : 0;
+  const wornATK = char.statBonuses ? (char.statBonuses.ATK || 0) : 0;
+  const spellATK = char.spellATK || 0;
+  const weaponId = char.equipment ? char.equipment['primary'] : null;
+  const weapon = weaponId && typeof ITEMS !== 'undefined' ? ITEMS[weaponId] : null;
+  const weaponDmg = weapon ? weapon.dmg : 2; // default 2 = unarmed base damage
+  return Math.max(1, Math.floor(strengthModifier + weaponSkill + wornATK + spellATK + weaponDmg));
+}
+
 function computeDerivedStats(char) {
   char.statBonuses = computeStatBonuses(char);
   char.maxHP = getMaxHP(char);
   char.maxMana = getMaxMana(char);
   char.currentAC = getAC(char);
+  char.atk = getATK(char);
   char.maxEndurance = getMaxEndurance(char);
   if (char.hp === undefined || char.hp > char.maxHP) char.hp = char.maxHP;
   if (char.mana === undefined || char.mana > char.maxMana) char.mana = char.maxMana;
@@ -540,4 +554,4 @@ function getEncumbrancePenalty(character) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, XP_TABLE, MAX_LEVEL, HELL_LEVELS, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getResistChance, getMaxEndurance, getWeaponRatio, getDamageBonus, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };
+if (typeof module !== 'undefined') module.exports = { getMaxHP, getMaxMana, getAC, getATK, getMeleeDamage, getCritChance, getMissChance, applyACMitigation, computeDerivedStats, computeStatBonuses, getEffectiveStat, XP_TABLE, MAX_LEVEL, HELL_LEVELS, xpForLevel, xpToNextLevel, getMerchantPriceMultiplier, getSaveVsMagic, getResistChance, getMaxEndurance, getWeaponRatio, getDamageBonus, getWeightLimit, getCurrentCarryWeight, getInventoryWeight, isEncumbered, getEncumbrancePenalty };
