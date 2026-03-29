@@ -2999,11 +2999,11 @@ function _renderLbPane(pane, containerEl) {
     `;
 
   } else if (pane === 'achievements') {
-    const categories = ['general','advancement','class','keys','level','progression','skills','special','vanity'];
+    const categories = ['general','advancement','class','keys','level','progression','skills','special','vanity','dungeon'];
     const catLabels  = {
       general:'General', advancement:'Advancement', class:'Class',
       keys:'Keys', level:'Level', progression:'Progression',
-      skills:'Skills', special:'Special', vanity:'Vanity',
+      skills:'Skills', special:'Special', vanity:'Vanity', dungeon:'Dungeon',
     };
     const unlockedCount = typeof getUnlockedCount === 'function' ? getUnlockedCount() : 0;
     const totalCount    = typeof getTotalCount    === 'function' ? getTotalCount()    : 0;
