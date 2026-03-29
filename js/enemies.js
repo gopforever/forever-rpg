@@ -985,6 +985,34 @@ const ENEMIES = {
     description: 'The gnoll responsible for the famous (and potent) Blackburrow Stout. Surprisingly dangerous when cornered.',
   },
 
+  tranixx_darkpaw: {
+    id: 'tranixx_darkpaw',
+    name: 'Tranixx Darkpaw',
+    level: 16,
+    hp: 420,
+    atk: 36,
+    ac: 26,
+    xp: 30000,
+    type: 'humanoid',
+    isRare: true,
+    isUndead: false,
+    enrages: true,
+    aoeAttack: true,
+    magicResist: 15,
+    statusProcs: [
+      { type: 'disease', chance: 0.20, duration: 14000, damage: 8 },
+    ],
+    lootTable: [
+      { itemId: 'ruined_blackburrow_gnoll_pelt', chance: 1.0, quantity: [1, 1] },
+      { itemId: 'gnoll_fang', chance: 1.0, quantity: [3, 6] },
+      { itemId: 'darkpaw_hide_cloak', chance: 0.35, quantity: [1, 1] },
+      { itemId: 'darkpaw_fang_necklace', chance: 0.25, quantity: [1, 1] },
+      { itemId: 'silver_coin', chance: 1.0, quantity: [10, 25] },
+      { itemId: 'gold_coin', chance: 0.4, quantity: [1, 5] },
+    ],
+    description: "The legendary warlord of Blackburrow. Tranixx Darkpaw is ancient beyond reckoning, his black fur matted with the blood of a hundred fallen heroes. His name is spoken in hushed tones in Qeynos — if it's spoken at all.",
+  },
+
   // ─── EVERFROST PEAKS ENEMIES ───────────────────────────────────────────────
 
   frost_goblin: {
