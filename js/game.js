@@ -27,6 +27,7 @@ const GameState = {
   bags: [null, null, null, null],
   bagContents: [{}, {}, {}, {}],
   bank: [],
+  platinum: 0,
   gold: 0,
   silver: 0,
   copper: 0,
@@ -447,4 +448,28 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(init, 50);
 });
 
-if (typeof module !== 'undefined') module.exports = { GameState, SPELL_BOOK_CLASSES, startGameLoops, init };
+/**
+ * Normalises the coin wallet so each denomination stays within its proper
+ * range: 10 copper → 1 silver, 10 silver → 1 gold, 10 gold → 1 platinum.
+ * @returns {void}
+ */
+function normalizeCoins() {
+  GameState.copper   = GameState.copper   || 0;
+  GameState.silver   = GameState.silver   || 0;
+  GameState.gold     = GameState.gold     || 0;
+  GameState.platinum = GameState.platinum || 0;
+  if (GameState.copper >= 10) {
+    GameState.silver  += Math.floor(GameState.copper / 10);
+    GameState.copper   = GameState.copper % 10;
+  }
+  if (GameState.silver >= 10) {
+    GameState.gold    += Math.floor(GameState.silver / 10);
+    GameState.silver   = GameState.silver % 10;
+  }
+  if (GameState.gold >= 10) {
+    GameState.platinum += Math.floor(GameState.gold / 10);
+    GameState.gold      = GameState.gold % 10;
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { GameState, SPELL_BOOK_CLASSES, startGameLoops, init, normalizeCoins };

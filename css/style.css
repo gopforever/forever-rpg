@@ -104,6 +104,7 @@ body {
   font-size: 0.85rem;
 }
 
+.platinum-amount { color: #e8d5ff; }
 .gold-amount { color: var(--gold-bright); }
 .silver-amount { color: #c0c0c0; }
 .copper-amount { color: #b87333; }
@@ -1209,6 +1210,10 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   gap: 3px;
 }
 
+.bank-grid .inv-slot {
+  min-height: 52px;
+}
+
 .inv-slot {
   width: 100%;
   aspect-ratio: 1;
@@ -1351,6 +1356,12 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   color: var(--text-secondary);
 }
 
+.bank-header-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .btn-deposit-all {
   background: #1a2a1a;
   border: 1px solid #2a5a2a;
@@ -1366,6 +1377,23 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .btn-deposit-all:hover {
   background: #2a3a2a;
   border-color: #44cc44;
+}
+
+.btn-deposit-coins {
+  background: #2a2000;
+  border: 1px solid #c8a84b;
+  color: #f0c040;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-deposit-coins:hover {
+  background: #3a2e00;
+  border-color: #f0c040;
 }
 
 .bank-slot {
@@ -2050,11 +2078,14 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 }
 
 .bank-slot-filled {
+  display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-start;
-  padding-top: 3px;
+  padding: 4px 2px 2px;
   min-width: 36px;
-  min-height: 36px;
+  min-height: 52px;
+  overflow: hidden;
 }
 
 .bank-slot-filled:hover {
@@ -2063,19 +2094,28 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 }
 
 .bank-slot-filled .inv-slot-name {
-  font-size: 0.6rem;
-  padding: 2px 1px;
+  font-size: 0.52rem;
+  padding: 0 1px;
   line-height: 1.2;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bank-slot-filled .inv-slot-icon {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
 }
 
 .bank-slot-filled .inv-slot-count {
   position: absolute;
-  top: 2px;
-  right: 3px;
+  top: 1px;
+  right: 2px;
   font-size: 0.6rem;
   color: #fff;
   font-weight: bold;

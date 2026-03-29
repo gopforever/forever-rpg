@@ -2256,4 +2256,41 @@ function createInventoryStack(itemId, quantity = 1) {
   return { itemId, quantity, item: ITEMS[itemId] };
 }
 
-if (typeof module !== 'undefined') module.exports = { ITEMS, STARTING_GEAR, getItemById, createInventoryStack };
+/**
+ * Vendor junk sell prices (in copper) for loot and material items.
+ * Based on P99 Vendor Junk wiki values.
+ * Items not listed fall back to type-based defaults in the sell logic.
+ * @type {Object<string, number>}
+ */
+const JUNK_SELL_PRICES = {
+  // Pelts / Animal drops
+  rat_pelt:            2,
+  wolf_pelt:           8,
+  bear_pelt:           15,
+
+  // Gnoll drops
+  gnoll_tooth:         2,
+  gnoll_fang:          3,
+  gnoll_shaman_beads:  5,
+
+  // Bug/creature parts
+  fire_beetle_eye:     4,
+  bat_wing:            2,
+  snake_scale:         3,
+  bone_chips:          5,
+
+  // Blackburrow loot
+  giant_snake_fang:    10,
+  blackburrow_stout:   8,
+
+  // Everfrost / Ice area drops
+  frost_goblin_ear:    3,
+  tundra_wolf_pelt:    12,
+
+  // Rusty weapons (vendor junk weapons)
+  rusty_short_sword:   4,
+  tarnished_axe:       4,
+  cracked_staff:       3,
+};
+
+if (typeof module !== 'undefined') module.exports = { ITEMS, STARTING_GEAR, JUNK_SELL_PRICES, getItemById, createInventoryStack };

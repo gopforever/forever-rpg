@@ -743,13 +743,15 @@ const GUILD_SPELLS = [
  */
 function formatCoins(copper) {
   if (!copper || copper <= 0) return '0c';
-  const gold   = Math.floor(copper / 1000);
-  const silver = Math.floor((copper % 1000) / 100);
-  const cop    = copper % 100;
-  const parts  = [];
-  if (gold   > 0) parts.push(`${gold}g`);
-  if (silver > 0) parts.push(`${silver}s`);
-  if (cop    > 0) parts.push(`${cop}c`);
+  const platinum = Math.floor(copper / 1000);
+  const gold     = Math.floor((copper % 1000) / 100);
+  const silver   = Math.floor((copper % 100) / 10);
+  const cop      = copper % 10;
+  const parts    = [];
+  if (platinum > 0) parts.push(`${platinum}p`);
+  if (gold     > 0) parts.push(`${gold}g`);
+  if (silver   > 0) parts.push(`${silver}s`);
+  if (cop      > 0) parts.push(`${cop}c`);
   return parts.join(' ') || '0c';
 }
 
@@ -779,7 +781,7 @@ function getAvailableSpells(classId, level) {
  * @returns {number} Total copper value.
  */
 function getTotalCopper() {
-  return ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+  return ((GameState.platinum || 0) * 1000) + ((GameState.gold || 0) * 100) + ((GameState.silver || 0) * 10) + (GameState.copper || 0);
 }
 
 /**
@@ -790,10 +792,12 @@ function getTotalCopper() {
 function deductCopper(amount) {
   let total = getTotalCopper() - amount;
   if (total < 0) return false;
-  GameState.gold   = Math.floor(total / 1000);
+  GameState.platinum = Math.floor(total / 1000);
   total %= 1000;
-  GameState.silver = Math.floor(total / 100);
-  GameState.copper = total % 100;
+  GameState.gold   = Math.floor(total / 100);
+  total %= 100;
+  GameState.silver = Math.floor(total / 10);
+  GameState.copper = total % 10;
   return true;
 }
 
@@ -884,9 +888,18 @@ function sellToVendor(itemId, quantity) {
   const vendorEntry = CITY_VENDORS.find(v => v.itemId === itemId);
   const item = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
 
-  // Only allow selling items that have a buy price reference; unknown items get 1c each
-  const basePrice = vendorEntry ? vendorEntry.buyPrice : 2;
-  const sellPrice = Math.max(1, Math.floor(basePrice * 0.5)) * quantity;
+  // Determine sell price using JUNK_SELL_PRICES for loot/material items
+  let sellPriceEach;
+  if (vendorEntry) {
+    sellPriceEach = Math.max(1, Math.floor(vendorEntry.buyPrice * 0.5));
+  } else if (typeof JUNK_SELL_PRICES !== 'undefined' && JUNK_SELL_PRICES[itemId]) {
+    sellPriceEach = JUNK_SELL_PRICES[itemId];
+  } else if (item && (item.type === 'loot' || item.type === 'material')) {
+    sellPriceEach = item.rarity === 'uncommon' ? 5 : item.rarity === 'rare' ? 15 : 2;
+  } else {
+    sellPriceEach = 1;
+  }
+  const sellPrice = sellPriceEach * quantity;
 
   if (!item) { addCombatLog('Unknown item.', 'system'); return false; }
   if (item.nodrop) { addCombatLog(`${item.name} is no-drop and cannot be sold.`, 'system'); return false; }
@@ -904,12 +917,9 @@ function sellToVendor(itemId, quantity) {
     GameState.inventory.splice(idx, 1);
   }
 
-  // Add coin
-  let total = getTotalCopper() + sellPrice;
-  GameState.gold   = Math.floor(total / 1000);
-  total %= 1000;
-  GameState.silver = Math.floor(total / 100);
-  GameState.copper = total % 100;
+  // Add coin using normalizeCoins for correct carry-over
+  GameState.copper = (GameState.copper || 0) + sellPrice;
+  if (typeof normalizeCoins === 'function') normalizeCoins();
 
   addCombatLog(`Sold ${item.name} x${quantity} for ${formatCoins(sellPrice)}.`, 'loot');
   if (typeof renderTopBar === 'function') renderTopBar();

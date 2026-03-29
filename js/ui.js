@@ -367,8 +367,9 @@ function initMainUI() {
 function renderTopBar() {
   const walletEl = document.getElementById('wallet');
   if (walletEl) {
+    const platDisplay = (GameState.platinum || 0) > 0 ? `<span class="platinum-amount">${GameState.platinum}p</span> ` : '';
     walletEl.innerHTML = `
-      <span class="gold-amount">${GameState.gold || 0}g</span>
+      ${platDisplay}<span class="gold-amount">${GameState.gold || 0}g</span>
       <span class="silver-amount">${GameState.silver || 0}s</span>
       <span class="copper-amount">${GameState.copper || 0}c</span>
     `;
@@ -2182,7 +2183,10 @@ function renderBankSlots() {
   return `
     <div class="bank-header">
       <span>🏦 Bank of Qeynos — ${bank.filter(Boolean).length}/${BANK_SLOTS} slots used</span>
-      <button class="btn-deposit-all" id="deposit-all-btn">Deposit All</button>
+      <div class="bank-header-buttons">
+        <button class="btn-deposit-coins" id="deposit-coins-btn">Deposit Coins</button>
+        <button class="btn-deposit-all" id="deposit-all-btn">Deposit All</button>
+      </div>
     </div>
     <div class="inv-grid bank-grid">${slots.join('')}</div>
   `;
@@ -2573,17 +2577,26 @@ function renderCityTabContent(tab) {
         renderCityTabContent('bank');
       });
     }
+    // Wire deposit-coins button
+    const depositCoinsBtn = el.querySelector('#deposit-coins-btn');
+    if (depositCoinsBtn) {
+      depositCoinsBtn.addEventListener('click', () => {
+        if (typeof depositCoinsToBank === 'function') depositCoinsToBank();
+        renderCityTabContent('bank');
+      });
+    }
     // Tooltips for bank items
     el.querySelectorAll('[data-item]').forEach(itemEl => {
       if (itemEl.dataset.item) attachTooltip(itemEl, () => getItemTooltipHTML(itemEl.dataset.item));
     });
     // Coin exchange display
-    const totalCopper = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+    const totalCopper = ((GameState.platinum || 0) * 1000) + ((GameState.gold || 0) * 100) + ((GameState.silver || 0) * 10) + (GameState.copper || 0);
     const exchangeDiv = document.createElement('div');
     exchangeDiv.className = 'city-coin-exchange';
+    const platRow = (GameState.platinum || 0) > 0 ? `<span class="platinum-amount">${GameState.platinum}p</span> ` : '';
     exchangeDiv.innerHTML = `
       <div class="city-section-title">💰 Coin Purse</div>
-      <div class="coin-row"><span class="gold-amount">${GameState.gold || 0}g</span> <span class="silver-amount">${GameState.silver || 0}s</span> <span class="copper-amount">${GameState.copper || 0}c</span></div>
+      <div class="coin-row">${platRow}<span class="gold-amount">${GameState.gold || 0}g</span> <span class="silver-amount">${GameState.silver || 0}s</span> <span class="copper-amount">${GameState.copper || 0}c</span></div>
       <div class="coin-total">Total: ${fmt(totalCopper)}</div>
     `;
     el.insertAdjacentElement('afterbegin', exchangeDiv);
@@ -2608,8 +2621,16 @@ function renderCityTabContent(tab) {
       const item = typeof ITEMS !== 'undefined' ? ITEMS[stack.itemId] : null;
       if (!item || item.nodrop) return '';
       const vendorRef = vendors.find(v => v.itemId === stack.itemId);
-      const basePrice = vendorRef ? vendorRef.buyPrice : 2;
-      const sellPrice = Math.max(1, Math.floor(basePrice * 0.5));
+      let sellPrice;
+      if (vendorRef) {
+        sellPrice = Math.max(1, Math.floor(vendorRef.buyPrice * 0.5));
+      } else if (typeof JUNK_SELL_PRICES !== 'undefined' && JUNK_SELL_PRICES[stack.itemId]) {
+        sellPrice = JUNK_SELL_PRICES[stack.itemId];
+      } else if (item.type === 'loot' || item.type === 'material') {
+        sellPrice = item.rarity === 'uncommon' ? 5 : item.rarity === 'rare' ? 15 : 2;
+      } else {
+        sellPrice = 1;
+      }
       return `
         <div class="vendor-row">
           <span class="vendor-item-name">${getItemIcon(stack.itemId)} ${item.name}${stack.quantity > 1 ? ` x${stack.quantity}` : ''}</span>
@@ -2817,7 +2838,7 @@ function renderCityTabContent(tab) {
         if (!listing) return;
 
         const totalCost = listing.price * listing.qty;
-        const total = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
+        const total = ((GameState.platinum || 0) * 1000) + ((GameState.gold || 0) * 100) + ((GameState.silver || 0) * 10) + (GameState.copper || 0);
         if (total < totalCost) {
           if (typeof addCombatLog === 'function') addCombatLog(`Not enough coin to buy ${listing.itemName} (${fmt2(totalCost)}).`, 'system');
           return;
@@ -2825,10 +2846,12 @@ function renderCityTabContent(tab) {
 
         // Deduct cost
         let remaining = total - totalCost;
-        GameState.gold   = Math.floor(remaining / 1000);
+        GameState.platinum = Math.floor(remaining / 1000);
         remaining %= 1000;
-        GameState.silver = Math.floor(remaining / 100);
-        GameState.copper = remaining % 100;
+        GameState.gold   = Math.floor(remaining / 100);
+        remaining %= 100;
+        GameState.silver = Math.floor(remaining / 10);
+        GameState.copper = remaining % 10;
 
         // Add item to inventory
         if (typeof addToInventory === 'function') {
