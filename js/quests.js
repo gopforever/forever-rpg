@@ -907,6 +907,7 @@ function startQuest(id) {
   if (!state || state.status !== 'available') return;
 
   state.status = 'active';
+  state.progress = state.progress || {};
   if (typeof addCombatLog === 'function') {
     addCombatLog(`Quest started: ${quest.name}`, 'system');
   }

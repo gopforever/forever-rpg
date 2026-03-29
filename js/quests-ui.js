@@ -137,6 +137,45 @@
     }
   }
 
+  // ── Quest completion check ────────────────────────────────────────────────────
+
+  function _isQuestComplete(quest, state) {
+    if (!quest || !state) return false;
+    var obj  = quest.objective;
+    var prog = state.progress || {};
+
+    switch (obj.type) {
+      case 'kill': {
+        if (obj.enemies && obj.enemies.length > 0) {
+          var kc = (typeof GameState !== 'undefined' && GameState.killCounts) || {};
+          var current = 0;
+          for (var i = 0; i < obj.enemies.length; i++) {
+            current += (kc[obj.enemies[i]] || 0);
+          }
+          return current >= (obj.count || 1);
+        }
+        return (prog.zoneKills || 0) >= (obj.count || 1);
+      }
+      case 'kill_all_types': {
+        var killed = prog.killedTypes || {};
+        var kc2    = (typeof GameState !== 'undefined' && GameState.killCounts) || {};
+        return (obj.enemies || []).every(function (id) {
+          return (kc2[id] || 0) > 0 || !!killed[id];
+        });
+      }
+      case 'loot':
+        return (prog.looted || 0) >= (obj.count || 1);
+      case 'reach_floor':
+        return (prog.floor || 0) >= (obj.floor || 1);
+      case 'visit':
+        return (Array.isArray(prog.visited) ? prog.visited.length : 0) >= (obj.count || 1);
+      case 'inspect_ghosts':
+        return (prog.inspected || 0) >= (obj.count || 1);
+      default:
+        return false;
+    }
+  }
+
   // ── Tab: Available ────────────────────────────────────────────────────────────
 
   function _renderAvailable() {
@@ -200,12 +239,14 @@
       var zoneLabel  = quest.zone ? '<div class="quest-card-zone">' + _zoneName(quest.zone) + '</div>' : '';
       var progressHtml = _progressHtml(quest, state);
       var rewardStr  = _rewardSummary(quest.reward);
+      var complete   = _isQuestComplete(quest, state);
       return '<div class="quest-card">' +
         '<div class="quest-card-name">' + quest.name + '</div>' +
         zoneLabel +
         '<div class="quest-card-desc">' + (quest.desc || '') + '</div>' +
         progressHtml +
         (rewardStr ? '<div class="quest-card-reward">\uD83C\uDF81 ' + rewardStr + '</div>' : '') +
+        (complete ? '<button class="quest-accept-btn quest-turnin-btn" onclick="_questTurnIn(\'' + quest.id + '\')">Turn In Quest</button>' : '') +
         '</div>';
     }).join('');
   }
@@ -281,6 +322,11 @@
         if (typeof initQuests === 'function') initQuests();
       }
       if (typeof startQuest === 'function') startQuest(questId);
+      renderQuestLogPanel();
+    };
+
+    window._questTurnIn = function (questId) {
+      if (typeof completeQuest === 'function') completeQuest(questId);
       renderQuestLogPanel();
     };
 

@@ -209,12 +209,14 @@ function rcLoadData() {
     const raw = localStorage.getItem('foreverRPG_save');
     if (raw) {
       const save = JSON.parse(raw);
-      const data = save && save.data;
+      const data = save;
       if (data && Array.isArray(data.party) && data.party.length) {
         // Compute total kills and gold for real player
         const totalKills = Object.values(data.killCounts || {}).reduce((s, v) => s + v, 0);
-        const totalGold  = (data.gold || 0) * 100 + (data.silver || 0) * 10 + (data.copper || 0);
-        const zoneId     = (data.zone && data.zone.id) ? data.zone.id : (data.zone || '');
+        const totalGold  = (data.gold || 0) * 10000 + (data.silver || 0) * 100 + (data.copper || 0);
+        let zoneId = '';
+        if (typeof data.zone === 'string') zoneId = data.zone;
+        else if (data.zone && data.zone.id) zoneId = data.zone.id;
 
         // Compute real-player achievement points from their save data
         let playerAchPts = 0;
