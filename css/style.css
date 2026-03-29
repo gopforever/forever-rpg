@@ -3381,3 +3381,235 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   border-color: var(--gold, #c8a84b);
   color: var(--gold, #c8a84b);
 }
+
+/* ============================================================
+   SPELL EXAMINE MODAL
+   ============================================================ */
+
+#spell-examine-modal.modal {
+  align-items: center;
+  justify-content: center;
+}
+
+#spell-examine-modal .modal-content {
+  min-width: 300px;
+  max-width: 440px;
+  padding: 20px;
+}
+
+.spell-examine-body {
+  margin-top: 8px;
+}
+
+.spell-examine-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--spell-color);
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 6px;
+}
+
+.spell-examine-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 3px 0;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(74,56,32,0.3);
+}
+
+.spell-examine-row:last-child { border-bottom: none; }
+
+.spell-examine-label {
+  color: var(--gold);
+  font-weight: bold;
+  min-width: 90px;
+}
+
+.spell-examine-desc {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 6px 8px;
+  line-height: 1.5;
+}
+
+.spell-examine-effect-tag {
+  display: inline-block;
+  margin-top: 8px;
+  background: rgba(136,68,255,0.15);
+  border: 1px solid var(--spell-color);
+  color: var(--spell-color);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.spell-examine-learned {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--hp-green);
+}
+
+.spell-examine-unlearned {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   MEMBER EXAMINE MODAL
+   ============================================================ */
+
+#member-examine-modal.modal {
+  align-items: center;
+  justify-content: center;
+}
+
+#member-examine-modal .modal-content {
+  min-width: 340px;
+  max-width: 560px;
+  width: 95%;
+  padding: 18px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.member-examine-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 10px;
+}
+
+.member-examine-portrait {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+}
+
+.member-examine-nameblock h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.member-examine-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.member-examine-section {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold-dim);
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 3px;
+  margin: 10px 0 5px;
+}
+
+.member-examine-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.member-examine-vital {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  padding: 3px 8px;
+  color: var(--text-primary);
+}
+
+.member-examine-vital .vital-label {
+  color: var(--gold);
+  font-size: 0.72rem;
+}
+
+.member-examine-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px 12px;
+  font-size: 0.78rem;
+}
+
+.member-examine-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  color: var(--text-secondary);
+}
+
+.member-examine-stat-label { color: var(--gold); font-weight: bold; }
+
+.member-examine-bonus { color: var(--hp-green); font-size: 0.72rem; }
+
+.member-examine-equip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 10px;
+  font-size: 0.75rem;
+}
+
+.member-examine-equip-row {
+  display: flex;
+  gap: 5px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(74,56,32,0.25);
+}
+
+.member-examine-equip-slot {
+  color: var(--gold-dim);
+  min-width: 72px;
+  font-size: 0.7rem;
+}
+
+.member-examine-equip-item {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.member-examine-equip-empty {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.member-examine-effects {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.member-examine-effect-row {
+  padding: 2px 0;
+}
+
+.member-examine-xp {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.member-examine-xp-bar-track {
+  height: 6px;
+  background: var(--xp-dark);
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.member-examine-xp-bar-fill {
+  height: 100%;
+  background: var(--xp-green);
+  border-radius: 3px;
+}
