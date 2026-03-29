@@ -1,5 +1,20 @@
 // ui.js — DOM rendering and UI updates for Forever RPG
 
+/**
+ * Escapes special HTML characters to prevent XSS when inserting user-controlled data into innerHTML.
+ * @param {*} str - The value to escape.
+ * @returns {string} HTML-safe string.
+ */
+function _esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─── Achievement Toast ────────────────────────────────────────────────────────
 
 /**
@@ -328,6 +343,14 @@ function initMainUI() {
       if (examineModal && examineModal.style.display !== 'none') {
         examineModal.style.display = 'none';
       }
+      const spellModal = document.getElementById('spell-examine-modal');
+      if (spellModal && spellModal.style.display !== 'none') {
+        spellModal.style.display = 'none';
+      }
+      const memberModal = document.getElementById('member-examine-modal');
+      if (memberModal && memberModal.style.display !== 'none') {
+        memberModal.style.display = 'none';
+      }
     }
     const num = parseInt(e.key);
     if (num >= 1 && num <= 8 && !e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -339,6 +362,16 @@ function initMainUI() {
       const abilities = (cls && cls.abilities) ? cls.abilities.slice(0, 8) : [];
       const ability = abilities[num - 1];
       if (ability) triggerHotbarAbility(idx, ability);
+    }
+  });
+
+  // Click-outside-to-close for spell and member examine modals
+  ['spell-examine-modal', 'member-examine-modal'].forEach(modalId => {
+    const m = document.getElementById(modalId);
+    if (m) {
+      m.addEventListener('click', (e) => {
+        if (e.target === m) m.style.display = 'none';
+      });
     }
   });
 
@@ -663,6 +696,12 @@ function showPartyMemberContextMenu(e, member, charIdx) {
         renderEquipmentPanel();
         renderSpellsPanel();
         renderHotbar();
+      },
+    },
+    {
+      label: `🔍 Examine ${member.name}`,
+      action: () => {
+        showMemberExamineModal(member);
       },
     },
     isDead ? {
@@ -1312,6 +1351,38 @@ function renderEquipmentPanel() {
 }
 
 /**
+ * Shows a right-click context menu for a spell/ability row with an Examine option.
+ * @param {MouseEvent} e         - The right-click event.
+ * @param {object}     ability   - The ability/spell object.
+ * @param {boolean}    isLearned - Whether the spell is learned.
+ */
+function _showSpellContextMenu(e, ability, isLearned) {
+  document.querySelectorAll('.spell-ctx-menu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'item-context-menu spell-ctx-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;`;
+  menu.innerHTML = `<div class="ctx-item ctx-examine">🔍 Examine Spell</div>`;
+  document.body.appendChild(menu);
+
+  menu.querySelector('.ctx-examine').addEventListener('click', () => {
+    menu.remove();
+    showSpellExamineModal(ability, isLearned);
+  });
+
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth)  menu.style.left = `${window.innerWidth - rect.width - 8}px`;
+  if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height - 8}px`;
+
+  const dismiss = (ev) => {
+    if (!menu.contains(ev.target)) {
+      menu.remove();
+      document.removeEventListener('click', dismiss);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
+}
+
+/**
  * Renders the spells/abilities panel for the currently inspected party member,
  * listing each ability with its name and mana cost.
  * @returns {void}
@@ -1340,7 +1411,14 @@ function renderSpellsPanel() {
     `).join('');
     el.querySelectorAll('.spell-row').forEach((row, i) => {
       const ability = cls.abilities[i];
-      if (ability) attachTooltip(row, () => getAbilityTooltipHTML(ability));
+      if (ability) {
+        attachTooltip(row, () => getAbilityTooltipHTML(ability));
+        row.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          _showSpellContextMenu(e, ability, false);
+        });
+      }
     });
     return;
   }
@@ -1397,6 +1475,20 @@ function renderSpellsPanel() {
       if (typeof renderHotbar === 'function') renderHotbar();
     });
   });
+
+  // Right-click Examine on each spell row
+  el.querySelectorAll('.spell-row').forEach((row, i) => {
+    const spellId = spellBook[i];
+    const spell = spellId ? allSpells.find(s => s.id === spellId) : null;
+    if (spell) {
+      const ability = { name: spell.name, manaCost: spell.manaCost || 0, effect: spell.effect, description: spell.description || '' };
+      row.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        _showSpellContextMenu(e, ability, true);
+      });
+    }
+  });
 }
 
 function renderHotbar() {
@@ -1431,7 +1523,7 @@ function renderHotbar() {
 
       if (spell) {
         // Build a synthetic ability object for compatibility with existing helpers
-        const ability = { name: spell.name, manaCost: spell.manaCost || 0, effect: spell.effect };
+        const ability = { name: spell.name, manaCost: spell.manaCost || 0, effect: spell.effect, description: spell.description || '' };
         const onCd = member && member.abilityCooldowns && member.abilityCooldowns[spell.name] && member.abilityCooldowns[spell.name] > Date.now();
         slot.classList.toggle('hotbar-cooldown', !!onCd);
         slot.innerHTML = `
@@ -1443,6 +1535,11 @@ function renderHotbar() {
         `;
         slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
         attachTooltip(slot, () => getAbilityTooltipHTML(ability));
+        slot.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          _showSpellContextMenu(e, ability, true);
+        });
       } else {
         slot.innerHTML = `<div class="hotbar-key">${keyLabel}</div><div class="hotbar-empty-label">[ Empty ]</div>`;
       }
@@ -1472,6 +1569,11 @@ function renderHotbar() {
         `;
         slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
         attachTooltip(slot, () => getAbilityTooltipHTML(ability));
+        slot.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          _showSpellContextMenu(e, ability, false);
+        });
       } else {
         slot.innerHTML = `<div class="hotbar-key">${i + 1}</div><div class="hotbar-empty-label">—</div>`;
       }
@@ -2086,6 +2188,15 @@ function renderInventoryPanel() {
     });
   });
 
+  // Right-click on filled bag slot items → examine context menu
+  panel.querySelectorAll('#inv-tab-bags .inv-slot.filled[data-item]').forEach(slotEl => {
+    slotEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showExamineModal(slotEl.dataset.item);
+    });
+  });
+
   const depositBtn = panel.querySelector('#deposit-all-btn');
   if (depositBtn) {
     depositBtn.addEventListener('click', () => {
@@ -2329,24 +2440,227 @@ function unequipItem(slotId, member) {
 }
 
 /**
- * Shows a right-click context menu for an inventory carry slot, offering
- * equip-on-member and drop options.
- * @param {MouseEvent} e          - The right-click event for positioning.
- * @param {string}     itemId     - The item ID in the slot.
- * @param {number}     invIndex   - Index in GameState.inventory.
- */
-/**
  * Opens the examine modal with full item details.
  * @param {string} itemId - The item ID to examine.
  */
 function showExamineModal(itemId) {
   let modal = document.getElementById('examine-modal');
   if (!modal) return;
+  const item = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
   const html = typeof getItemTooltipHTML === 'function' ? getItemTooltipHTML(itemId) : '';
+  const title = item ? item.name : 'Item Description';
   const content = modal.querySelector('.modal-content');
   if (content) {
-    content.innerHTML = `<button class="modal-close examine-modal-close">✕</button><div class="examine-body">${html}</div>`;
+    content.innerHTML = `<button class="modal-close examine-modal-close">✕</button><h2>${_esc(title)}</h2><div class="examine-body">${html}</div>`;
     content.querySelector('.examine-modal-close').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+  modal.style.display = 'flex';
+}
+
+/**
+ * Opens a popup window displaying full details about a spell or ability.
+ * @param {object}  ability   - The ability/spell object.
+ * @param {boolean} isLearned - Whether the spell is currently learned/purchased.
+ */
+const _SPELL_EFFECT_TYPE_LABELS = {
+  heal: 'Heal', damage: 'Damage', dot: 'DoT', buff: 'Buff', debuff: 'Debuff',
+  stun: 'Stun', root: 'Root', fear: 'Mez/Fear', calm: 'Pacify', mez: 'Mez',
+  resurrect: 'Resurrect', rez: 'Resurrect', dispel: 'Dispel', cure: 'Cure',
+  damage_undead: 'Damage (Undead)', fear_undead: 'Fear (Undead)', utility: 'Utility',
+  buff_damage: 'Damage Buff',
+};
+
+const _SPELL_TARGET_TYPE_LABELS = {
+  heal: 'Single (Friendly)', damage: 'Single', dot: 'Single', buff: 'Single (Friendly)',
+  debuff: 'Single', stun: 'Single', root: 'Single', fear: 'Single', calm: 'Single',
+  mez: 'Single', resurrect: 'Single (Dead)', rez: 'Single (Dead)', dispel: 'Single',
+  cure: 'Single (Friendly)', damage_undead: 'Single (Undead)', fear_undead: 'Single (Undead)',
+  utility: 'Self', buff_damage: 'Single (Friendly)', aoe: 'AoE',
+};
+
+function showSpellExamineModal(ability, isLearned) {
+  const modal = document.getElementById('spell-examine-modal');
+  if (!modal || !ability) return;
+
+  const effect = ability.effect || {};
+  const effectType = effect.type || '';
+  const effectLabel = _SPELL_EFFECT_TYPE_LABELS[effectType] || effectType;
+  const targetLabel = _SPELL_TARGET_TYPE_LABELS[effectType] || 'Single';
+
+  const castSec  = ability.castTime  > 0 ? (ability.castTime  / 1000).toFixed(1) + 's' : 'Instant';
+  const recastSec = ability.recastTime > 0 ? (ability.recastTime / 1000).toFixed(1) + 's' : 'None';
+
+  let durationStr = '—';
+  if (effect.duration > 0) {
+    const totalSec = Math.floor(effect.duration / 1000);
+    if (totalSec >= 60) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      durationStr = `${m}:${String(s).padStart(2, '0')}`;
+    } else {
+      durationStr = totalSec + 's';
+    }
+  }
+
+  const rangeStr = effect.range > 0 ? effect.range + ' units' : '—';
+  const manaCostStr = ability.manaCost > 0 ? ability.manaCost + ' MP' : 'Passive';
+
+  const rows = [
+    ['Mana Cost',  manaCostStr],
+    ['Cast Time',  castSec],
+    ['Recast',     recastSec],
+    ['Target',     targetLabel],
+    ['Duration',   durationStr],
+    ['Range',      rangeStr],
+  ].map(([label, val]) =>
+    `<div class="spell-examine-row"><span class="spell-examine-label">${label}</span><span>${val}</span></div>`
+  ).join('');
+
+  const learnedHtml = isLearned === undefined ? '' :
+    isLearned
+      ? `<div class="spell-examine-learned">✅ Learned</div>`
+      : `<div class="spell-examine-unlearned">🔒 Not yet learned</div>`;
+
+  const descHtml = ability.description
+    ? `<div class="spell-examine-desc">${_esc(ability.description)}</div>`
+    : '';
+
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.innerHTML = `
+      <button class="modal-close spell-examine-close">✕</button>
+      <div class="spell-examine-body">
+        <div class="spell-examine-name">${_esc(ability.name)}</div>
+        ${rows}
+        ${effectLabel ? `<div class="spell-examine-effect-tag">${_esc(effectLabel)}</div>` : ''}
+        ${learnedHtml}
+        ${descHtml}
+      </div>
+    `;
+    content.querySelector('.spell-examine-close').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+  modal.style.display = 'flex';
+}
+
+/**
+ * Opens a dedicated floating modal showing ALL information about a party member.
+ * @param {object} member - The party member object.
+ */
+function showMemberExamineModal(member) {
+  const modal = document.getElementById('member-examine-modal');
+  if (!modal || !member) return;
+
+  const cls = (typeof CLASSES !== 'undefined') ? CLASSES[member.classId] : null;
+  const className = cls ? cls.name : (member.classId || 'Unknown');
+  const classIcon = cls ? (cls.icon || '⚔') : '⚔';
+  const race = member.race ? (member.race.charAt(0).toUpperCase() + member.race.slice(1)) : '';
+
+  // Vitals
+  const vitals = [
+    { label: '❤ HP',    val: `${member.hp || 0} / ${member.maxHP || 0}` },
+    { label: '💧 Mana', val: `${member.mana || 0} / ${member.maxMana || 0}` },
+    { label: '🛡 AC',   val: member.currentAC || 0 },
+    { label: '⚔ ATK',  val: member.atk || 0 },
+  ];
+  const vitalsHtml = vitals.map(v =>
+    `<div class="member-examine-vital"><span class="vital-label">${v.label}</span>: ${v.val}</div>`
+  ).join('');
+
+  // Primary stats with gear bonuses
+  const STAT_KEYS = ['STR', 'DEX', 'AGI', 'STA', 'WIS', 'INT', 'CHA'];
+  const bonuses = member.statBonuses || {};
+  const statsHtml = STAT_KEYS.map(stat => {
+    const base = member[stat] || 0;
+    const bonus = bonuses[stat] || 0;
+    const bonusStr = bonus > 0 ? `<span class="member-examine-bonus">(+${bonus})</span>` :
+                     bonus < 0 ? `<span style="color:var(--hp-red)">(${bonus})</span>` : '';
+    return `<div class="member-examine-stat-row">
+      <span class="member-examine-stat-label">${stat}</span>
+      <span>${base} ${bonusStr}</span>
+    </div>`;
+  }).join('');
+
+  // Equipment slots
+  const slotLabels = {
+    head:'Head', face:'Face', ear1:'Ear 1', ear2:'Ear 2', neck:'Neck',
+    shoulders:'Shoulders', back:'Back', chest:'Chest',
+    wrist_l:'Wrist L', wrist_r:'Wrist R', hands:'Hands', waist:'Waist',
+    legs:'Legs', feet:'Feet', primary:'Primary', secondary:'Secondary',
+    range:'Range', ammo:'Ammo', ring1:'Ring 1', ring2:'Ring 2',
+  };
+
+  const equipSlots = (typeof EQUIP_SLOTS !== 'undefined') ? EQUIP_SLOTS :
+    ['head','face','ear1','ear2','neck','shoulders','back','chest',
+     'wrist_l','wrist_r','hands','waist','legs','feet',
+     'primary','secondary','range','ammo','ring1','ring2'];
+
+  const equipHtml = equipSlots.map(slot => {
+    const itemId = member.equipment && member.equipment[slot];
+    const item   = itemId && typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
+    const label  = slotLabels[slot] || slot;
+    const rarityClass = item ? `rarity-${_esc(item.rarity || 'common')}` : '';
+    const itemStr = item
+      ? `<span class="member-examine-equip-item ${rarityClass}">${_esc(item.name)}</span>`
+      : `<span class="member-examine-equip-empty">— empty —</span>`;
+    return `<div class="member-examine-equip-row">
+      <span class="member-examine-equip-slot">${_esc(label)}</span>${itemStr}
+    </div>`;
+  }).join('');
+
+  // Status effects
+  const effects = member.statusEffects || [];
+  let effectsHtml = '';
+  if (effects.length > 0) {
+    const now = Date.now();
+    effectsHtml = effects.filter(fx => !fx.endTime || fx.endTime > now).map(fx => {
+      const remSec = fx.endTime ? Math.max(0, Math.ceil((fx.endTime - now) / 1000)) : null;
+      return `<div class="member-examine-effect-row">• ${_esc(fx.type || fx.name || '?')}${remSec !== null ? ` (${remSec}s)` : ''}</div>`;
+    }).join('');
+    if (!effectsHtml) effectsHtml = '<div class="member-examine-effect-row" style="color:var(--text-dim)">None</div>';
+  } else {
+    effectsHtml = '<div class="member-examine-effect-row" style="color:var(--text-dim)">None</div>';
+  }
+
+  // XP progress
+  const xp = member.xp || 0;
+  const xpToNext = member.xpToNext || 1;
+  const xpPct = Math.min(100, Math.floor((xp / xpToNext) * 100));
+  const xpHtml = `
+    <div class="member-examine-xp">
+      Level ${_esc(member.level)} — ${xp.toLocaleString()} / ${xpToNext.toLocaleString()} XP (${xpPct}%)
+      <div class="member-examine-xp-bar-track">
+        <div class="member-examine-xp-bar-fill" style="width:${xpPct}%"></div>
+      </div>
+    </div>
+  `;
+
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.innerHTML = `
+      <button class="modal-close member-examine-close">✕</button>
+      <div class="member-examine-header">
+        <div class="member-examine-portrait">${_esc(classIcon)}</div>
+        <div class="member-examine-nameblock">
+          <h2>${_esc(member.name)}</h2>
+          <div class="member-examine-subtitle">${_esc(className)}${race ? ' · ' + _esc(race) : ''} · Level ${_esc(member.level)}</div>
+        </div>
+      </div>
+      <div class="member-examine-section">⚡ Vitals</div>
+      <div class="member-examine-vitals">${vitalsHtml}</div>
+      <div class="member-examine-section">📊 Primary Stats</div>
+      <div class="member-examine-stats">${statsHtml}</div>
+      <div class="member-examine-section">⚔ Equipment</div>
+      <div class="member-examine-equip-grid">${equipHtml}</div>
+      <div class="member-examine-section">✨ Status Effects</div>
+      <div class="member-examine-effects">${effectsHtml}</div>
+      <div class="member-examine-section">🌟 Experience</div>
+      ${xpHtml}
+    `;
+    content.querySelector('.member-examine-close').addEventListener('click', () => {
       modal.style.display = 'none';
     });
   }
@@ -3243,6 +3557,8 @@ if (typeof module !== 'undefined') module.exports = {
   showItemContextMenu,
   showUnequipContextMenu,
   showExamineModal,
+  showSpellExamineModal,
+  showMemberExamineModal,
   renderDPSMeter,
   addSpellToBar,
   removeSpellFromBar,
