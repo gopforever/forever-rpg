@@ -410,10 +410,19 @@ function renderZonePanel() {
         if (!conn) return '';
         return `<button class="zone-travel-btn" data-zone="${connId}">➤ ${conn.name}</button>`;
       }).join('');
+      // Show current floor label when inside a dungeon with floors
+      let floorLabel = '';
+      if (zone.isDungeon && Array.isArray(zone.floors)) {
+        const floorData = zone.floors.find(f => f.floor === GameState.dungeonFloor);
+        if (floorData) {
+          floorLabel = `<div class="dungeon-floor-label">🗺 Floor ${floorData.floor}: ${floorData.name}</div>`;
+        }
+      }
       zoneInfoEl.innerHTML = `
         <div class="zone-name">${zone.name}</div>
         <div class="zone-levels">${levelDisplay}</div>
         ${isSafe}
+        ${floorLabel}
         <div class="zone-desc">${zone.description}</div>
         ${connections ? `<div class="zone-connections">${connections}</div>` : ''}
       `;
@@ -461,6 +470,11 @@ function changeZone(zoneId) {
   stopCombat();
   GameState.zone = zoneId;
   GameState.selectedEnemyId = null;
+
+  // Reset dungeon floor state whenever the zone changes
+  GameState.dungeonFloor = 1;
+  GameState.miniBossDefeated = false;
+  GameState.floorKills = 0;
 
   if (zone.flavorLines && zone.flavorLines.length > 0) {
     const line = zone.flavorLines[Math.floor(Math.random() * zone.flavorLines.length)];
@@ -989,8 +1003,26 @@ function renderEnemySelector() {
 
   gridEl.innerHTML = '';
 
+  // For dungeon zones with floors, show only the current floor's enemies
+  let commonPool = zone.commonEnemies || [];
+  if (zone.isDungeon && Array.isArray(zone.floors)) {
+    const floorData = zone.floors.find(f => f.floor === GameState.dungeonFloor);
+    if (floorData && floorData.commonEnemies) commonPool = floorData.commonEnemies;
+    // Update the grid header to reflect the current floor
+    const headerEl = document.getElementById('enemy-grid-header');
+    if (headerEl) {
+      headerEl.textContent = floorData
+        ? `⚔ Select Enemy — Floor ${floorData.floor}: ${floorData.name}`
+        : '⚔ Select Enemy';
+    }
+  } else {
+    // Restore default header for non-dungeon zones
+    const headerEl = document.getElementById('enemy-grid-header');
+    if (headerEl) headerEl.textContent = '⚔ Select Enemy';
+  }
+
   const allEnemyIds = [...new Set([
-    ...(zone.commonEnemies || []),
+    ...commonPool,
     ...(zone.rareEnemies || [])
   ])];
 

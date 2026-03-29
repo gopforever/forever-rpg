@@ -58,6 +58,10 @@ const GameState = {
   totalXPEarned: 0,
   namedKills: 0,
   chatMessagesSeen: 0,
+  // Dungeon floor progression
+  dungeonFloor: 1,
+  miniBossDefeated: false,
+  floorKills: 0,
 };
 
 // ============================================================
@@ -336,6 +340,14 @@ function wireUpButtons() {
     });
   }
 
+  // Descend button — advance to the next dungeon floor
+  const descendBtn = document.getElementById('descend-btn');
+  if (descendBtn) {
+    descendBtn.addEventListener('click', () => {
+      if (typeof descendFloor === 'function') descendFloor();
+    });
+  }
+
   // Sit / Stand button
   const sitBtn = document.getElementById('sit-btn');
   if (sitBtn) {
@@ -435,6 +447,21 @@ function updateStopButtonState() {
     } else {
       campIndicator.textContent = '';
       campIndicator.style.display = 'none';
+    }
+  }
+
+  // Descend button — visible when mini-boss defeated and a next floor exists
+  const descendBtn = document.getElementById('descend-btn');
+  if (descendBtn) {
+    const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+    const isDungeon = zone && zone.isDungeon && Array.isArray(zone.floors);
+    if (isDungeon && GameState.miniBossDefeated && !GameState.combatActive) {
+      const currentFloorData = zone.floors.find(f => f.floor === GameState.dungeonFloor);
+      const nextFloor = zone.floors.find(f => f.floor === GameState.dungeonFloor + 1);
+      const canDescend = currentFloorData && !currentFloorData.isFinalFloor && nextFloor;
+      descendBtn.style.display = canDescend ? '' : 'none';
+    } else {
+      descendBtn.style.display = 'none';
     }
   }
 }
