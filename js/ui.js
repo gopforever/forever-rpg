@@ -3309,6 +3309,8 @@ function renderCityTabContent(tab) {
     _renderLbPane('rankings', el);
   } else if (tab === 'tradeskills') {
     if (typeof renderTradeskillsTab === 'function') renderTradeskillsTab();
+  } else if (tab === 'gathering') {
+    if (typeof renderGatheringTab === 'function') renderGatheringTab();
   }
 }
 

@@ -142,6 +142,8 @@ function applyLoadedSave(data) {
     if (!charData.actionBar) charData.actionBar = Array(10).fill(null);
     // Tradeskills — initialize for older saves (safe to call multiple times)
     if (typeof initTradeskills === 'function') initTradeskills(charData);
+    // Gathering — initialize for older saves (safe to call multiple times)
+    if (typeof initGathering === 'function') initGathering(charData);
     return charData;
   });
 
