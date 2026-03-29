@@ -368,7 +368,7 @@ const BEGINNER_ZONES = ['qeynos_hills', 'blackburrow'];
 
 function createSingleGhost(id, name, isNew) {
   const classId     = GHOST_CLASSES[Math.floor(Math.random() * GHOST_CLASSES.length)];
-  const zone        = BEGINNER_ZONES[Math.floor(Math.random() * BEGINNER_ZONES.length)];
+  const zone        = 'qeynos';
   const xpRate      = 0.8 + Math.random() * 0.7;
   const personality = PERSONALITY_TYPES[Math.floor(Math.random() * PERSONALITY_TYPES.length)];
   const ghost = {
