@@ -1561,6 +1561,33 @@ function renderHotbar() {
       }
       hotbarEl.appendChild(slot);
     }
+
+    // Inject innate pet-summon slot for summoner classes with no active pet
+    if (
+      typeof INNATE_PET_ABILITY !== 'undefined' &&
+      INNATE_PET_ABILITY[member.classId] &&
+      typeof getPetForOwner === 'function' &&
+      !getPetForOwner(member.id)
+    ) {
+      const innate = INNATE_PET_ABILITY[member.classId];
+      const emptySlot = hotbarEl.querySelector('.hotbar-empty');
+      const slotEl = emptySlot || document.createElement('div');
+      if (!emptySlot) hotbarEl.appendChild(slotEl);
+
+      const onCd = member.abilityCooldowns &&
+        member.abilityCooldowns[innate.name] &&
+        member.abilityCooldowns[innate.name] > Date.now();
+      slotEl.className = 'hotbar-slot' + (onCd ? ' hotbar-cooldown' : '') + ' hotbar-innate';
+      slotEl.innerHTML = `
+        <div class="hotbar-key">★</div>
+        <div class="hotbar-icon">${getAbilityIcon(innate)}</div>
+        <div class="hotbar-name">${innate.name}</div>
+        <div class="hotbar-cost">${innate.manaCost}mp</div>
+        ${onCd ? '<div class="hotbar-cd-overlay"></div>' : ''}
+      `;
+      slotEl.addEventListener('click', () => triggerHotbarAbility(idx, innate));
+      attachTooltip(slotEl, () => getAbilityTooltipHTML(innate));
+    }
   } else {
     // Melee / non-spell class: use first 8 class abilities as before
     const cls = member && CLASSES[member.classId];
