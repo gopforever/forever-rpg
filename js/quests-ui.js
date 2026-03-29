@@ -277,6 +277,9 @@
     };
 
     window._questAccept = function (questId) {
+      if (typeof GameState !== 'undefined' && !GameState.quests) {
+        if (typeof initQuests === 'function') initQuests();
+      }
       if (typeof startQuest === 'function') startQuest(questId);
       renderQuestLogPanel();
     };

@@ -391,7 +391,9 @@ function renderTradeskillInventory(character) {
     // Left-click: take 1 if transferable, otherwise open context menu
     card.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (typeof ITEMS !== 'undefined' && ITEMS[itemId]) {
+      const isTransferable = (typeof ITEMS !== 'undefined' && !!ITEMS[itemId]) ||
+                             (typeof TRADESKILL_MATERIALS !== 'undefined' && !!TRADESKILL_MATERIALS[itemId]);
+      if (isTransferable) {
         _tsTakeItem(itemId, 1, character);
       } else {
         showTSInvContextMenu(e, itemId, qty, character);
@@ -417,7 +419,9 @@ function _tsTakeItem(itemId, amount, character) {
   const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
   const name = item ? item.name : itemId;
 
-  if (typeof ITEMS === 'undefined' || !ITEMS[itemId]) {
+  const isTransferable = (typeof ITEMS !== 'undefined' && !!ITEMS[itemId]) ||
+                         (typeof TRADESKILL_MATERIALS !== 'undefined' && !!TRADESKILL_MATERIALS[itemId]);
+  if (!isTransferable) {
     _showTSFeedback(`${name} can only be stored in the Tradeskill Inventory.`, 'error');
     return;
   }
@@ -457,7 +461,8 @@ function showTSInvContextMenu(e, itemId, qty, character) {
 
   const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
   const name = item ? item.name : itemId;
-  const inItems = typeof ITEMS !== 'undefined' && !!ITEMS[itemId];
+  const inItems = (typeof ITEMS !== 'undefined' && !!ITEMS[itemId]) ||
+                  (typeof TRADESKILL_MATERIALS !== 'undefined' && !!TRADESKILL_MATERIALS[itemId]);
   const disabledClass = inItems ? '' : ' ctx-disabled';
   const disabledAttr = inItems ? '' : ' disabled';
 

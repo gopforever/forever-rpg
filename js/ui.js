@@ -3041,10 +3041,15 @@ function renderCityTabContent(tab) {
       `;
     }).join('');
 
+    const sellAllBtn = sellRows
+      ? `<button class="city-btn sell-btn" id="sell-all-btn" style="margin-bottom:6px">💰 Sell All</button>`
+      : '';
+
     el.innerHTML = `
       <div class="city-section-title">🛒 General Merchant</div>
       <div class="vendor-list">${itemsForSale || '<div class="city-empty">No items available.</div>'}</div>
       <div class="city-section-title" style="margin-top:12px">💼 Sell Items</div>
+      ${sellAllBtn}
       <div class="vendor-list">${sellRows || '<div class="city-empty">Your inventory is empty.</div>'}</div>
     `;
 
@@ -3060,6 +3065,21 @@ function renderCityTabContent(tab) {
         renderCityTabContent('market');
       });
     });
+
+    const sellAllBtnEl = el.querySelector('#sell-all-btn');
+    if (sellAllBtnEl) {
+      sellAllBtnEl.addEventListener('click', () => {
+        if (typeof sellToVendor !== 'function') return;
+        const inv = GameState.inventory || [];
+        const toSell = inv.filter(Boolean).filter(s => {
+          const it = typeof ITEMS !== 'undefined' ? ITEMS[s.itemId] : null;
+          return it && !it.nodrop;
+        }).map(s => ({ itemId: s.itemId, quantity: s.quantity }));
+        toSell.forEach(s => sellToVendor(s.itemId, s.quantity));
+        renderCityTabContent('market');
+      });
+    }
+
     el.querySelectorAll('[data-item]').forEach(itemEl => {
       if (itemEl.dataset.item) attachTooltip(itemEl, () => getItemTooltipHTML(itemEl.dataset.item));
     });
