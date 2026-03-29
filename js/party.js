@@ -76,6 +76,8 @@ function createCharacter(name, classId, level = 1, raceId = 'human') {
     castingAbility: null,
     isCasting: false,
     nextSwingAt: 0,
+    spellBook: [],
+    actionBar: Array(10).fill(null),
   };
 
   // Equip starting gear

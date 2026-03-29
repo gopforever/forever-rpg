@@ -137,8 +137,27 @@ function applyLoadedSave(data) {
     charData.abilityCooldowns = charData.abilityCooldowns || {};
     charData.castingAbility = null;
     charData.isCasting = false;
+    // Spell book / action bar — initialize for older saves that pre-date this system
+    if (!charData.spellBook) charData.spellBook = [];
+    if (!charData.actionBar) charData.actionBar = Array(10).fill(null);
     return charData;
   });
+
+  // Migrate legacy party-wide learnedSpells into per-character spellBooks
+  if (data.learnedSpells && Array.isArray(data.learnedSpells) && data.learnedSpells.length > 0) {
+    for (const spellId of data.learnedSpells) {
+      const spell = (typeof GUILD_SPELLS !== 'undefined')
+        ? GUILD_SPELLS.find(s => s.id === spellId)
+        : null;
+      if (!spell) continue;
+      for (const char of GameState.party) {
+        if (char.classId === spell.classId && !char.spellBook.includes(spellId)) {
+          char.spellBook.push(spellId);
+        }
+      }
+    }
+  }
+
   GameState.inventory = data.inventory || [];
   if (data.bags !== undefined) GameState.bags = data.bags;
   if (data.bagContents !== undefined) GameState.bagContents = data.bagContents;

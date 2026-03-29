@@ -1289,24 +1289,80 @@ function renderSpellsPanel() {
   const el = document.getElementById('spells-panel');
   if (!el || !member) return;
 
-  const cls = CLASSES[member.classId];
-  if (!cls || !cls.abilities || cls.abilities.length === 0) {
-    el.innerHTML = '<div class="no-spells">No abilities.</div>';
+  const spellBookClasses = typeof SPELL_BOOK_CLASSES !== 'undefined' ? SPELL_BOOK_CLASSES : [];
+  const isSpellBookClass = spellBookClasses.includes(member.classId);
+
+  if (!isSpellBookClass) {
+    // Melee / non-spell class: show class abilities as before
+    const cls = CLASSES[member.classId];
+    if (!cls || !cls.abilities || cls.abilities.length === 0) {
+      el.innerHTML = '<div class="no-spells">No abilities.</div>';
+      return;
+    }
+    el.innerHTML = cls.abilities.map(ability => `
+      <div class="spell-row" data-ability="${ability.name}">
+        <div class="spell-name">${ability.name}</div>
+        <div class="spell-cost">${ability.manaCost > 0 ? ability.manaCost + ' MP' : 'Passive'}</div>
+      </div>
+    `).join('');
+    el.querySelectorAll('.spell-row').forEach((row, i) => {
+      const ability = cls.abilities[i];
+      if (ability) attachTooltip(row, () => getAbilityTooltipHTML(ability));
+    });
     return;
   }
 
-  el.innerHTML = cls.abilities.map(ability => `
-    <div class="spell-row" data-ability="${ability.name}">
-      <div class="spell-name">${ability.name}</div>
-      <div class="spell-cost">${ability.manaCost > 0 ? ability.manaCost + ' MP' : 'Passive'}</div>
-    </div>
-  `).join('');
+  // Spell-book class: show purchased spells from spellBook
+  const spellBook = member.spellBook || [];
+  const actionBar = member.actionBar || [];
+  const usedSlots = actionBar.filter(s => s !== null).length;
 
-  el.querySelectorAll('.spell-row').forEach((row, i) => {
-    const ability = cls.abilities[i];
-    if (ability) {
-      attachTooltip(row, () => getAbilityTooltipHTML(ability));
-    }
+  if (spellBook.length === 0) {
+    el.innerHTML = `<div class="spellbook-empty">No spells memorized. Visit the Guild in Qeynos to purchase spells.</div>`;
+    return;
+  }
+
+  const allSpells = typeof GUILD_SPELLS !== 'undefined' ? GUILD_SPELLS : [];
+  const slotCount = `<div class="spellbook-slot-count">Action Bar: ${usedSlots} / 10 slots used</div>`;
+
+  const rows = spellBook.map(spellId => {
+    const spell = allSpells.find(s => s.id === spellId);
+    if (!spell) return '';
+    const onBar = actionBar.includes(spellId);
+    const barFull = usedSlots >= 10;
+    return `
+      <div class="spell-row${onBar ? ' spell-on-bar' : ''}">
+        <div class="spell-info">
+          <div class="spell-name">${spell.name}${onBar ? ' <span class="spell-on-bar-badge">⚡ On Bar</span>' : ''}</div>
+          <div class="spell-meta">Lv.${spell.level} · ${spell.manaCost > 0 ? spell.manaCost + ' MP' : 'No mana'}</div>
+        </div>
+        <div class="spell-actions">
+          ${onBar
+            ? `<button class="remove-from-bar-btn" data-spell-id="${spellId}">Remove from Bar</button>`
+            : (barFull
+                ? `<span class="spell-bar-full">Bar Full</span>`
+                : `<button class="add-to-bar-btn" data-spell-id="${spellId}">Add to Bar</button>`)
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = slotCount + rows;
+
+  el.querySelectorAll('.add-to-bar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (typeof addSpellToBar === 'function') addSpellToBar(idx, btn.dataset.spellId);
+      renderSpellsPanel();
+      if (typeof renderHotbar === 'function') renderHotbar();
+    });
+  });
+  el.querySelectorAll('.remove-from-bar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (typeof removeSpellFromBar === 'function') removeSpellFromBar(idx, btn.dataset.spellId);
+      renderSpellsPanel();
+      if (typeof renderHotbar === 'function') renderHotbar();
+    });
   });
 }
 
@@ -1322,34 +1378,73 @@ function renderHotbar() {
     labelEl.textContent = member ? `${member.name} [${member.classId}]` : '';
   }
 
-  const cls = member && CLASSES[member.classId];
-  const abilities = (cls && cls.abilities) ? cls.abilities.slice(0, 8) : [];
+  const spellBookClasses = typeof SPELL_BOOK_CLASSES !== 'undefined' ? SPELL_BOOK_CLASSES : [];
+  const isSpellBookClass = member && spellBookClasses.includes(member.classId);
+  const allSpells = typeof GUILD_SPELLS !== 'undefined' ? GUILD_SPELLS : [];
 
   hotbarEl.innerHTML = '';
-  for (let i = 0; i < 8; i++) {
-    const ability = abilities[i] || null;
-    const slot = document.createElement('div');
-    slot.className = 'hotbar-slot' + (ability ? '' : ' hotbar-empty');
-    slot.dataset.index = i;
-    slot.dataset.key = i + 1;
 
-    if (ability) {
-      const onCd = member && member.abilityCooldowns && member.abilityCooldowns[ability.name] && member.abilityCooldowns[ability.name] > Date.now();
-      slot.classList.toggle('hotbar-cooldown', !!onCd);
-      slot.innerHTML = `
-        <div class="hotbar-key">${i + 1}</div>
-        <div class="hotbar-icon">${getAbilityIcon(ability)}</div>
-        <div class="hotbar-name">${ability.name}</div>
-        <div class="hotbar-cost">${ability.manaCost > 0 ? ability.manaCost + 'mp' : 'passive'}</div>
-        ${onCd ? '<div class="hotbar-cd-overlay"></div>' : ''}
-      `;
-      slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
-      attachTooltip(slot, () => getAbilityTooltipHTML(ability));
-    } else {
-      slot.innerHTML = `<div class="hotbar-key">${i + 1}</div><div class="hotbar-empty-label">—</div>`;
+  if (isSpellBookClass) {
+    // 10-slot action bar driven by member.actionBar
+    const actionBar = (member && Array.isArray(member.actionBar)) ? member.actionBar : [];
+    for (let i = 0; i < 10; i++) {
+      const spellId = actionBar[i] || null;
+      const spell = spellId ? allSpells.find(s => s.id === spellId) : null;
+      const slot = document.createElement('div');
+      const keyLabel = i < 9 ? (i + 1) : '0';
+      slot.className = 'hotbar-slot' + (spell ? '' : ' hotbar-empty');
+      slot.dataset.index = i;
+      slot.dataset.key = keyLabel;
+
+      if (spell) {
+        // Build a synthetic ability object for compatibility with existing helpers
+        const ability = { name: spell.name, manaCost: spell.manaCost || 0, effect: spell.effect };
+        const onCd = member && member.abilityCooldowns && member.abilityCooldowns[spell.name] && member.abilityCooldowns[spell.name] > Date.now();
+        slot.classList.toggle('hotbar-cooldown', !!onCd);
+        slot.innerHTML = `
+          <div class="hotbar-key">${keyLabel}</div>
+          <div class="hotbar-icon">${getAbilityIcon(ability)}</div>
+          <div class="hotbar-name">${spell.name}</div>
+          <div class="hotbar-cost">${spell.manaCost > 0 ? spell.manaCost + 'mp' : 'passive'}</div>
+          ${onCd ? '<div class="hotbar-cd-overlay"></div>' : ''}
+        `;
+        slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
+        attachTooltip(slot, () => getAbilityTooltipHTML(ability));
+      } else {
+        slot.innerHTML = `<div class="hotbar-key">${keyLabel}</div><div class="hotbar-empty-label">[ Empty ]</div>`;
+      }
+      hotbarEl.appendChild(slot);
     }
+  } else {
+    // Melee / non-spell class: use first 8 class abilities as before
+    const cls = member && CLASSES[member.classId];
+    const abilities = (cls && cls.abilities) ? cls.abilities.slice(0, 8) : [];
 
-    hotbarEl.appendChild(slot);
+    for (let i = 0; i < 8; i++) {
+      const ability = abilities[i] || null;
+      const slot = document.createElement('div');
+      slot.className = 'hotbar-slot' + (ability ? '' : ' hotbar-empty');
+      slot.dataset.index = i;
+      slot.dataset.key = i + 1;
+
+      if (ability) {
+        const onCd = member && member.abilityCooldowns && member.abilityCooldowns[ability.name] && member.abilityCooldowns[ability.name] > Date.now();
+        slot.classList.toggle('hotbar-cooldown', !!onCd);
+        slot.innerHTML = `
+          <div class="hotbar-key">${i + 1}</div>
+          <div class="hotbar-icon">${getAbilityIcon(ability)}</div>
+          <div class="hotbar-name">${ability.name}</div>
+          <div class="hotbar-cost">${ability.manaCost > 0 ? ability.manaCost + 'mp' : 'passive'}</div>
+          ${onCd ? '<div class="hotbar-cd-overlay"></div>' : ''}
+        `;
+        slot.addEventListener('click', () => triggerHotbarAbility(idx, ability));
+        attachTooltip(slot, () => getAbilityTooltipHTML(ability));
+      } else {
+        slot.innerHTML = `<div class="hotbar-key">${i + 1}</div><div class="hotbar-empty-label">—</div>`;
+      }
+
+      hotbarEl.appendChild(slot);
+    }
   }
 }
 
@@ -1399,6 +1494,49 @@ function triggerHotbarAbility(charIdx, ability) {
   }
   renderHotbar();
 }
+
+/**
+ * Adds a spell to a character's action bar (up to 10 slots).
+ * @param {number} charIdx - Index into GameState.party.
+ * @param {string} spellId - The spell ID to add.
+ * @returns {boolean} True if added successfully.
+ */
+function addSpellToBar(charIdx, spellId) {
+  const member = GameState.party && GameState.party[charIdx];
+  if (!member) return false;
+  if (!Array.isArray(member.actionBar)) member.actionBar = Array(10).fill(null);
+  if (!Array.isArray(member.spellBook)) member.spellBook = [];
+  if (!member.spellBook.includes(spellId)) {
+    addCombatLog('You must learn this spell before putting it on the action bar.', 'system');
+    return false;
+  }
+  if (member.actionBar.includes(spellId)) return false; // already on bar
+  const emptyIdx = member.actionBar.indexOf(null);
+  if (emptyIdx === -1) {
+    addCombatLog('Action bar is full (10 slots). Remove a spell first.', 'system');
+    return false;
+  }
+  member.actionBar[emptyIdx] = spellId;
+  if (typeof saveGame === 'function') saveGame();
+  return true;
+}
+
+/**
+ * Removes a spell from a character's action bar.
+ * @param {number} charIdx - Index into GameState.party.
+ * @param {string} spellId - The spell ID to remove.
+ * @returns {boolean} True if removed successfully.
+ */
+function removeSpellFromBar(charIdx, spellId) {
+  const member = GameState.party && GameState.party[charIdx];
+  if (!member || !Array.isArray(member.actionBar)) return false;
+  const idx = member.actionBar.indexOf(spellId);
+  if (idx === -1) return false;
+  member.actionBar[idx] = null;
+  if (typeof saveGame === 'function') saveGame();
+  return true;
+}
+
 
 /**
  * Appends new drops to the recent-loot list and renders up to the last five
@@ -2505,17 +2643,34 @@ function renderCityTabContent(tab) {
     });
 
   } else if (tab === 'guild') {
-    const char = GameState.party[GameState.inspectedCharIndex || 0];
-    if (!char) {
-      el.innerHTML = '<div class="city-empty">No character selected.</div>';
+    // Identify which characters in the party have spell books
+    const spellBookClasses = typeof SPELL_BOOK_CLASSES !== 'undefined' ? SPELL_BOOK_CLASSES : [];
+    const casterChars = GameState.party.filter(c => spellBookClasses.includes(c.classId));
+
+    if (casterChars.length === 0) {
+      el.innerHTML = '<div class="city-empty">None of your party members use a spell book.</div>';
       return;
     }
 
-    const guild = typeof getGuildForClass === 'function' ? getGuildForClass(char.classId) : null;
+    // Ensure inspectedCharIndex points to a valid caster, else default to first caster
+    let guildCharIdx = GameState.inspectedCharIndex || 0;
+    if (!spellBookClasses.includes(GameState.party[guildCharIdx] && GameState.party[guildCharIdx].classId)) {
+      guildCharIdx = GameState.party.indexOf(casterChars[0]);
+    }
+    const char = GameState.party[guildCharIdx] || casterChars[0];
 
+    // Character selector tabs
+    const charTabs = GameState.party.map((c, i) => {
+      if (!spellBookClasses.includes(c.classId)) return '';
+      const isActive = c === char;
+      return `<button class="char-tab-btn${isActive ? ' active' : ''}" data-guild-char="${i}">${c.name}</button>`;
+    }).join('');
+
+    // Guild info for selected character
+    const guild = typeof getGuildForClass === 'function' ? getGuildForClass(char.classId) : null;
     let guildHtml = '';
     if (!guild || !guild.npc) {
-      guildHtml = `<div class="guild-info"><div class="guild-no-guild">⚠ Your guild is not located in Qeynos.</div><div class="guild-hint">${guild ? guild.name : ''}</div></div>`;
+      guildHtml = `<div class="guild-info"><div class="guild-no-guild">⚠ ${char.name}'s guild is not located in Qeynos.</div></div>`;
     } else {
       guildHtml = `
         <div class="guild-info">
@@ -2526,37 +2681,71 @@ function renderCityTabContent(tab) {
       `;
     }
 
-    const availableSpells = typeof getAvailableSpells === 'function'
-      ? getAvailableSpells(char.classId, char.level)
-      : [];
-    const learnedSpells = GameState.learnedSpells || [];
+    // Build spell list for selected character grouped by class, sorted by level then price
+    // Show ALL spell-book classes present in the party so players can plan
+    const partyClassIds = [...new Set(casterChars.map(c => c.classId))];
+    const allSpells = typeof GUILD_SPELLS !== 'undefined' ? GUILD_SPELLS : [];
 
-    const spellRows = availableSpells.map(spell => {
-      const owned = learnedSpells.includes(spell.id);
-      return `
-        <div class="spell-row ${owned ? 'spell-owned' : ''}">
-          <div class="spell-info">
-            <div class="spell-name">${spell.name} ${owned ? '✓' : ''}</div>
-            <div class="spell-meta">Lv.${spell.level} · ${spell.manaCost > 0 ? spell.manaCost + ' MP' : 'No mana'}</div>
+    const learnedSpells = char.spellBook || [];
+
+    let spellGroupsHtml = '';
+    for (const classId of partyClassIds) {
+      const classSpells = allSpells
+        .filter(s => s.classId === classId)
+        .sort((a, b) => a.level - b.level || a.buyPrice - b.buyPrice);
+      if (classSpells.length === 0) continue;
+
+      // Only show spells the selected character can buy (match classId)
+      const isBuyableClass = char.classId === classId;
+      const cls = typeof CLASSES !== 'undefined' ? CLASSES[classId] : null;
+      const className = cls ? (cls.name || classId) : classId;
+
+      const rows = classSpells.map(spell => {
+        const owned = learnedSpells.includes(spell.id);
+        const tooLow = isBuyableClass && char.level < spell.level;
+        const canBuy = isBuyableClass && !owned && !tooLow;
+        return `
+          <div class="spell-row ${owned ? 'spell-owned' : ''}${tooLow ? ' spell-locked' : ''}">
+            <div class="spell-info">
+              <div class="spell-name">${spell.name}${owned ? ' <span class="spell-learned-badge">✓ Learned</span>' : ''}</div>
+              <div class="spell-meta">Lv.${spell.level} · ${spell.manaCost > 0 ? spell.manaCost + ' MP' : 'No mana'}</div>
+            </div>
+            <div class="spell-purchase">
+              <span class="spell-price">${fmt(spell.buyPrice)}</span>
+              ${canBuy ? `<button class="city-btn" data-buy-spell="${spell.id}">Buy</button>` : ''}
+              ${tooLow ? `<span class="spell-level-req">Lv.${spell.level} req</span>` : ''}
+            </div>
           </div>
-          <div class="spell-purchase">
-            <span class="spell-price">${fmt(spell.buyPrice)}</span>
-            ${owned ? '' : `<button class="city-btn" data-buy-spell="${spell.id}">Buy</button>`}
-          </div>
-        </div>
+        `;
+      }).join('');
+
+      spellGroupsHtml += `
+        <div class="spellbook-header">── ${className.toUpperCase()} ──</div>
+        ${rows}
       `;
-    }).join('');
+    }
 
     el.innerHTML = `
+      <div class="guild-char-tabs">${charTabs}</div>
       ${guildHtml}
-      <div class="city-section-title" style="margin-top:12px">📜 Spells Available</div>
-      ${spellRows || '<div class="city-empty">No spells available for your class and level.</div>'}
+      <div class="city-section-title" style="margin-top:12px">📜 Spell Book — ${char.name}</div>
+      <div class="spellbook-slot-count">Spell Book: ${learnedSpells.length} spell${learnedSpells.length !== 1 ? 's' : ''} learned</div>
+      ${spellGroupsHtml || '<div class="city-empty">No spells available.</div>'}
     `;
+
+    el.querySelectorAll('[data-guild-char]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        GameState.inspectedCharIndex = parseInt(btn.dataset.guildChar, 10);
+        renderCityTabContent('guild');
+      });
+    });
 
     el.querySelectorAll('[data-buy-spell]').forEach(btn => {
       btn.addEventListener('click', () => {
         if (typeof buySpell === 'function') buySpell(btn.dataset.buySpell);
         renderCityTabContent('guild');
+        // Refresh spell panel if open
+        if (typeof renderSpellsPanel === 'function') renderSpellsPanel();
       });
     });
 
@@ -2957,4 +3146,6 @@ if (typeof module !== 'undefined') module.exports = {
   showUnequipContextMenu,
   showExamineModal,
   renderDPSMeter,
+  addSpellToBar,
+  removeSpellFromBar,
 };

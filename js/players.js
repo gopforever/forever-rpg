@@ -379,6 +379,8 @@ function createSingleGhost(id, name, isNew) {
     lastZoneChange: 0,
     ticksInZone: 0,
     party: createGhostParty(name, classId),
+    spellBook: [],
+    actionBar: [],
   };
   if (isNew) {
     setTimeout(() => {
@@ -1264,6 +1266,29 @@ function simulateGhostTick(ghost) {
     ghostBuyFromMarket(ghost);
   }
 
+  // Ghost spell purchasing: if in a safe zone (simulating city visit), buy a random
+  // affordable spell appropriate for their class/level from GUILD_SPELLS.
+  if (typeof SPELL_BOOK_CLASSES !== 'undefined' && SPELL_BOOK_CLASSES.includes(ghost.classId) &&
+      typeof GUILD_SPELLS !== 'undefined' && Math.random() < 0.05) {
+    if (!ghost.spellBook) ghost.spellBook = [];
+    if (!ghost.actionBar) ghost.actionBar = [];
+    const available = GUILD_SPELLS.filter(s =>
+      s.classId === ghost.classId &&
+      s.level <= ghost.level &&
+      !ghost.spellBook.includes(s.id) &&
+      ghost.gold >= Math.ceil(s.buyPrice / 1000)
+    );
+    if (available.length > 0) {
+      const pick = available[Math.floor(Math.random() * available.length)];
+      ghost.gold = Math.max(0, ghost.gold - Math.ceil(pick.buyPrice / 1000));
+      ghost.spellBook.push(pick.id);
+      // Auto-assign to action bar if space is available (up to 10 slots)
+      if (ghost.actionBar.length < 10) {
+        ghost.actionBar.push(pick.id);
+      }
+    }
+  }
+
   // Guild tick
   if (typeof tickGuildProgress === 'function') {
     tickGuildProgress(ghost, killsPerTick, xpPerTick);
@@ -1393,6 +1418,8 @@ function initGhostPlayers() {
     if (!g.personality) g.personality = PERSONALITY_TYPES[Math.floor(Math.random() * PERSONALITY_TYPES.length)];
     if (!g.inventory)   g.inventory   = [];
     if (!g.equipment)   g.equipment   = {};
+    if (!g.spellBook)   g.spellBook   = [];
+    if (!g.actionBar)   g.actionBar   = [];
   }
 
   ghosts = simulateOfflineProgression(ghosts);

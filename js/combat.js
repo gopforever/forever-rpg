@@ -1660,10 +1660,16 @@ function selectAbilityForMember(member, enemy, party) {
   if (!cls || !cls.abilities) return;
   const now = Date.now();
 
-  // Merge base class abilities with purchased guild spells for this member
+  // Merge base class abilities with purchased guild spells for this member.
+  // For spell-book classes, only spells in the character's spellBook AND actionBar
+  // are available. For melee classes, all cls.abilities are always available.
   const learnedAbilities = [];
-  if (typeof GameState !== 'undefined' && GameState.learnedSpells && typeof GUILD_SPELLS !== 'undefined') {
-    for (const spellId of GameState.learnedSpells) {
+  const isSpellBookClass = (typeof SPELL_BOOK_CLASSES !== 'undefined') && SPELL_BOOK_CLASSES.includes(member.classId);
+  if (isSpellBookClass && typeof GUILD_SPELLS !== 'undefined') {
+    const spellBook = Array.isArray(member.spellBook) ? member.spellBook : [];
+    const actionBar = Array.isArray(member.actionBar) ? member.actionBar : [];
+    for (const spellId of spellBook) {
+      if (!actionBar.includes(spellId)) continue; // must also be on the action bar
       const spell = GUILD_SPELLS.find(s => s.id === spellId);
       if (spell && spell.classId === member.classId && spell.level <= member.level) {
         learnedAbilities.push({
@@ -1677,7 +1683,8 @@ function selectAbilityForMember(member, enemy, party) {
       }
     }
   }
-  const allAbilities = [...cls.abilities, ...learnedAbilities];
+  // For spell-book classes use only purchased+bar spells; melee keeps cls.abilities
+  const allAbilities = isSpellBookClass ? learnedAbilities : [...cls.abilities, ...learnedAbilities];
 
   // Gather candidate abilities: usable, off cooldown, mana available
   const candidates = allAbilities.filter(ab => {

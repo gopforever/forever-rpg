@@ -3,6 +3,17 @@
 // ============================================================
 
 /**
+ * Classes that use the spell book system — they must purchase spells in Qeynos
+ * before using them and must manually assign spells to their action bar.
+ * @type {string[]}
+ */
+const SPELL_BOOK_CLASSES = [
+  'cleric', 'druid', 'shaman',
+  'wizard', 'magician', 'enchanter', 'necromancer',
+  'paladin', 'shadowknight', 'bard', 'ranger',
+];
+
+/**
  * Global mutable state object for the entire game session.
  * Tracks party, enemies, inventory, zone, combat state, and settings.
  * @type {object}
@@ -436,4 +447,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(init, 50);
 });
 
-if (typeof module !== 'undefined') module.exports = { GameState, startGameLoops, init };
+if (typeof module !== 'undefined') module.exports = { GameState, SPELL_BOOK_CLASSES, startGameLoops, init };
