@@ -76,6 +76,28 @@ const ACHIEVEMENTS = [
   { id: 'inspect_ghost',      category: 'vanity',      name: 'People Watcher',        desc: 'Inspect a ghost player' },
   { id: 'zone_chat_10',       category: 'vanity',      name: 'Social Butterfly',      desc: 'See 10 zone chat messages', threshold: 10 },
   { id: 'world_first_witness',category: 'vanity',      name: 'History Maker',         desc: 'Be online when a World First occurs' },
+
+  // Dungeon — Blackburrow
+  { id: 'bb_enter',             category: 'dungeon', name: 'Smells Like Wet Dog',            desc: 'Enter Blackburrow for the first time' },
+  { id: 'bb_floor2',            category: 'dungeon', name: 'Going Deeper',                   desc: 'Reach Floor 2 of Blackburrow' },
+  { id: 'bb_floor3',            category: 'dungeon', name: 'No Way Back Up',                 desc: "Reach Floor 3 of Blackburrow — The Shaman's Den" },
+  { id: 'bb_floor4',            category: 'dungeon', name: "Where the Sun Doesn't Reach",    desc: 'Reach Floor 4 of Blackburrow — The Deep Warrens' },
+  { id: 'bb_floor5',            category: 'dungeon', name: 'Audience With the Warlord',      desc: 'Reach Floor 5 of Blackburrow — The Darkpaw Throne' },
+  { id: 'bb_clear',             category: 'dungeon', name: 'Blackburrow Cleared',            desc: 'Defeat Tranixx Darkpaw and complete Blackburrow' },
+  { id: 'bb_brewer_slain',      category: 'dungeon', name: 'Last Call',                      desc: 'Slay the Gnoll Brewer in Blackburrow' },
+  { id: 'bb_master_brewer',     category: 'dungeon', name: 'The Brew Stops Here',            desc: 'Slay the Master Brewer in Blackburrow' },
+  { id: 'bb_high_shaman',       category: 'dungeon', name: 'Silenced the Spirits',           desc: 'Slay the Gnoll High Shaman in Blackburrow' },
+  { id: 'bb_lord_elgnub',       category: 'dungeon', name: 'Dethroned',                      desc: 'Slay Lord Elgnub, ruler of the deep warrens' },
+  { id: 'bb_tranixx',           category: 'dungeon', name: 'The Darkpaw Falls',              desc: 'Slay Tranixx Darkpaw, the legendary warlord of Blackburrow' },
+  { id: 'bb_no_deaths',         category: 'dungeon', name: 'Clean Paws',                     desc: 'Clear Blackburrow without a single party death' },
+  { id: 'bb_all_floors_solo',   category: 'dungeon', name: 'One Gnoll Army',                 desc: 'Clear all 5 floors of Blackburrow solo (party of 1)' },
+  { id: 'bb_speed_clear',       category: 'dungeon', name: 'Like a Bat Out of Blackburrow',  desc: 'Clear Blackburrow in under 10 minutes', threshold: 600 },
+  { id: 'bb_stout_collector',   category: 'dungeon', name: 'Blackburrow Stout Connoisseur',  desc: 'Loot 5 Blackburrow Stouts', threshold: 5 },
+  { id: 'bb_gnoll_genocide',    category: 'dungeon', name: 'Gnoll Exterminatus',             desc: 'Kill 100 gnolls inside Blackburrow', threshold: 100 },
+  { id: 'bb_pelt_collector',    category: 'dungeon', name: 'Furrier of the Year',            desc: 'Collect 10 Blackburrow Gnoll Pelts', threshold: 10 },
+  { id: 'bb_poisoned_survivor', category: 'dungeon', name: 'Built Different',                desc: 'Survive a poison proc from a gnoll shaman and still win the fight' },
+  { id: 'bb_train_survivor',    category: 'dungeon', name: 'Caught a Train',                 desc: 'Win a fight against 4 or more Blackburrow enemies at once' },
+  { id: 'bb_tranixx_loot',      category: 'dungeon', name: 'Trophies from the Dark',         desc: 'Loot a named item from Tranixx Darkpaw' },
 ];
 
 // ─── Storage ─────────────────────────────────────────────────────────────────────
@@ -358,6 +380,12 @@ function checkAchievements(event, data) {
       if (ALL_ZONE_IDS.every(z => visited.has(z))) {
         unlockAchievement('all_zones');
       }
+
+      // Blackburrow entry
+      if (zoneId === 'blackburrow') {
+        unlockAchievement('bb_enter');
+        checkAchievements('dungeon_floor', { dungeonId: 'blackburrow', floor: 1 });
+      }
       break;
     }
 
@@ -454,6 +482,87 @@ function checkAchievements(event, data) {
     case 'world_first_witness':
       unlockAchievement('world_first_witness');
       break;
+
+    case 'dungeon_floor': {
+      const { dungeonId, floor } = data || {};
+      if (dungeonId === 'blackburrow') {
+        if (floor >= 1) unlockAchievement('bb_enter');
+        if (floor >= 2) unlockAchievement('bb_floor2');
+        if (floor >= 3) unlockAchievement('bb_floor3');
+        if (floor >= 4) unlockAchievement('bb_floor4');
+        if (floor >= 5) unlockAchievement('bb_floor5');
+      }
+      break;
+    }
+
+    case 'dungeon_boss_kill': {
+      const { dungeonId, bossId, party, timeSeconds, noDeath } = data || {};
+      if (dungeonId === 'blackburrow') {
+        if (bossId === 'gnoll_brewer')         unlockAchievement('bb_brewer_slain');
+        if (bossId === 'master_brewer')        unlockAchievement('bb_master_brewer');
+        if (bossId === 'gnoll_high_shaman_bb') unlockAchievement('bb_high_shaman');
+        if (bossId === 'lord_elgnub')          unlockAchievement('bb_lord_elgnub');
+        if (bossId === 'tranixx_darkpaw') {
+          unlockAchievement('bb_tranixx');
+          unlockAchievement('bb_clear');
+          if (noDeath) unlockAchievement('bb_no_deaths');
+          if (party && party.length === 1) unlockAchievement('bb_all_floors_solo');
+          if (timeSeconds !== undefined) updateAchievementProgress('bb_speed_clear', timeSeconds);
+          if (typeof recordWorldFirst === 'function' && party && party.length) {
+            const playerName = party[0].name || 'Someone';
+            recordWorldFirst('first_tranixx_darkpaw', playerName, `${playerName} was first to slay Tranixx Darkpaw in Blackburrow!`);
+          }
+        }
+      }
+      break;
+    }
+
+    case 'dungeon_loot': {
+      const { dungeonId, itemId, item } = data || {};
+      if (dungeonId === 'blackburrow') {
+        if (itemId === 'blackburrow_stout') {
+          if (typeof GameState !== 'undefined') {
+            GameState.bb_stoutCount = (GameState.bb_stoutCount || 0) + 1;
+            updateAchievementProgress('bb_stout_collector', GameState.bb_stoutCount);
+          }
+        }
+        if (itemId === 'blackburrow_gnoll_pelt' || itemId === 'blackburrow_gnoll_skin' || itemId === 'ruined_blackburrow_gnoll_pelt') {
+          if (typeof GameState !== 'undefined') {
+            GameState.bb_peltCount = (GameState.bb_peltCount || 0) + 1;
+            updateAchievementProgress('bb_pelt_collector', GameState.bb_peltCount);
+          }
+        }
+        if (item && item.rarity === 'named' && (itemId === 'darkpaw_hide_cloak' || itemId === 'darkpaw_fang_necklace')) {
+          unlockAchievement('bb_tranixx_loot');
+        }
+      }
+      break;
+    }
+
+    case 'dungeon_kill': {
+      const { dungeonId, enemyId, enemy, enemyCount, party } = data || {};
+      if (dungeonId === 'blackburrow') {
+        const gnollIds = [
+          'gnoll_pup', 'a_scrawny_gnoll', 'scrawny_gnoll', 'a_gnoll_guard', 'burly_gnoll', 'a_burly_gnoll',
+          'gnoll_guard', 'a_gnoll_shaman', 'gnoll_shaman', 'a_gnoll_guard_elite', 'gnoll_commander',
+          'gnoll_commander_bb', 'gnoll_high_shaman', 'gnoll_high_shaman_bb', 'lord_elgnub',
+          'gnoll_brewer', 'master_brewer', 'tranixx_darkpaw',
+        ];
+        if (gnollIds.includes(enemyId)) {
+          if (typeof GameState !== 'undefined') {
+            GameState.bb_gnollKills = (GameState.bb_gnollKills || 0) + 1;
+            updateAchievementProgress('bb_gnoll_genocide', GameState.bb_gnollKills);
+          }
+        }
+        if ((enemyCount || 0) >= 4) {
+          unlockAchievement('bb_train_survivor');
+        }
+        if (enemy && enemy.statusProcs && enemy.statusProcs.some(p => p.type === 'poison') && party && party.every(m => m.hp > 0)) {
+          unlockAchievement('bb_poisoned_survivor');
+        }
+      }
+      break;
+    }
 
     default:
       break;

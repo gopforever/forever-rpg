@@ -2206,6 +2206,53 @@ const ITEMS = {
     ac: 14,
     stats: { AGI: 12, STA: 8 },
   },
+
+  ruined_blackburrow_gnoll_pelt: {
+    id: 'ruined_blackburrow_gnoll_pelt',
+    name: 'Ruined Blackburrow Gnoll Pelt',
+    slot: 'inventory',
+    type: 'material',
+    rarity: 'common',
+    lore: false,
+    nodrop: false,
+    weight: 2.5,
+    classes: [],
+    races: [],
+    flavor: "A shredded pelt from a Blackburrow gnoll shaman or Tranixx Darkpaw himself. Still fetches a coin or two.",
+  },
+
+  darkpaw_hide_cloak: {
+    id: 'darkpaw_hide_cloak',
+    name: "Darkpaw's Hide Cloak",
+    slot: 'back',
+    type: 'armor',
+    rarity: 'named',
+    lore: true,
+    nodrop: false,
+    weight: 2.0,
+    classes: [],
+    races: [],
+    flavor: "Cut from the pelt of Tranixx Darkpaw himself. Still smells of the deep warrens.",
+    ac: 8,
+    stats: { AGI: 3, STA: 2 },
+  },
+
+  darkpaw_fang_necklace: {
+    id: 'darkpaw_fang_necklace',
+    name: "Darkpaw Fang Necklace",
+    slot: 'neck',
+    type: 'jewelry',
+    rarity: 'named',
+    lore: true,
+    nodrop: false,
+    weight: 0.2,
+    classes: [],
+    races: [],
+    flavor: "The oversized fangs of Tranixx Darkpaw, strung together. A trophy of Blackburrow's most feared denizen.",
+    ac: 3,
+    stats: { STR: 2, STA: 3 },
+    resists: { disease: 5 },
+  },
 };
 
 /**
