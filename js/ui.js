@@ -2753,15 +2753,19 @@ function renderCityTabContent(tab) {
         .sort((a, b) => a.level - b.level || a.buyPrice - b.buyPrice);
       if (classSpells.length === 0) continue;
 
-      // Only show spells the selected character can buy (match classId)
-      const isBuyableClass = char.classId === classId;
+      // Find the actual party member who belongs to this class (not just the inspected char)
+      const classChar = GameState.party.find(c => c.classId === classId) || char;
+      const classCharIdx = GameState.party.indexOf(classChar);
+      // Fallback to 0 if indexOf returns -1 (shouldn't happen, but guard against it)
+      const safeClassCharIdx = classCharIdx >= 0 ? classCharIdx : 0;
+      const classCharSpellBook = classChar.spellBook || [];
       const cls = typeof CLASSES !== 'undefined' ? CLASSES[classId] : null;
       const className = cls ? (cls.name || classId) : classId;
 
       const rows = classSpells.map(spell => {
-        const owned = learnedSpells.includes(spell.id);
-        const tooLow = isBuyableClass && char.level < spell.level;
-        const canBuy = isBuyableClass && !owned && !tooLow;
+        const owned = classCharSpellBook.includes(spell.id);
+        const tooLow = classChar.level < spell.level;
+        const canBuy = !owned && !tooLow;
         return `
           <div class="spell-row ${owned ? 'spell-owned' : ''}${tooLow ? ' spell-locked' : ''}">
             <div class="spell-info">
@@ -2770,7 +2774,7 @@ function renderCityTabContent(tab) {
             </div>
             <div class="spell-purchase">
               <span class="spell-price">${fmt(spell.buyPrice)}</span>
-              ${canBuy ? `<button class="city-btn" data-buy-spell="${spell.id}">Buy</button>` : ''}
+              ${canBuy ? `<button class="city-btn" data-buy-spell="${spell.id}" data-char-idx="${safeClassCharIdx}">Buy</button>` : ''}
               ${tooLow ? `<span class="spell-level-req">Lv.${spell.level} req</span>` : ''}
             </div>
           </div>
@@ -2800,6 +2804,8 @@ function renderCityTabContent(tab) {
 
     el.querySelectorAll('[data-buy-spell]').forEach(btn => {
       btn.addEventListener('click', () => {
+        const charIdx = parseInt(btn.dataset.charIdx, 10);
+        GameState.inspectedCharIndex = charIdx;
         if (typeof buySpell === 'function') buySpell(btn.dataset.buySpell);
         renderCityTabContent('guild');
         // Refresh spell panel if open
