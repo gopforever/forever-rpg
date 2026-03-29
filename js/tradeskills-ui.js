@@ -363,7 +363,8 @@ function renderTradeskillInventory(character) {
     const name = typeof _esc === 'function'
       ? _esc(item ? item.name : itemId)
       : (item ? item.name : itemId);
-    const card = `<div class="ts-inv-item" title="${name}">
+    const safeId = typeof _esc === 'function' ? _esc(itemId) : itemId;
+    const card = `<div class="ts-inv-item" title="${name}" data-item-id="${safeId}" data-qty="${qty}">
       <span class="ts-inv-icon">${icon}</span>
       <span class="ts-inv-name">${name}</span>
       <span class="ts-inv-qty">×${qty}</span>
@@ -381,6 +382,163 @@ function renderTradeskillInventory(character) {
   panel.innerHTML =
     (products.length ? buildGroup('Crafted Items', products) : '') +
     (materials.length ? buildGroup('Materials', materials) : '');
+
+  // Wire click interactions on inventory cards
+  panel.querySelectorAll('.ts-inv-item').forEach(card => {
+    const itemId = card.dataset.itemId;
+    const qty = parseInt(card.dataset.qty, 10) || 0;
+
+    // Left-click: take 1 if transferable, otherwise open context menu
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof ITEMS !== 'undefined' && ITEMS[itemId]) {
+        _tsTakeItem(itemId, 1, character);
+      } else {
+        showTSInvContextMenu(e, itemId, qty, character);
+      }
+    });
+
+    // Right-click: always show context menu
+    card.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showTSInvContextMenu(e, itemId, qty, character);
+    });
+  });
+}
+
+/**
+ * Take `amount` of itemId from tradeskillInventory into carry inventory.
+ * @param {string} itemId
+ * @param {number} amount
+ * @param {object} character
+ */
+function _tsTakeItem(itemId, amount, character) {
+  const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
+  const name = item ? item.name : itemId;
+
+  if (typeof ITEMS === 'undefined' || !ITEMS[itemId]) {
+    _showTSFeedback(`${name} can only be stored in the Tradeskill Inventory.`, 'error');
+    return;
+  }
+
+  const have = (character.tradeskillInventory && character.tradeskillInventory[itemId]) || 0;
+  const toTake = Math.min(amount, have);
+  if (toTake <= 0) return;
+
+  if (typeof addToInventory !== 'function') return;
+  const success = addToInventory(itemId, toTake);
+  if (!success) {
+    _showTSFeedback(`Inventory full! Could not take ${name}.`, 'error');
+    return;
+  }
+
+  character.tradeskillInventory[itemId] = have - toTake;
+  if (character.tradeskillInventory[itemId] <= 0) {
+    delete character.tradeskillInventory[itemId];
+  }
+
+  _showTSFeedback(`Took ${toTake}× ${name}.`, 'success');
+  if (typeof addCombatLog === 'function') addCombatLog(`Took ${toTake}× ${name} from tradeskill inventory.`, 'system');
+  if (typeof saveGame === 'function') saveGame();
+  renderTradeskillInventory(character);
+  if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
+}
+
+/**
+ * Show a context menu for a tradeskill inventory item.
+ * @param {MouseEvent} e
+ * @param {string} itemId
+ * @param {number} qty
+ * @param {object} character
+ */
+function showTSInvContextMenu(e, itemId, qty, character) {
+  document.querySelectorAll('.ts-inv-context-menu').forEach(m => m.remove());
+
+  const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
+  const name = item ? item.name : itemId;
+  const inItems = typeof ITEMS !== 'undefined' && !!ITEMS[itemId];
+  const disabledClass = inItems ? '' : ' ctx-disabled';
+  const disabledAttr = inItems ? '' : ' disabled';
+
+  const menu = document.createElement('div');
+  menu.className = 'item-context-menu ts-inv-context-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;`;
+  menu.innerHTML = `
+    <div class="ctx-item ctx-examine">🔍 Examine</div>
+    <div class="ctx-item ctx-take${disabledClass}"${disabledAttr}>📥 Take</div>
+    <div class="ctx-item ctx-take-all${disabledClass}"${disabledAttr}>📥 Take All (×${qty})</div>
+    <div class="ctx-item ctx-destroy">🗑 Destroy</div>
+  `;
+  document.body.appendChild(menu);
+
+  menu.querySelector('.ctx-examine').addEventListener('click', () => {
+    menu.remove();
+    if (inItems && typeof showExamineModal === 'function') {
+      showExamineModal(itemId);
+    } else {
+      showTSItemExamineModal(itemId);
+    }
+  });
+
+  if (inItems) {
+    menu.querySelector('.ctx-take').addEventListener('click', () => {
+      menu.remove();
+      _tsTakeItem(itemId, 1, character);
+    });
+
+    menu.querySelector('.ctx-take-all').addEventListener('click', () => {
+      menu.remove();
+      _tsTakeItem(itemId, qty, character);
+    });
+  }
+
+  menu.querySelector('.ctx-destroy').addEventListener('click', () => {
+    menu.remove();
+    if (confirm(`Destroy all ${qty}× ${name}? This cannot be undone.`)) {
+      if (character.tradeskillInventory) {
+        delete character.tradeskillInventory[itemId];
+      }
+      if (typeof addCombatLog === 'function') addCombatLog(`Destroyed ${qty}× ${name}.`, 'system');
+      if (typeof saveGame === 'function') saveGame();
+      renderTradeskillInventory(character);
+    }
+  });
+
+  const dismiss = () => { menu.remove(); document.removeEventListener('click', dismiss); };
+  setTimeout(() => document.addEventListener('click', dismiss), 0);
+}
+
+/**
+ * Show a simple examine modal for items that only exist in the TS item table.
+ * @param {string} itemId
+ */
+function showTSItemExamineModal(itemId) {
+  const item = typeof getTSItem === 'function' ? getTSItem(itemId) : null;
+  if (!item) return;
+
+  const esc = typeof _esc === 'function' ? _esc : (s) => String(s);
+  const existing = document.getElementById('ts-examine-modal-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ts-examine-modal-overlay';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="examine-modal">
+      <div class="examine-modal-header">
+        <span class="examine-icon">${esc(item.icon || '📦')}</span>
+        <span class="examine-name">${esc(item.name || itemId)}</span>
+      </div>
+      <div class="examine-desc">${esc(item.description || '')}</div>
+      <button class="examine-close" id="ts-examine-close">Close</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  document.getElementById('ts-examine-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }
 
 // ─── Progress Bar Animation ───────────────────────────────────────────────────
@@ -450,5 +608,7 @@ if (typeof module !== 'undefined') {
     renderTradeskillInventory,
     startCraftUI,
     updateTradeskillsUI,
+    showTSInvContextMenu,
+    showTSItemExamineModal,
   };
 }
