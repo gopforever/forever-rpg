@@ -92,7 +92,7 @@ const ACHIEVEMENTS = [
   { id: 'bb_tranixx',           category: 'dungeon', name: 'The Darkpaw Falls',              desc: 'Slay Tranixx Darkpaw, the legendary warlord of Blackburrow',   points: 10 },
   { id: 'bb_no_deaths',         category: 'dungeon', name: 'Clean Paws',                     desc: 'Clear Blackburrow without a single party death',               points: 25 },
   { id: 'bb_all_floors_solo',   category: 'dungeon', name: 'One Gnoll Army',                 desc: 'Clear all 5 floors of Blackburrow solo (party of 1)',           points: 25 },
-  { id: 'bb_speed_clear',       category: 'dungeon', name: 'Like a Bat Out of Blackburrow',  desc: 'Clear Blackburrow in under 10 minutes', threshold: 600,         points: 25 },
+  { id: 'bb_speed_clear',       category: 'dungeon', name: 'Like a Bat Out of Blackburrow',  desc: 'Clear Blackburrow in under 10 minutes',                         points: 25 },
   { id: 'bb_stout_collector',   category: 'dungeon', name: 'Blackburrow Stout Connoisseur',  desc: 'Loot 5 Blackburrow Stouts', threshold: 5,                      points: 10 },
   { id: 'bb_gnoll_genocide',    category: 'dungeon', name: 'Gnoll Exterminatus',             desc: 'Kill 100 gnolls inside Blackburrow', threshold: 100,            points: 10 },
   { id: 'bb_pelt_collector',    category: 'dungeon', name: 'Furrier of the Year',            desc: 'Collect 10 Blackburrow Gnoll Pelts', threshold: 10,             points: 10 },
@@ -117,7 +117,7 @@ const ACHIEVEMENTS = [
   { id: 'bef_gynok',             category: 'dungeon', name: "The Traitor's End",               desc: 'Slay Gynok Moltor, the fallen paladin who betrayed the light',                   points: 10 },
   { id: 'bef_no_deaths',         category: 'dungeon', name: 'Untouchable in the Dark',         desc: 'Clear Befallen without a single party death',                                    points: 25 },
   { id: 'bef_solo',              category: 'dungeon', name: 'Into Darkness Alone',             desc: 'Clear all 6 floors of Befallen solo (party of 1)',                               points: 25 },
-  { id: 'bef_speed_clear',       category: 'dungeon', name: 'Racing the Reaper',               desc: 'Clear Befallen in under 15 minutes', threshold: 900,                             points: 25 },
+  { id: 'bef_speed_clear',       category: 'dungeon', name: 'Racing the Reaper',               desc: 'Clear Befallen in under 15 minutes',                                                 points: 25 },
   { id: 'bef_undead_slayer',     category: 'dungeon', name: 'Bane of the Undead',              desc: 'Kill 150 undead enemies inside Befallen', threshold: 150,                        points: 10 },
   { id: 'bef_all_named',         category: 'dungeon', name: 'No Survivors',                    desc: 'Kill every named NPC in Befallen in a single run', threshold: 7,                 points: 10 },
   { id: 'bef_cursed_loot',       category: 'dungeon', name: 'Touched by Marnek',               desc: 'Loot the Dagger of Marnek from Gynok Moltor',                                    points: 10 },
@@ -139,7 +139,6 @@ const WORLD_FIRSTS_SAVE_KEY = 'foreverRPG_worldFirsts';
 
 let _achievements = [];
 let _worldFirsts  = {};
-let _achievementListeners = [];
 
 // ─── Load / Save ─────────────────────────────────────────────────────────────────
 
@@ -239,8 +238,6 @@ function onAchievementUnlocked(achievement) {
   if (typeof showAchievementToast === 'function') {
     showAchievementToast(achievement);
   }
-  // Mark "History Maker" for anyone online when world first happens
-  if (achievement.id === 'world_first_witness') return;
 }
 
 // ─── World Firsts ──────────────────────────────────────────────────────────────────
@@ -283,7 +280,10 @@ const ALL_ZONE_IDS = Object.keys(ZONE_ACH_MAP);
 let _consecutiveWins = 0;
 
 function checkAchievements(event, data) {
-  if (!_achievements.length) return;
+  if (!_achievements.length) {
+    console.warn('[Achievements] checkAchievements called before initAchievements(); event dropped:', event);
+    return;
+  }
 
   switch (event) {
     case 'first_login':
@@ -553,7 +553,7 @@ function checkAchievements(event, data) {
           unlockAchievement('bb_clear');
           if (noDeath) unlockAchievement('bb_no_deaths');
           if (party && party.length === 1) unlockAchievement('bb_all_floors_solo');
-          if (timeSeconds !== undefined) updateAchievementProgress('bb_speed_clear', timeSeconds);
+          if (timeSeconds !== undefined && timeSeconds <= 600) unlockAchievement('bb_speed_clear');
           if (typeof recordWorldFirst === 'function' && party && party.length) {
             const playerName = party[0].name || 'Someone';
             recordWorldFirst('first_tranixx_darkpaw', playerName, `${playerName} was first to slay Tranixx Darkpaw in Blackburrow!`);
@@ -571,7 +571,7 @@ function checkAchievements(event, data) {
           unlockAchievement('bef_clear');
           if (noDeath) unlockAchievement('bef_no_deaths');
           if (party && party.length === 1) unlockAchievement('bef_solo');
-          if (timeSeconds !== undefined) updateAchievementProgress('bef_speed_clear', timeSeconds);
+          if (timeSeconds !== undefined && timeSeconds <= 900) unlockAchievement('bef_speed_clear');
           if (typeof recordWorldFirst === 'function' && party && party.length) {
             const playerName = party[0].name || 'Someone';
             recordWorldFirst('first_gynok_moltor', playerName, `${playerName} was first to slay Gynok Moltor in Befallen!`);
@@ -691,6 +691,13 @@ function initAchievements() {
     const totalCopper = ((GameState.gold || 0) * 1000) + ((GameState.silver || 0) * 100) + (GameState.copper || 0);
     checkAchievements('gold', { totalCopper });
 
+    // XP check
+    const totalXP = GameState.totalXP || 0;
+    if (totalXP > 0) {
+      updateAchievementProgress('earn_1000_xp', totalXP);
+      updateAchievementProgress('earn_100k_xp', totalXP);
+    }
+
     // Kill counts
     const totalKills = Object.values(GameState.killCounts || {}).reduce((s, v) => s + v, 0);
     if (totalKills > 0) {
@@ -701,6 +708,15 @@ function initAchievements() {
         party: GameState.party,
       });
     }
+
+    // Dungeon counter rechecks
+    if (GameState.bb_gnollKills)    updateAchievementProgress('bb_gnoll_genocide',  GameState.bb_gnollKills);
+    if (GameState.bb_stoutCount)    updateAchievementProgress('bb_stout_collector', GameState.bb_stoutCount);
+    if (GameState.bb_peltCount)     updateAchievementProgress('bb_pelt_collector',  GameState.bb_peltCount);
+    if (GameState.bef_undeadKills)  updateAchievementProgress('bef_undead_slayer',  GameState.bef_undeadKills);
+    if (GameState.bef_namedKills)   updateAchievementProgress('bef_all_named',      GameState.bef_namedKills);
+    if (GameState.namedKills)       updateAchievementProgress('named_5',            GameState.namedKills);
+    if (GameState.chatMessagesSeen) updateAchievementProgress('zone_chat_10',       GameState.chatMessagesSeen);
   }
 }
 
