@@ -63,6 +63,18 @@ const RC_PERSONALITY_LABELS = {
   veteran:'Veteran', newbie:'Newbie', hardcore:'Hardcore', roleplayer:'Roleplayer',
 };
 
+const RC_RACE_ICONS = {
+  human:'🧑', barbarian:'🪓', darkelf:'🧝', dwarf:'⛏️', erudite:'🔮',
+  gnome:'🔧', halfelf:'🧝‍♀️', halfling:'🍀', highelf:'✨', iksar:'🦎',
+  ogre:'👹', troll:'🧟', woodelf:'🌿', froglok:'🐸',
+};
+const RC_RACE_NAMES = {
+  human:'Human', barbarian:'Barbarian', darkelf:'Dark Elf', dwarf:'Dwarf',
+  erudite:'Erudite', gnome:'Gnome', halfelf:'Half Elf', halfling:'Halfling',
+  highelf:'High Elf', iksar:'Iksar', ogre:'Ogre', troll:'Troll',
+  woodelf:'Wood Elf', froglok:'Froglok',
+};
+
 function rcGetBio(ghost) {
   const cls = RC_CLASS_NAMES[ghost.classId] || ghost.classId;
   const lvl = ghost.level || 1;
@@ -453,6 +465,7 @@ function rcDetailRow(ghost, color) {
       <td colspan="12">
         <div class="rank-detail-inner">
           <div class="rank-detail-bio">${rcEscape(bio)}</div>
+          ${ghost.race ? `<div class="rank-detail-section"><h4>🧬 Race</h4><div>${RC_RACE_ICONS[ghost.race] || ''} ${rcEscape(RC_RACE_NAMES[ghost.race] || ghost.race)}</div></div>` : ''}
           <div class="rank-detail-section">
             <h4>📊 Stats</h4>
             <div class="rank-stat-grid">${statRows}</div>

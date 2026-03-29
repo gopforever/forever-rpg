@@ -1818,6 +1818,12 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.who-race-icon {
+  font-size: 0.85em;
+  opacity: 0.8;
+  margin-left: 2px;
+  cursor: default;
+}
 .who-level {
   font-size: 0.68rem;
   color: var(--text-dim);
