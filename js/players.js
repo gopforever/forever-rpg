@@ -1306,6 +1306,11 @@ function simulateGhostTick(ghost) {
     ghostCraft(ghost);
   }
 
+  // Gathering: ghost gathers raw materials to feed tradeskill crafting
+  if (typeof ghostGather === 'function' && Math.random() < 0.5) {
+    ghostGather(ghost);
+  }
+
   ghost.lastActive = Date.now();
   return ghost;
 }

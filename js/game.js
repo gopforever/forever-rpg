@@ -152,6 +152,13 @@ function gameTick() {
       tickTradeskills(member, now);
     }
   }
+
+  // Gathering tick (always active, feeds raw materials into tradeskillInventory)
+  if (typeof tickGathering === 'function' && GameState.party.length > 0) {
+    for (const member of GameState.party) {
+      tickGathering(member, now);
+    }
+  }
 }
 
 /**
@@ -200,6 +207,13 @@ function init() {
           const offlineMs = offline.offlineHours * 3600000;
           for (const member of GameState.party) {
             processTradeskillOffline(member, offlineMs);
+          }
+        }
+        // Apply offline gathering for each party member
+        if (typeof processGatheringOffline === 'function') {
+          const offlineMs = offline.offlineHours * 3600000;
+          for (const member of GameState.party) {
+            processGatheringOffline(member, offlineMs);
           }
         }
         showOfflineProgressModal(offline);

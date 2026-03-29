@@ -857,36 +857,11 @@ const TRADESKILL_MATERIALS = {
 // ─── Starter Material Quantities (given to new characters) ───────────────────
 
 const TRADESKILL_STARTER_MATERIALS = [
-  { itemId: 'ts_bronze_ingot', qty: 10 },
-  { itemId: 'ts_iron_ingot', qty: 5 },
-  { itemId: 'ts_sword_mold', qty: 3 },
-  { itemId: 'ts_breastplate_mold', qty: 2 },
-  { itemId: 'ts_shield_mold', qty: 2 },
-  { itemId: 'ts_wooden_handle', qty: 5 },
-  { itemId: 'ts_chainmail_links', qty: 6 },
-  { itemId: 'ts_rawhide', qty: 10 },
-  { itemId: 'ts_thread', qty: 15 },
-  { itemId: 'ts_silk_swatch', qty: 8 },
-  { itemId: 'ts_canvas', qty: 5 },
-  { itemId: 'ts_wheat_flour', qty: 10 },
-  { itemId: 'ts_water_flask', qty: 15 },
-  { itemId: 'ts_dried_herbs', qty: 8 },
-  { itemId: 'ts_honey', qty: 6 },
-  { itemId: 'ts_raw_meat', qty: 5 },
-  { itemId: 'ts_barley', qty: 8 },
-  { itemId: 'ts_yeast', qty: 6 },
-  { itemId: 'ts_jumjum', qty: 6 },
-  { itemId: 'ts_clay', qty: 12 },
-  { itemId: 'ts_glaze', qty: 8 },
-  { itemId: 'ts_oak_wood', qty: 10 },
-  { itemId: 'ts_bowstring', qty: 5 },
-  { itemId: 'ts_feathers', qty: 15 },
-  { itemId: 'ts_arrow_tip', qty: 20 },
-  { itemId: 'ts_copper_ingot', qty: 8 },
-  { itemId: 'ts_silver_ingot', qty: 4 },
-  { itemId: 'ts_ring_mold', qty: 5 },
-  { itemId: 'ts_jewel_setting', qty: 6 },
-  { itemId: 'ts_raw_gem', qty: 4 },
+  { itemId: 'ts_water_flask',  qty: 5 },
+  { itemId: 'ts_wheat_flour',  qty: 3 },
+  { itemId: 'ts_rawhide',      qty: 2 },
+  { itemId: 'ts_oak_wood',     qty: 2 },
+  { itemId: 'ts_copper_ingot', qty: 2 },
 ];
 
 // ─── Per-Character State Init ─────────────────────────────────────────────────
@@ -1223,11 +1198,17 @@ function ghostCraft(ghostCharacter) {
 }
 
 /**
- * Restock a ghost's tradeskill inventory with a random assortment of basic materials.
- * Uses the starter materials list so only raw ingredient IDs are stocked.
+ * Restock a ghost's tradeskill inventory. Delegates to ghostGather when available so
+ * ghosts earn materials the same way players do. Falls back to random-pick seeding
+ * if the gathering module has not yet loaded.
  * @param {object} ghost
  */
 function _ghostRestockMaterials(ghost) {
+  if (typeof ghostGather === 'function') {
+    ghostGather(ghost);
+    return;
+  }
+  // Fallback: seed a random starter material directly
   if (!ghost.tradeskillInventory) ghost.tradeskillInventory = {};
   const starters = TRADESKILL_STARTER_MATERIALS;
   const pick = starters[Math.floor(Math.random() * starters.length)];
