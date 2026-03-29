@@ -3313,6 +3313,58 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   margin-left: 4px;
 }
 
+/* ── Abilities Book (melee/hybrid panel) ─────────────────────────────── */
+
+/* Character selector tabs inside the Abilities panel */
+.abilities-char-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px 4px 0;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 5px;
+}
+
+.abilities-char-tab {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.abilities-char-tab:hover { border-color: var(--gold-dim); color: var(--text-primary); }
+.abilities-char-tab.active { background: #2a1f0d; border-color: var(--gold); color: var(--gold); }
+
+/* Section title inside the Abilities Book panel */
+.abilities-book-header {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+/* Passive ability badge (0-mana abilities) */
+.ability-passive-badge {
+  font-size: 9px;
+  color: var(--text-dim, #8a7050);
+  font-family: 'Share Tech Mono', monospace;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+
+
 /* Level requirement notice */
 .spell-level-req {
   font-size: 9px;
