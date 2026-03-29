@@ -4121,3 +4121,64 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   font-size: 0.68rem;
   font-weight: 600;
 }
+
+/* ============================================================
+   GATHERING — MASTERY DISPLAY IN NODE CARDS
+   ============================================================ */
+.gs-mastery-block {
+  margin: 5px 0 6px;
+  font-size: 0.7rem;
+}
+
+.gs-mastery-label {
+  color: var(--text-secondary);
+  margin-bottom: 3px;
+}
+
+.gs-mastery-label strong {
+  color: var(--gold);
+}
+
+.gs-mastery-track {
+  height: 4px;
+  background: #1a1208;
+  border: 1px solid var(--panel-border);
+  border-radius: 2px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+.gs-mastery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.gs-mastery-bonus-active,
+.gs-mastery-bonus-locked {
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.gs-mastery-bonus-active {
+  color: #7adc7a;
+}
+
+.gs-mastery-bonus-locked {
+  color: var(--text-dim);
+}
+
+.gs-mastery-threshold {
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   ACHIEVEMENT TOAST — POINTS DISPLAY
+   ============================================================ */
+.achievement-toast-pts {
+  color: var(--gold-bright, #ffd700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 2px;
+}

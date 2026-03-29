@@ -1126,6 +1126,13 @@ function tickTradeskills(character, nowMs) {
       const awardXp = currentLevel < recipe.trivialLevel;
 
       for (let c = 0; c < completable; c++) {
+        // Record world first for the very first craft completion of each discipline
+        if (entry.completedCount === 0 && typeof recordWorldFirst === 'function') {
+          const discName = (TRADESKILL_DISCIPLINES[disc] && TRADESKILL_DISCIPLINES[disc].name) || disc;
+          const who = character.name || 'An adventurer';
+          recordWorldFirst(`first_craft_${disc}`, who, `${who} was first to complete a ${discName} craft!`);
+        }
+
         // Bonus yield roll per craft
         const bonusYield = Math.random() < getBonusYieldChance(character, recipe);
         giveOutput(character, recipe, 1, bonusYield);
