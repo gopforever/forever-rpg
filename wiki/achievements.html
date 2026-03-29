@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievements — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Achievements</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      The <b>Achievement System</b> in Forever RPG tracks milestones across every aspect of the game —
+      from your first kill to slaying 5,000 enemies, from visiting a new zone to equipping a full set
+      of gear. Achievements are implemented in <code>js/achievements.js</code> and stored in
+      <code>localStorage</code>.
+    </p>
+
+    <div class="article-section" id="overview">
+      <h2>Overview <a href="#overview" class="edit-link">edit</a></h2>
+      <p>
+        When you earn an achievement, a <b>toast notification</b> appears on screen — a brief popup
+        with the achievement name and description. Some achievements require a threshold (e.g., kill 100
+        enemies) while others are one-time events (e.g., first login). There are currently over
+        <b>60 achievements</b> across 9 categories.
+      </p>
+      <p>
+        Achievements are shared across your save — all party members contribute to a unified achievement
+        total. World First achievements track who in the entire player community accomplished something first.
+      </p>
+    </div>
+
+    <div class="article-section" id="categories">
+      <h2>Achievement Categories <a href="#categories" class="edit-link">edit</a></h2>
+
+      <h3 id="general">General</h3>
+      <p>Introductory achievements for new players:</p>
+      <table class="wiki-table">
+        <thead><tr><th>Achievement</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Welcome, Adventurer</td><td>Start the game for the first time</td></tr>
+          <tr><td>Blood on Your Hands</td><td>Kill your first enemy</td></tr>
+          <tr><td>Embraced by Darkness</td><td>Die for the first time</td></tr>
+          <tr><td>Fortune Favors the Bold</td><td>Loot your first item</td></tr>
+          <tr><td>Better Together</td><td>Create a party of 3+ members</td></tr>
+          <tr><td>Battle Tested</td><td>Win 10 consecutive fights without dying</td></tr>
+          <tr><td>City of Honor</td><td>Enter Qeynos (safe zone)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="advancement">Advancement</h3>
+      <p>Leveling and experience milestones:</p>
+      <table class="wiki-table">
+        <thead><tr><th>Achievement</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Seasoned</td><td>Reach level 5</td></tr>
+          <tr><td>Veteran</td><td>Reach level 10</td></tr>
+          <tr><td>Champion</td><td>Reach level 20</td></tr>
+          <tr><td>Hero</td><td>Reach level 30</td></tr>
+          <tr><td>Legend</td><td>Reach level 50</td></tr>
+          <tr><td>Transcendent</td><td>Reach level 60 (max level)</td></tr>
+          <tr><td>Grinder</td><td>Earn 1,000 total XP</td></tr>
+          <tr><td>Relentless</td><td>Earn 100,000 total XP</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="kills">Kill Count (Level)</h3>
+      <p>Combat milestones based on total enemies slain:</p>
+      <table class="wiki-table">
+        <thead><tr><th>Achievement</th><th>Kills Required</th></tr></thead>
+        <tbody>
+          <tr><td>Slayer</td><td>10 kills</td></tr>
+          <tr><td>Destroyer</td><td>100 kills</td></tr>
+          <tr><td>Warlord</td><td>500 kills</td></tr>
+          <tr><td>Massacre</td><td>1,000 kills</td></tr>
+          <tr><td>Avatar of Death</td><td>5,000 kills</td></tr>
+          <tr><td>Completionist</td><td>Kill at least one of every enemy type</td></tr>
+          <tr><td>Named Slayer</td><td>Kill a rare/named enemy</td></tr>
+          <tr><td>Rare Hunter</td><td>Kill 5 different named enemies</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="exploration">Exploration (Keys)</h3>
+      <p>Zone discovery achievements — visit every zone in Norrath:</p>
+      <table class="wiki-table">
+        <thead><tr><th>Achievement</th><th>Zone</th></tr></thead>
+        <tbody>
+          <tr><td>Rolling Hills</td><td>Qeynos Hills</td></tr>
+          <tr><td>Into the Dark</td><td>Blackburrow</td></tr>
+          <tr><td>Frozen Peaks</td><td>Everfrost Peaks</td></tr>
+          <tr><td>The Open Plains</td><td>West Karana</td></tr>
+          <tr><td>Mountain Pass</td><td>Highpass Hold</td></tr>
+          <tr><td>Cursed Forest</td><td>Kithicor Forest</td></tr>
+          <tr><td>The Commonlands</td><td>Commonlands</td></tr>
+          <tr><td>Into the Plane of Fear</td><td>Plane of Fear</td></tr>
+          <tr><td>Ill Omens</td><td>Lake of Ill Omen</td></tr>
+          <tr><td>Into Befallen</td><td>Befallen</td></tr>
+          <tr><td>World Traveler</td><td>Visit <em>all</em> zones</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="progression">Progression</h3>
+      <p>Gear and character development milestones:</p>
+      <ul>
+        <li><b>Rare Find</b> — Equip a rare-quality item</li>
+        <li><b>Fully Geared</b> — Have gear in all 20 equipment slots</li>
+        <li><b>Pack Rat</b> — Store 10 items in the bank</li>
+        <li><b>Scrollkeeper</b> — Purchase your first spell from the guild</li>
+        <li><b>Power Unleashed</b> — Use a class ability in combat</li>
+      </ul>
+
+      <h3 id="skills-ach">Skills</h3>
+      <p>Raise any skill to increasing levels:</p>
+      <ul>
+        <li><b>Apprentice</b> — Skill level 25 in any skill</li>
+        <li><b>Journeyman</b> — Skill level 50</li>
+        <li><b>Master</b> — Skill level 100</li>
+        <li><b>Grandmaster</b> — Skill level 200</li>
+      </ul>
+
+      <h3 id="special">Special</h3>
+      <p>Unique and challenging achievements:</p>
+      <ul>
+        <li><b>Savvy Shopper</b> — Buy from the player marketplace</li>
+        <li><b>Merchant</b> — List an item on the Player Marketplace</li>
+        <li><b>Coin Collector</b> — Accumulate 1,000 copper equivalent</li>
+        <li><b>Merchant Prince</b> — Accumulate 10,000 copper</li>
+        <li><b>Against the Odds</b> — Kill a rare/named enemy at a lower level than it</li>
+        <li><b>No Safety Net</b> — Win a fight with 3+ enemies and no healer in party</li>
+      </ul>
+
+      <h3 id="vanity">Vanity</h3>
+      <p>Social and community achievements:</p>
+      <ul>
+        <li><b>People Watcher</b> — Inspect a ghost player</li>
+        <li><b>Social Butterfly</b> — See 10 zone chat messages</li>
+        <li><b>History Maker</b> — Be online when a World First occurs</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="world-firsts">
+      <h2>World Firsts <a href="#world-firsts" class="edit-link">edit</a></h2>
+      <p>
+        <b>World First</b> events are special achievements awarded to the first player in the entire
+        community to accomplish a notable milestone — such as the first to reach level 60, the first
+        to kill a specific named enemy, or the first to complete a full gear set.
+      </p>
+      <p>
+        When a World First occurs, all players currently online receive the <em>History Maker</em>
+        achievement. World Firsts are announced via the <b>World Feed</b> in the center panel, visible
+        to all active players.
+      </p>
+    </div>
+
+    <div class="article-section" id="rankings">
+      <h2>Rankings &amp; Leaderboard <a href="#rankings" class="edit-link">edit</a></h2>
+      <p>
+        The <b>Rankings</b> system tracks and displays the top players across several categories.
+        Rankings are accessible from:
+      </p>
+      <ul>
+        <li>The <b>Rankings tab</b> in the Qeynos City panel</li>
+        <li>The standalone <a href="../ranking.html">ranking.html</a> page (linked from the top bar)</li>
+      </ul>
+      <p>
+        Rankings are implemented in <code>js/ranking.js</code> with dedicated styles in
+        <code>css/ranking.css</code>. Players are ranked by various metrics including:
+      </p>
+      <ul>
+        <li>Highest character level</li>
+        <li>Total enemies killed</li>
+        <li>Total achievements earned</li>
+        <li>Total gold accumulated</li>
+        <li>Guild membership and guild rankings</li>
+      </ul>
+      <p>
+        Rankings use the same <b>ghost system</b> that powers the Who's Online and Players panels —
+        player data persists in <code>localStorage</code> as ghost snapshots, refreshed every 30 seconds
+        while online and retained for up to 72 hours offline.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

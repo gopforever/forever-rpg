@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Combat System — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Combat System</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      The <b>combat system</b> in Forever RPG is <b>tick-based</b> — combat resolves in discrete time intervals
+      called <em>ticks</em>. The speed of these ticks is configurable via the Combat Speed slider in Settings.
+      The full combat engine is implemented in <code>js/combat.js</code>.
+    </p>
+
+    <div class="article-section" id="tick-based-combat">
+      <h2>Tick-Based Combat <a href="#tick-based-combat" class="edit-link">edit</a></h2>
+      <p>
+        Every combat tick, the game processes all attacks, spells, ability cooldowns, damage-over-time effects,
+        and regeneration. Actions do not resolve in real time — they wait for the next tick.
+      </p>
+
+      <h3 id="combat-speed">Combat Speed</h3>
+      <p>
+        The <b>Combat Speed slider</b> in Settings controls the duration of each tick:
+      </p>
+      <ul>
+        <li><b>500 ms</b> — Maximum speed (fast-paced, 2 ticks per second)</li>
+        <li><b>1000 ms</b> — Default recommended speed</li>
+        <li><b>5000 ms</b> — Minimum speed (slow, 1 tick per 5 seconds — great for AFK play)</li>
+      </ul>
+      <p>
+        Slower tick rates are useful if you want to review each combat action in the log before the next
+        round resolves, or for AFK grinding sessions.
+      </p>
+
+      <h3 id="combat-round">What Happens Each Tick</h3>
+      <p>Each combat tick processes, in order:</p>
+      <ol>
+        <li>Player character melee attacks against their current target</li>
+        <li>Ability triggers and spell resolutions</li>
+        <li>Enemy attacks against party members (based on aggro)</li>
+        <li>Damage-over-time (DoT) and heal-over-time (HoT) effects</li>
+        <li>HP/Mana regeneration for sitting characters</li>
+        <li>Death checks — characters or enemies at 0 HP are processed</li>
+        <li>Loot distribution (if auto-loot is on) for defeated enemies</li>
+      </ol>
+    </div>
+
+    <div class="article-section" id="initiating-combat">
+      <h2>Initiating Combat <a href="#initiating-combat" class="edit-link">edit</a></h2>
+
+      <h3 id="enemy-grid">Enemy Grid</h3>
+      <p>
+        The center panel shows an <b>enemy encounter grid</b> — a visual list of all enemies currently
+        in your zone's combat encounter. Click an enemy portrait to select it as the current target.
+      </p>
+
+      <h3 id="pull-button">The Pull Button</h3>
+      <p>
+        Click <b>Pull</b> to engage combat with the selected enemy. The tank character (or the first party
+        member capable of it) rushes in and initiates the encounter. All other party members join based
+        on their class role and abilities.
+      </p>
+
+      <h3 id="auto-engage">Auto-Engage</h3>
+      <p>
+        If enemies are present in your camp and your party is not in combat, they will auto-engage after a short delay.
+        This makes AFK grinding possible — set your camp, configure your hotbar, and let the party work.
+      </p>
+    </div>
+
+    <div class="article-section" id="combat-buttons">
+      <h2>Combat Buttons <a href="#combat-buttons" class="edit-link">edit</a></h2>
+      <p>Four primary combat control buttons appear in the combat area:</p>
+
+      <table class="wiki-table">
+        <thead>
+          <tr><th>Button</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Stop Fighting</b></td>
+            <td>Immediately halt all combat actions. Your party stops attacking. Useful to avoid accidentally pulling extras or to recover before engaging again.</td>
+          </tr>
+          <tr>
+            <td><b>Sit</b></td>
+            <td>Characters sit down to rest, drastically increasing HP and Mana regeneration per tick. Characters cannot attack while sitting. Click again or Pull to stand up.</td>
+          </tr>
+          <tr>
+            <td><b>Pull</b></td>
+            <td>Engage the selected enemy. Your tank initiates combat. If no enemy is selected, a random available enemy in the zone is targeted.</td>
+          </tr>
+          <tr>
+            <td><b>Set Camp</b></td>
+            <td>Designate your current location as your camp point. Enemies from the zone will spawn near your camp. Dying players respawn at the city; camp persists.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="sitting">
+      <h2>Sitting &amp; Mana Regeneration <a href="#sitting" class="edit-link">edit</a></h2>
+      <p>
+        Mana-using classes (all Hybrids, Casters, and Priests) regenerate mana passively each tick.
+        While <b>sitting</b>, mana regeneration is dramatically increased. Sitting also increases HP
+        regeneration for all classes.
+      </p>
+      <p>
+        Characters cannot act — attack, cast spells, or use abilities — while sitting. They automatically
+        stand up if attacked. A common strategy is to sit between pulls to recover resources quickly,
+        especially for Clerics who burn mana keeping the party alive.
+      </p>
+    </div>
+
+    <div class="article-section" id="aggro">
+      <h2>Aggro &amp; Taunt <a href="#aggro" class="edit-link">edit</a></h2>
+      <p>
+        Each enemy maintains an <b>aggro list</b> — a ranked list of characters it prefers to attack.
+        The character at the top of the aggro list receives the enemy's attacks.
+      </p>
+      <p>
+        <b>Taunt</b> (Warrior, Paladin, Shadow Knight) is the primary tool for controlling aggro.
+        When a warrior taunts, they immediately move to the top of the enemy's aggro list.
+        Healers generate aggro by casting heals; heavy DPS characters generate aggro with damage.
+        The tank's job is to Taunt frequently to keep enemies focused away from the healer.
+      </p>
+    </div>
+
+    <div class="article-section" id="spell-hotbar">
+      <h2>Spell Hotbar <a href="#spell-hotbar" class="edit-link">edit</a></h2>
+      <p>
+        The <b>spell hotbar</b> appears in the combat area below the enemy grid. It contains slots for
+        each of your selected character's abilities. Click an ability slot to activate it immediately
+        (if off cooldown and enough mana is available).
+      </p>
+      <p>
+        Abilities are defined per class in <code>js/classes.js</code>, with each ability having:
+      </p>
+      <ul>
+        <li><b>Mana Cost</b> — Mana consumed on use (0 for physical abilities)</li>
+        <li><b>Cast Time</b> — Time in ms before the spell resolves</li>
+        <li><b>Recast Time</b> — Cooldown in ms before the ability can be used again</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="combat-log">
+      <h2>Combat Log &amp; Zone Chat <a href="#combat-log" class="edit-link">edit</a></h2>
+      <p>
+        Below the combat area, tabs let you switch between:
+      </p>
+      <ul>
+        <li><b>Combat Log</b> — A running log of all combat events: attacks, misses, crits, spells, and deaths.</li>
+        <li><b>Zone Chat</b> — Live chat shared with other players currently in your zone. Powered by the
+            persistent ghost/player system (see <a href="./guilds.html#zone-chat">Zone Chat</a>).</li>
+        <li><b>Loot</b> — Items dropped by recently defeated enemies, available for pickup if Auto-Loot is off.</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="loot-system">
+      <h2>Loot System <a href="#loot-system" class="edit-link">edit</a></h2>
+      <p>
+        When an enemy is defeated, it drops loot based on its internal loot table (defined in <code>js/enemies.js</code>).
+        Drops can include weapons, armor, accessories, consumables, and currency.
+      </p>
+      <ul>
+        <li><b>Auto-Loot ON</b> — Loot is automatically distributed to the first party member who can use/carry it.</li>
+        <li><b>Auto-Loot OFF</b> — Loot appears in the <b>Loot</b> tab; click items to pick them up manually.</li>
+      </ul>
+      <p>
+        Currency (gold, silver, copper) is always looted automatically and added to your wallet.
+        See <a href="./items.html#currency">Currency</a> for denomination details.
+      </p>
+    </div>
+
+    <div class="article-section" id="death-revival">
+      <h2>Death &amp; Revival <a href="#death-revival" class="edit-link">edit</a></h2>
+
+      <h3 id="death">Death</h3>
+      <p>
+        When a character's HP reaches 0, they die. Dead characters:
+      </p>
+      <ul>
+        <li>Cannot attack, cast spells, or use abilities</li>
+        <li>Enter a <b>ghost state</b> — their ghost persists in the world as visible to other players</li>
+        <li>May be revived by a Paladin's <em>Revive</em> ability or a Cleric's <em>Resurrection</em></li>
+        <li>If not revived in combat, they respawn at the hub city <a href="./zones.html#qeynos">Qeynos</a> with partial HP</li>
+      </ul>
+
+      <h3 id="ghost-state">Ghost State</h3>
+      <p>
+        Dead player characters remain in the world as ghosts for up to <b>72 hours</b> after the player logs off
+        (stored in <code>localStorage</code> key <code>foreverRPG_ghosts</code>). Other players can inspect these
+        ghost characters via the <b>Ghost Inspect</b> modal, which shows the ghost's equipment and stats.
+      </p>
+
+      <h3 id="revival">Revival</h3>
+      <p>
+        In-combat revival requires a Paladin or Cleric with the appropriate ability. Out-of-combat, characters
+        can return to Qeynos and recover at full HP at the next zone load. Experience penalty on death is
+        noted in the combat log.
+      </p>
+    </div>
+
+    <div class="article-section" id="camp-system">
+      <h2>Camp System <a href="#camp-system" class="edit-link">edit</a></h2>
+      <p>
+        Clicking <b>Set Camp</b> marks your current position as a camp. The camp system controls which
+        enemies from the zone's encounter table will spawn near your party. Different camps within a zone
+        may pull from different enemy sub-groups — experienced players use camps to target specific rare spawns.
+      </p>
+      <p>
+        Rare enemies (e.g., named monsters with unique loot) have a low spawn chance (typically 8% per pull,
+        defined as <code>rareSpawnChance</code> in <code>js/zones.js</code>). Group encounters (multiple
+        enemies at once) also have a configurable spawn chance per zone.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classes — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Classes</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      <b>Classes</b> define a character's role in combat, the abilities they learn, their stat growth,
+      and which <a href="./races.html">races</a> can play them. There are <b>16 classes</b> in Forever RPG,
+      organized into four archetypes: <b>Melee</b>, <b>Hybrid</b>, <b>Caster</b>, and <b>Priest</b>.
+      Full ability definitions are in <code>js/classes.js</code> and <code>js/skills.js</code>.
+    </p>
+
+    <div class="article-section" id="archetypes">
+      <h2>Archetypes <a href="#archetypes" class="edit-link">edit</a></h2>
+      <p>Every class belongs to one of four archetypes:</p>
+      <ul>
+        <li><span class="role-tag role-tank">Melee</span> — Pure fighters with no mana pool. Highest physical output and survivability. Use disciplines and combat skills.</li>
+        <li><span class="role-tag role-hybrid">Hybrid</span> — Blend melee ability with magic. Versatile but specialized; often fill two roles simultaneously.</li>
+        <li><span class="role-tag role-caster">Caster</span> — Intelligence-based spellcasters. Highest single-target magic damage; fragile without group protection.</li>
+        <li><span class="role-tag role-healer">Priest</span> — Wisdom-based support. Essential healers and utility casters; keep the party alive.</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="class-table">
+      <h2>Class Reference Table <a href="#class-table" class="edit-link">edit</a></h2>
+      <div class="hatnote">Data sourced from <code>js/classes.js</code>. HP/STA values are per point of Stamina.</div>
+
+      <table class="wiki-table">
+        <thead>
+          <tr>
+            <th>Icon</th>
+            <th>Class</th>
+            <th>Archetype</th>
+            <th>Role</th>
+            <th>Mana Stat</th>
+            <th>HP/STA (≤50)</th>
+            <th>HP/STA (60)</th>
+            <th>Primary Stats</th>
+            <th>Key Abilities</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>⚔️</td>
+            <td><b>Warrior</b></td>
+            <td><span class="role-tag role-tank">Melee</span></td>
+            <td>Tank</td>
+            <td>None</td>
+            <td>4.5</td><td>6.0</td>
+            <td>STR, STA, AGI</td>
+            <td>Taunt, Bash, Berserk, Defense Discipline, War Cry, Kick</td>
+          </tr>
+          <tr>
+            <td>🛡️</td>
+            <td><b>Paladin</b></td>
+            <td><span class="role-tag role-hybrid">Hybrid</span></td>
+            <td>Tank / Healer</td>
+            <td>WIS</td>
+            <td>3.8</td><td>5.2</td>
+            <td>STR, STA, WIS</td>
+            <td>Holy Light, Lay on Hands, Stun, Divine Aura, Undead Ward, Healing, Revive</td>
+          </tr>
+          <tr>
+            <td>💀</td>
+            <td><b>Shadow Knight</b></td>
+            <td><span class="role-tag role-hybrid">Hybrid</span></td>
+            <td>Tank / DPS</td>
+            <td>INT</td>
+            <td>3.8</td><td>5.2</td>
+            <td>STR, STA, INT</td>
+            <td>Harm Touch, Siphon Strength, Fear, Lifetap, Screaming Terror, Taunt</td>
+          </tr>
+          <tr>
+            <td>🏹</td>
+            <td><b>Ranger</b></td>
+            <td><span class="role-tag role-hybrid">Hybrid</span></td>
+            <td>DPS</td>
+            <td>WIS</td>
+            <td>3.3</td><td>4.2</td>
+            <td>STR, DEX, AGI</td>
+            <td>Eagle Eye, Snare, Track, Nature's Fury, Dual Wield Expertise</td>
+          </tr>
+          <tr>
+            <td>🎵</td>
+            <td><b>Bard</b></td>
+            <td><span class="role-tag role-hybrid">Hybrid</span></td>
+            <td>Support / DPS</td>
+            <td>None</td>
+            <td>3.0</td><td>4.0</td>
+            <td>DEX, CHA, AGI</td>
+            <td>Anthem, War March, Selos Accelerando, Chant of Battle, Lulling Melody</td>
+          </tr>
+          <tr>
+            <td>🐆</td>
+            <td><b>Beastlord</b></td>
+            <td><span class="role-tag role-hybrid">Hybrid</span></td>
+            <td>DPS / Support</td>
+            <td>WIS</td>
+            <td>3.2</td><td>4.3</td>
+            <td>STR, AGI, WIS</td>
+            <td>Feral Swipe, Ferocity, Bestial Alignment, Spirit of the Beast, Warder Command</td>
+          </tr>
+          <tr>
+            <td>🪓</td>
+            <td><b>Berserker</b></td>
+            <td><span class="role-tag role-tank">Melee</span></td>
+            <td>DPS</td>
+            <td>None</td>
+            <td>4.2</td><td>5.8</td>
+            <td>STR, STA, DEX</td>
+            <td>Frenzy, Axe Toss, Reckless Abandon, Headbutt, Berserk Rage</td>
+          </tr>
+          <tr>
+            <td>🥋</td>
+            <td><b>Monk</b></td>
+            <td><span class="role-tag role-tank">Melee</span></td>
+            <td>DPS</td>
+            <td>None</td>
+            <td>3.8</td><td>5.0</td>
+            <td>STR, DEX, AGI</td>
+            <td>Flying Kick, Feign Death, Mend, Stunning Kick, Eagle Strike</td>
+          </tr>
+          <tr>
+            <td>🗡️</td>
+            <td><b>Rogue</b></td>
+            <td><span class="role-tag role-tank">Melee</span></td>
+            <td>DPS</td>
+            <td>None</td>
+            <td>3.0</td><td>4.0</td>
+            <td>DEX, AGI, STR</td>
+            <td>Backstab, Sneak Attack, Evade, Poison Blade, Pick Pocket</td>
+          </tr>
+          <tr>
+            <td>🔥</td>
+            <td><b>Wizard</b></td>
+            <td><span class="role-tag role-caster">Caster</span></td>
+            <td>DPS (magic)</td>
+            <td>INT</td>
+            <td>2.0</td><td>2.8</td>
+            <td>INT, STA</td>
+            <td>Thunderbolt, Ice Comet, Mana Burn, Teleport, Concussion</td>
+          </tr>
+          <tr>
+            <td>🔮</td>
+            <td><b>Magician</b></td>
+            <td><span class="role-tag role-caster">Caster</span></td>
+            <td>DPS / Summoner</td>
+            <td>INT</td>
+            <td>2.0</td><td>2.8</td>
+            <td>INT, STA</td>
+            <td>Summon Elemental, Fireball, Shock of Spikes, Element of Air, Burnout</td>
+          </tr>
+          <tr>
+            <td>💀</td>
+            <td><b>Necromancer</b></td>
+            <td><span class="role-tag role-caster">Caster</span></td>
+            <td>DPS / DoT</td>
+            <td>INT</td>
+            <td>2.0</td><td>2.8</td>
+            <td>INT, STA</td>
+            <td>Lifedrain, Disease Cloud, Summon Undead, Feign Death, Lich</td>
+          </tr>
+          <tr>
+            <td>✨</td>
+            <td><b>Enchanter</b></td>
+            <td><span class="role-tag role-caster">Caster</span></td>
+            <td>Control / Support</td>
+            <td>INT</td>
+            <td>2.0</td><td>2.8</td>
+            <td>INT, CHA</td>
+            <td>Mesmerize, Rune, Clarity, Haste, Tashani</td>
+          </tr>
+          <tr>
+            <td>✝️</td>
+            <td><b>Cleric</b></td>
+            <td><span class="role-tag role-healer">Priest</span></td>
+            <td>Healer</td>
+            <td>WIS</td>
+            <td>2.5</td><td>3.5</td>
+            <td>WIS, STA</td>
+            <td>Complete Heal, Divine Light, Resurrection, Stun, Ward Undead</td>
+          </tr>
+          <tr>
+            <td>🌿</td>
+            <td><b>Druid</b></td>
+            <td><span class="role-tag role-healer">Priest</span></td>
+            <td>Healer / DPS</td>
+            <td>WIS</td>
+            <td>2.3</td><td>3.2</td>
+            <td>WIS, STA</td>
+            <td>Nature Healing, Snare, Harmony, Wolf Form, Storm of Lightning</td>
+          </tr>
+          <tr>
+            <td>🥁</td>
+            <td><b>Shaman</b></td>
+            <td><span class="role-tag role-healer">Priest</span></td>
+            <td>Healer / Support</td>
+            <td>WIS</td>
+            <td>2.5</td><td>3.5</td>
+            <td>WIS, STA, STR</td>
+            <td>Slow, Malise, Torpor, Spirit of Wolf, Cannibalize</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="article-section" id="class-stats">
+      <h2>Class Stats &amp; Leveling <a href="#class-stats" class="edit-link">edit</a></h2>
+      <p>
+        Each class has a list of <b>primary stats</b> — the 2–3 stats that receive <b>+2 per level</b>.
+        All other stats receive +1 per level. This means melee classes like the Warrior naturally grow
+        their STR/STA/AGI faster than INT or WIS.
+      </p>
+      <p>
+        Hit points are calculated from STA using the <code>hpPerSTA</code> multiplier, which increases
+        at level 50. Warriors have the highest multiplier (4.5/6.0), making STA especially valuable for them.
+        Casters have a low multiplier (2.0/2.8) and rely on staying out of direct combat.
+      </p>
+    </div>
+
+    <div class="article-section" id="mana-system">
+      <h2>Mana System <a href="#mana-system" class="edit-link">edit</a></h2>
+      <p>
+        Pure melee classes (Warrior, Berserker, Monk, Rogue) have <b>no mana pool</b> — their abilities
+        are based on timers (recast cooldowns) rather than a resource.
+      </p>
+      <p>
+        All other classes use one of two mana stats:
+      </p>
+      <ul>
+        <li><b>WIS-based</b> — Paladin, Ranger, Beastlord, Cleric, Druid, Shaman. Higher Wisdom = larger mana pool.</li>
+        <li><b>INT-based</b> — Shadow Knight, Wizard, Magician, Necromancer, Enchanter. Higher Intelligence = larger mana pool.</li>
+      </ul>
+      <p>
+        Mana regenerates over time while out of combat, and is accelerated by using the
+        <a href="./combat.html#sitting">Sit</a> command.
+      </p>
+    </div>
+
+    <div class="article-section" id="party-roles">
+      <h2>Party Roles <a href="#party-roles" class="edit-link">edit</a></h2>
+      <p>
+        A balanced party of 6 typically includes:
+      </p>
+      <ul>
+        <li><b>1 Tank</b> — Usually Warrior or Paladin. Taunts enemies and absorbs damage.</li>
+        <li><b>1 Healer</b> — Usually Cleric or Druid. Keeps the party alive.</li>
+        <li><b>1 Crowd Control</b> — Enchanter (Mesmerize) or Bard (Lulling Melody). Handles extra enemies.</li>
+        <li><b>2–3 DPS</b> — Any combination of Rogue, Wizard, Monk, Ranger, etc.</li>
+        <li><b>1 Support/Buffer</b> — Shaman (Slow + buffs) or Bard (Haste songs).</li>
+      </ul>
+      <p>
+        Smaller parties work well too — even a solo character can progress through lower-level zones.
+        The party system is managed by <code>js/party.js</code>.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>

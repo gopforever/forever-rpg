@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Races — Forever RPG Wiki</title>
+  <link rel="stylesheet" href="./wiki.css">
+</head>
+<body>
+
+<nav class="wiki-topbar">
+  <a href="./index.html" class="wiki-logo">⚔ Forever RPG Wiki</a>
+  <form id="wiki-search-form" class="wiki-topbar-search" role="search">
+    <input type="search" placeholder="Search the wiki…" aria-label="Search">
+    <button type="submit">Go</button>
+  </form>
+  <ul class="wiki-topnav">
+    <li><a href="./index.html">Main Page</a></li>
+    <li><a href="./getting-started.html">Contents</a></li>
+    <li><a href="./index.html#recent-changes">Recent Changes</a></li>
+    <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="wiki-body">
+
+  <aside class="wiki-sidebar">
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Getting Started <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./getting-started.html">Introduction</a></li>
+          <li><a href="./getting-started.html#running-the-game">Running the Game</a></li>
+          <li><a href="./getting-started.html#character-creation">Character Creation</a></li>
+          <li><a href="./getting-started.html#ui-overview">UI Overview</a></li>
+          <li><a href="./getting-started.html#save-load">Save &amp; Load</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Game Systems <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./races.html">Races</a></li>
+          <li><a href="./classes.html">Classes</a></li>
+          <li><a href="./combat.html">Combat</a></li>
+          <li><a href="./items.html">Items &amp; Equipment</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">World <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./zones.html">Zones &amp; World</a></li>
+          <li><a href="./zones.html#qeynos">Qeynos</a></li>
+          <li><a href="./zones.html#zone-list">Zone List</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="wiki-sidebar-portal">
+      <div class="wiki-sidebar-portal-header">Community <span class="toggle-icon">▼</span></div>
+      <div class="wiki-sidebar-portal-body">
+        <ul>
+          <li><a href="./guilds.html">Guilds</a></li>
+          <li><a href="./guilds.html#party-system">Parties</a></li>
+          <li><a href="./guilds.html#whos-online">Who's Online</a></li>
+          <li><a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <main class="wiki-content">
+
+    <h1>Races</h1>
+
+    <div class="toc" id="wiki-toc">
+      <div class="toc-title">Contents</div>
+    </div>
+
+    <p>
+      <b>Races</b> are the foundational choice made during <a href="./getting-started.html#character-creation">character creation</a>.
+      Each race provides a unique set of base statistics and restricts which <a href="./classes.html">classes</a>
+      that character may pursue. All characters begin in <a href="./zones.html#qeynos">Qeynos — The City of Honor</a>,
+      regardless of their racial homeland.
+    </p>
+    <p>
+      Stat values are sourced from <code>js/races.js</code> in the game repository.
+    </p>
+
+    <div class="article-section" id="overview">
+      <h2>Overview <a href="#overview" class="edit-link">edit</a></h2>
+      <p>
+        There are <b>14 playable races</b> in Forever RPG, inspired by the classic Norrath setting of EverQuest.
+        Race selection is permanent for a character, so choose carefully. The primary stats are:
+      </p>
+      <ul>
+        <li><b>STR</b> (Strength) — Melee damage and encumbrance capacity</li>
+        <li><b>DEX</b> (Dexterity) — Attack speed, ranged accuracy, and proc rate</li>
+        <li><b>AGI</b> (Agility) — Evasion and armor class contribution</li>
+        <li><b>STA</b> (Stamina) — Hit points; each point contributes HP based on class</li>
+        <li><b>WIS</b> (Wisdom) — Mana pool for Priest classes (Cleric, Druid, Shaman, Paladin)</li>
+        <li><b>INT</b> (Intelligence) — Mana pool for Caster classes (Wizard, Magician, Necromancer, Enchanter, Shadow Knight)</li>
+        <li><b>CHA</b> (Charisma) — NPC faction, merchant pricing, and Enchanter effectiveness</li>
+      </ul>
+    </div>
+
+    <div class="article-section" id="race-table">
+      <h2>Race Statistics Table <a href="#race-table" class="edit-link">edit</a></h2>
+      <div class="hatnote">Data sourced from <code>js/races.js</code>. Bonus stats are racial flavor highlights and do not stack additively with base stats in the current implementation.</div>
+
+      <table class="wiki-table">
+        <thead>
+          <tr>
+            <th>Icon</th>
+            <th>Race</th>
+            <th>STR</th>
+            <th>DEX</th>
+            <th>AGI</th>
+            <th>STA</th>
+            <th>WIS</th>
+            <th>INT</th>
+            <th>CHA</th>
+            <th>Stat Highlights</th>
+            <th>Available Classes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🧑</td>
+            <td><b>Human</b></td>
+            <td>75</td><td>75</td><td>75</td><td>75</td><td>75</td><td>75</td><td>75</td>
+            <td>CHA +5 (all-around balanced)</td>
+            <td>All 14 classes</td>
+          </tr>
+          <tr>
+            <td>🪓</td>
+            <td><b>Barbarian</b></td>
+            <td>103</td><td>70</td><td>82</td><td>95</td><td>70</td><td>60</td><td>55</td>
+            <td>STR +15, STA +10 (melee powerhouse)</td>
+            <td>Warrior, Rogue, Shaman</td>
+          </tr>
+          <tr>
+            <td>🧝</td>
+            <td><b>Dark Elf</b></td>
+            <td>60</td><td>90</td><td>90</td><td>70</td><td>83</td><td>99</td><td>60</td>
+            <td>INT +15, DEX +10 (caster &amp; rogue)</td>
+            <td>Warrior, Shadow Knight, Rogue, Enchanter, Magician, Necromancer, Wizard, Cleric</td>
+          </tr>
+          <tr>
+            <td>⛏️</td>
+            <td><b>Dwarf</b></td>
+            <td>90</td><td>90</td><td>70</td><td>90</td><td>83</td><td>60</td><td>45</td>
+            <td>STR +10, WIS +10, STA +10 (cleric &amp; warrior)</td>
+            <td>Warrior, Paladin, Rogue, Cleric</td>
+          </tr>
+          <tr>
+            <td>🔮</td>
+            <td><b>Erudite</b></td>
+            <td>60</td><td>70</td><td>70</td><td>70</td><td>83</td><td>107</td><td>70</td>
+            <td>INT +20 (highest INT of any race)</td>
+            <td>Wizard, Enchanter, Magician, Necromancer, Cleric, Paladin, Shadow Knight</td>
+          </tr>
+          <tr>
+            <td>🔧</td>
+            <td><b>Gnome</b></td>
+            <td>60</td><td>95</td><td>80</td><td>67</td><td>67</td><td>98</td><td>60</td>
+            <td>DEX +15, INT +15 (tinkerer mages)</td>
+            <td>Warrior, Rogue, Enchanter, Magician, Necromancer, Wizard, Cleric</td>
+          </tr>
+          <tr>
+            <td>🧝‍♀️</td>
+            <td><b>Half Elf</b></td>
+            <td>80</td><td>90</td><td>90</td><td>75</td><td>60</td><td>75</td><td>75</td>
+            <td>DEX +10, AGI +10 (bard &amp; ranger)</td>
+            <td>Warrior, Paladin, Ranger, Rogue, Bard, Cleric, Druid</td>
+          </tr>
+          <tr>
+            <td>🍀</td>
+            <td><b>Halfling</b></td>
+            <td>70</td><td>95</td><td>95</td><td>75</td><td>80</td><td>67</td><td>75</td>
+            <td>DEX +15, AGI +15 (rogue &amp; druid)</td>
+            <td>Warrior, Rogue, Cleric, Druid</td>
+          </tr>
+          <tr>
+            <td>✨</td>
+            <td><b>High Elf</b></td>
+            <td>55</td><td>75</td><td>80</td><td>65</td><td>95</td><td>92</td><td>80</td>
+            <td>WIS +15, INT +10, CHA +10 (divine &amp; arcane)</td>
+            <td>Wizard, Enchanter, Magician, Paladin, Cleric</td>
+          </tr>
+          <tr>
+            <td>🦎</td>
+            <td><b>Iksar</b></td>
+            <td>76</td><td>85</td><td>90</td><td>70</td><td>80</td><td>75</td><td>55</td>
+            <td>AGI +10 (natural regeneration)</td>
+            <td>Warrior, Shadow Knight, Monk, Shaman, Necromancer</td>
+          </tr>
+          <tr>
+            <td>👹</td>
+            <td><b>Ogre</b></td>
+            <td>130</td><td>60</td><td>70</td><td>127</td><td>70</td><td>60</td><td>40</td>
+            <td>STR +30, STA +30 (highest STR in Norrath)</td>
+            <td>Warrior, Shadow Knight, Shaman</td>
+          </tr>
+          <tr>
+            <td>🧟</td>
+            <td><b>Troll</b></td>
+            <td>108</td><td>75</td><td>83</td><td>119</td><td>60</td><td>52</td><td>40</td>
+            <td>STR +20, STA +25 (regeneration &amp; raw power)</td>
+            <td>Warrior, Shadow Knight, Shaman</td>
+          </tr>
+          <tr>
+            <td>🌿</td>
+            <td><b>Wood Elf</b></td>
+            <td>65</td><td>95</td><td>95</td><td>65</td><td>80</td><td>75</td><td>75</td>
+            <td>DEX +15, AGI +15 (rangers &amp; druids)</td>
+            <td>Warrior, Ranger, Rogue, Bard, Druid</td>
+          </tr>
+          <tr>
+            <td>🦅</td>
+            <td><b>Vah Shir</b></td>
+            <td>90</td><td>80</td><td>90</td><td>85</td><td>70</td><td>65</td><td>65</td>
+            <td>Balanced agility &amp; strength (see <code>races.js</code>)</td>
+            <td>Warrior, Beastlord, Rogue, Shaman, Berserker</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hatnote">† The Vah Shir is included based on the full class list in the source. Verify exact stat values in <code>js/races.js</code>.</div>
+    </div>
+
+    <div class="article-section" id="race-selection-tips">
+      <h2>Race Selection Tips <a href="#race-selection-tips" class="edit-link">edit</a></h2>
+
+      <h3 id="melee-races">Best Melee Races</h3>
+      <p>
+        For pure melee damage and tanking, <b>Ogre</b> (STR 130, STA 127) and <b>Troll</b> (STR 108, STA 119)
+        offer unmatched physical power. Ogres also have a notable resistance to being stunned from the front.
+        <b>Barbarians</b> offer a good balance of STR and STA with a slightly wider class selection.
+      </p>
+
+      <h3 id="caster-races">Best Caster Races</h3>
+      <p>
+        <b>Erudites</b> lead with INT 107, making them the ideal choice for Wizard, Magician, Enchanter,
+        and Necromancer. <b>High Elves</b> shine for WIS-based casters (Cleric) with WIS 95 and INT 92.
+        <b>Dark Elves</b> are a strong second choice for INT-based casters with INT 99.
+      </p>
+
+      <h3 id="agile-races">Best Agile Races</h3>
+      <p>
+        <b>Halflings</b>, <b>Wood Elves</b>, <b>Half Elves</b>, and <b>Gnomes</b> all offer DEX/AGI scores
+        in the 90–95 range, making them excellent Rogues, Rangers, and Bards.
+      </p>
+
+      <h3 id="versatile-races">Most Versatile Race</h3>
+      <p>
+        <b>Humans</b> are the only race that can play <em>every</em> class, including all three Priest
+        classes and all four Caster classes. Their perfectly balanced stats (75 across all attributes)
+        make them a safe pick when you're undecided on a class.
+      </p>
+    </div>
+
+    <div class="article-section" id="race-and-stats">
+      <h2>How Race Stats Affect Gameplay <a href="#race-and-stats" class="edit-link">edit</a></h2>
+      <p>
+        Race base stats combine with <a href="./classes.html#class-stats">class base stats</a> at character creation.
+        As characters level up, each stat gains +1 (or +2 for a class's primary stats) per level. This means the
+        starting stat gap between races narrows over time — but racial identity remains meaningful at all levels
+        because the initial advantage carries forward.
+      </p>
+      <p>
+        The <code>bonusStats</code> values on each race in <code>js/races.js</code> are reserved for future
+        display use and do not currently apply to character stat calculations.
+      </p>
+    </div>
+
+  </main>
+</div>
+
+<footer class="wiki-footer">
+  <p>Retrieved from <a href="https://github.com/gopforever/forever-rpg" target="_blank" rel="noopener">https://github.com/gopforever/forever-rpg</a></p>
+  <p>⚔ Forever RPG Wiki — content reflects the game source code. No external dependencies.</p>
+</footer>
+
+<script src="./wiki.js"></script>
+</body>
+</html>
