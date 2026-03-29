@@ -1754,6 +1754,17 @@ function selectAbilityForMember(member, enemy, party) {
       }
     }
   }
+  // Inject innate pet-summon for summoner classes if they have no active pet
+  if (
+    isSpellBookClass &&
+    typeof INNATE_PET_ABILITY !== 'undefined' &&
+    INNATE_PET_ABILITY[member.classId] &&
+    typeof getPetForOwner === 'function' &&
+    !getPetForOwner(member.id)
+  ) {
+    learnedAbilities.unshift(INNATE_PET_ABILITY[member.classId]);
+  }
+
   // For spell-book classes use only purchased+bar spells; melee keeps cls.abilities
   const allAbilities = isSpellBookClass ? learnedAbilities : [...cls.abilities, ...learnedAbilities];
 

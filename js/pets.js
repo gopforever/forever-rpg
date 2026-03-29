@@ -213,6 +213,39 @@ function buffPet(caster, effect) {
   }
 }
 
+/**
+ * Innate pet-summon ability descriptor for each summoner class.
+ * Used to inject a free summon ability when the owner has no pet active,
+ * regardless of whether they have purchased guild spells.
+ * @type {Object.<string, object>}
+ */
+const INNATE_PET_ABILITY = {
+  necromancer: {
+    name: 'Summon Skeleton',
+    manaCost: 30,
+    castTime: 3000,
+    recastTime: 30000,
+    effect: { type: 'summon_pet' },
+    description: 'Summon a skeletal servant to fight by your side.',
+  },
+  magician: {
+    name: 'Summon Elemental',
+    manaCost: 30,
+    castTime: 3000,
+    recastTime: 30000,
+    effect: { type: 'summon_pet' },
+    description: 'Summon an earth elemental to fight by your side.',
+  },
+  beastlord: {
+    name: 'Call Warder',
+    manaCost: 20,
+    castTime: 2000,
+    recastTime: 30000,
+    effect: { type: 'summon_pet' },
+    description: 'Call your spirit warder to your side.',
+  },
+};
+
 if (typeof module !== 'undefined') {
-  module.exports = { PET_TEMPLATES, CLASS_DEFAULT_PET, getPetMaxHP, summonPet, dismissPet, getPetForOwner, petAttack, tickPets, commandPetAttack, buffPet };
+  module.exports = { PET_TEMPLATES, CLASS_DEFAULT_PET, INNATE_PET_ABILITY, getPetMaxHP, summonPet, dismissPet, getPetForOwner, petAttack, tickPets, commandPetAttack, buffPet };
 }

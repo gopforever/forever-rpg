@@ -2717,6 +2717,10 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
   pointer-events: none;
 }
 
+.hotbar-slot.hotbar-innate {
+  border-color: #8b5cf6; /* purple tint to indicate innate/class ability */
+}
+
 /* ============================================================
    ENEMY INCOMING ATTACK INDICATOR
    ============================================================ */
