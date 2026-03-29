@@ -118,7 +118,6 @@ const GHOST_CLASSES = [
   'wizard','magician','enchanter','necromancer','cleric','druid','shaman','beastlord','berserker',
 ];
 
-const HEALER_CLASSES = ['cleric','druid','shaman'];
 const TANK_CLASSES   = ['warrior','paladin','shadowknight'];
 
 const ALL_ZONES = ['qeynos_hills','blackburrow','qeynos','everfrost_peaks','west_karana','highpass_hold','kithicor_forest','commonlands','plane_of_fear','lake_of_ill_omen'];
