@@ -331,6 +331,7 @@ function initMainUI() {
 
   if (typeof renderWhoOnlinePanel === 'function') renderWhoOnlinePanel();
   renderMonsterLogPanel();
+  if (typeof renderQuestLogPanel === 'function') renderQuestLogPanel();
 
   if (GameState.selectedEnemyId) {
     selectEnemy(GameState.selectedEnemyId);
@@ -534,6 +535,7 @@ function changeZone(zoneId) {
   renderZonePanel();
   renderEnemySelector();
   renderMonsterLogPanel();
+  if (typeof renderQuestLogPanel === 'function') renderQuestLogPanel();
   if (typeof updateCombatUI === 'function') updateCombatUI();
   if (typeof refreshZonePlayers === 'function') refreshZonePlayers();
 }
