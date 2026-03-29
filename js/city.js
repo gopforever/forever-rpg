@@ -1008,6 +1008,11 @@ function travelToZone(zoneId) {
 
   GameState.zone = zoneId;
 
+  // Reset dungeon floor state whenever the zone changes
+  GameState.dungeonFloor = 1;
+  GameState.miniBossDefeated = false;
+  GameState.floorKills = 0;
+
   // Track visited zones
   if (!GameState.visitedZones) GameState.visitedZones = [];
   if (!GameState.visitedZones.includes(zoneId)) {

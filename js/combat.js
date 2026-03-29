@@ -144,6 +144,12 @@ const MAX_CARRY_SLOTS = 30;
 /** Hard cap on simultaneous enemies in a single encounter. */
 const MAX_ENCOUNTER_ENEMIES = 3;
 
+/** Number of common-enemy kills on a dungeon floor before the mini-boss is triggered. */
+const FLOOR_MINIBOSS_KILL_THRESHOLD = 5;
+
+/** Default enemy respawn delay in milliseconds when the zone does not specify one. */
+const DEFAULT_RESPAWN_TIME = 3000;
+
 /**
  * Creates a live enemy object from a template ID.
  * @param {string} enemyId
@@ -350,8 +356,15 @@ function tryPullAdd(fleeingEnemy) {
   const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
   if (!zone) return;
 
+  // Use floor-specific enemy pool for dungeon zones
+  let commonPool = zone.commonEnemies || [];
+  if (zone.isDungeon && Array.isArray(zone.floors)) {
+    const floorData = zone.floors.find(f => f.floor === GameState.dungeonFloor);
+    if (floorData && floorData.commonEnemies) commonPool = floorData.commonEnemies;
+  }
+
   const activeIds = new Set(GameState.enemies.map(e => e.id));
-  const candidates = (zone.commonEnemies || []).filter(id => !activeIds.has(id));
+  const candidates = commonPool.filter(id => !activeIds.has(id));
   if (candidates.length === 0) return;
 
   const fleeingTemplate = ENEMIES[fleeingEnemy.id];
@@ -1128,22 +1141,61 @@ function handleEnemyDeath(enemy) {
     checkAchievements('fight_win', { party: GameState.party, enemyCount: startEnemyCount });
   }
 
-  if (GameState.camp && GameState.camp.zoneId === GameState.zone && GameState.camp.enemyId === GameState.selectedEnemyId) {
-    setTimeout(() => {
-      if (GameState.camp && GameState.selectedEnemyId) {
-        addCombatLog(`Your camp respawns — ${ENEMIES[GameState.selectedEnemyId] ? ENEMIES[GameState.selectedEnemyId].name : GameState.selectedEnemyId} returns.`, 'system');
-        startCombat(GameState.selectedEnemyId);
-        if (typeof updateCombatUI === 'function') updateCombatUI();
+  // Dungeon floor progression — check for mini-boss kills and floor kill tracking
+  let dungeonHandled = false;
+  if (zoneData && zoneData.isDungeon && Array.isArray(zoneData.floors)) {
+    const currentFloorData = zoneData.floors.find(f => f.floor === GameState.dungeonFloor);
+    if (currentFloorData && currentFloorData.miniBoss) {
+      const miniBossId = currentFloorData.miniBoss;
+      if (enemy.id === miniBossId) {
+        // Mini-boss was just defeated — unlock descent
+        GameState.miniBossDefeated = true;
+        addCombatLog('--- The path to the next floor is open! ---', 'system');
+        if (typeof checkAchievements === 'function') {
+          checkAchievements('dungeon_boss_kill', {
+            dungeonId: zoneData.id,
+            bossId: miniBossId,
+            party: GameState.party,
+          });
+        }
+        dungeonHandled = true;
+      } else if (!GameState.miniBossDefeated) {
+        // Common enemy killed — increment floor kill counter
+        GameState.floorKills = (GameState.floorKills || 0) + 1;
+        if (GameState.floorKills >= FLOOR_MINIBOSS_KILL_THRESHOLD) {
+          // Threshold reached — summon the mini-boss
+          const respawnTime = zoneData.respawnTime || DEFAULT_RESPAWN_TIME;
+          setTimeout(() => {
+            if (!GameState.miniBossDefeated && GameState.zone === zoneData.id) {
+              addCombatLog('--- A powerful presence stirs in the darkness... ---', 'system');
+              startCombat(miniBossId);
+              if (typeof updateCombatUI === 'function') updateCombatUI();
+            }
+          }, respawnTime);
+          dungeonHandled = true;
+        }
       }
-    }, 1500); // faster camp respawn
-  } else if (GameState.selectedEnemyId) {
-    const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : 3000;
-    setTimeout(() => {
-      if (GameState.selectedEnemyId) {
-        startCombat(GameState.selectedEnemyId);
-        if (typeof updateCombatUI === 'function') updateCombatUI();
-      }
-    }, respawnTime);
+    }
+  }
+
+  if (!dungeonHandled) {
+    if (GameState.camp && GameState.camp.zoneId === GameState.zone && GameState.camp.enemyId === GameState.selectedEnemyId) {
+      setTimeout(() => {
+        if (GameState.camp && GameState.selectedEnemyId) {
+          addCombatLog(`Your camp respawns — ${ENEMIES[GameState.selectedEnemyId] ? ENEMIES[GameState.selectedEnemyId].name : GameState.selectedEnemyId} returns.`, 'system');
+          startCombat(GameState.selectedEnemyId);
+          if (typeof updateCombatUI === 'function') updateCombatUI();
+        }
+      }, 1500); // faster camp respawn
+    } else if (GameState.selectedEnemyId) {
+      const respawnTime = zoneData && zoneData.respawnTime ? zoneData.respawnTime : DEFAULT_RESPAWN_TIME;
+      setTimeout(() => {
+        if (GameState.selectedEnemyId) {
+          startCombat(GameState.selectedEnemyId);
+          if (typeof updateCombatUI === 'function') updateCombatUI();
+        }
+      }, respawnTime);
+    }
   }
 
   if (typeof updateCombatUI === 'function') updateCombatUI();
@@ -2119,7 +2171,12 @@ function pullEnemy() {
     if (Math.random() < addChance) {
       // Pull a random common enemy from the zone as the add
       const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
-      const pool = zone ? (zone.commonEnemies || []) : [];
+      let pool = zone ? (zone.commonEnemies || []) : [];
+      // Use floor-specific enemy pool for dungeon zones
+      if (zone && zone.isDungeon && Array.isArray(zone.floors)) {
+        const floorData = zone.floors.find(f => f.floor === GameState.dungeonFloor);
+        if (floorData && floorData.commonEnemies) pool = floorData.commonEnemies;
+      }
       const addId = pool[Math.floor(Math.random() * pool.length)];
       if (addId && addId !== GameState.selectedEnemyId) {
         const add = makeLiveEnemy(addId);
@@ -2237,4 +2294,44 @@ function tickBardSongs() {
   if (typeof trySkillGain === 'function') trySkillGain(bard, 'singing');
 }
 
-if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, depositCoinsToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp, pullEnemy, setCamp, breakCamp, tickBardSongs };
+/**
+ * Advances the player to the next floor of the current dungeon.
+ * Requires the current floor's mini-boss to have been defeated first.
+ * On the final floor, immediately triggers the final boss encounter.
+ * @returns {void}
+ */
+function descendFloor() {
+  const zone = ZONES && GameState.zone ? ZONES[GameState.zone] : null;
+  if (!zone || !zone.isDungeon || !Array.isArray(zone.floors)) return;
+  if (!GameState.miniBossDefeated) return;
+
+  const nextFloorNum = GameState.dungeonFloor + 1;
+  const nextFloorData = zone.floors.find(f => f.floor === nextFloorNum);
+  if (!nextFloorData) return;
+
+  GameState.dungeonFloor = nextFloorNum;
+  GameState.miniBossDefeated = false;
+  GameState.floorKills = 0;
+  GameState.selectedEnemyId = null;
+
+  addCombatLog(`--- You descend to Floor ${nextFloorNum}: ${nextFloorData.name} ---`, 'system');
+
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('dungeon_floor', { dungeonId: zone.id, floor: nextFloorNum });
+  }
+
+  if (typeof renderEnemySelector === 'function') renderEnemySelector();
+  if (typeof renderZonePanel === 'function') renderZonePanel();
+  if (typeof updateStopButtonState === 'function') updateStopButtonState();
+
+  // Final floor — immediately trigger the final boss
+  if (nextFloorData.isFinalFloor && nextFloorData.finalBoss) {
+    addCombatLog(`--- ${nextFloorData.name} — the final guardian awaits! ---`, 'system');
+    setTimeout(() => {
+      startCombat(nextFloorData.finalBoss);
+      if (typeof updateCombatUI === 'function') updateCombatUI();
+    }, 1500);
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { startCombat, startGroupCombat, tryCallForHelp, tryPullAdd, makeLiveEnemy, rollWeightedGroup, combatTick, selectEnemy, stopCombat, addToInventory, addToBag, addToBank, depositAllToBank, depositCoinsToBank, tickManaRegen, tickHPRegen, handlePartyWipe, addThreat, getCurrentTarget, tickAbilityCasts, interruptCast, dispatchAbilityEffect, selectAbilityForMember, enemyAttackAoe, sitDown, standUp, pullEnemy, setCamp, breakCamp, tickBardSongs, descendFloor };

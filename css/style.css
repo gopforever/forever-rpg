@@ -1103,6 +1103,30 @@ input[type="range"] { accent-color: var(--gold); cursor: pointer; }
 .btn-camp:hover { background: #2a2010; border-color: #aa8822; }
 .btn-camp.camp-active { border-color: #c8a84b; color: #ffe88a; background: #2a2010; }
 
+/* ─── Descend Button ──────────────────────────────────────────────────────── */
+
+.btn-descend {
+  background: #0a1a2a;
+  border: 1px solid #2a6a9a;
+  color: #5ab4e8;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+.btn-descend:hover { background: #102030; border-color: #4a9acc; }
+
+/* ─── Dungeon Floor Label ─────────────────────────────────────────────────── */
+
+.dungeon-floor-label {
+  font-size: 0.75rem;
+  color: #5ab4e8;
+  margin: 3px 0;
+  font-style: italic;
+}
+
 /* ─── Camp Indicator ──────────────────────────────────────────────────────── */
 
 #camp-indicator {
