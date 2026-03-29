@@ -1103,6 +1103,16 @@ function handleEnemyDeath(enemy) {
       killCounts: GameState.killCounts,
       party: GameState.party,
     });
+    // Achievement hook: dungeon kill (for dungeon-specific achievements)
+    if (zoneData && zoneData.isDungeon) {
+      checkAchievements('dungeon_kill', {
+        dungeonId: zoneData.id,
+        enemyId: enemy.id,
+        enemy: enemyDef,
+        enemyCount: GameState._lastFightEnemyCount || 1,
+        party: GameState.party,
+      });
+    }
   }
 
   const lootDrops = rollLoot(ENEMIES[enemy.id]);
@@ -1119,6 +1129,15 @@ function handleEnemyDeath(enemy) {
     // Achievement hook: loot
     if (typeof checkAchievements === 'function') {
       checkAchievements('loot', { itemId: drop.itemId, item, party: GameState.party });
+      // Achievement hook: dungeon loot (for dungeon-specific loot achievements)
+      if (zoneData && zoneData.isDungeon) {
+        checkAchievements('dungeon_loot', {
+          dungeonId: zoneData.id,
+          itemId: drop.itemId,
+          item,
+          party: GameState.party,
+        });
+      }
     }
   }
 
@@ -2005,6 +2024,10 @@ function depositAllToBank() {
   }
   GameState.inventory = keep;
   if (typeof saveGame === 'function') saveGame();
+  // Achievement hook: bank deposit
+  if (typeof checkAchievements === 'function') {
+    checkAchievements('bank_deposit', { bankSize: (GameState.bank || []).length });
+  }
   if (typeof renderInventoryPanel === 'function') renderInventoryPanel();
   if (typeof updateInventoryUI === 'function') updateInventoryUI();
   if (typeof renderCityTabContent === 'function') renderCityTabContent('bank');
