@@ -126,6 +126,12 @@ const ACHIEVEMENTS = [
   { id: 'bef_disease_survivor',  category: 'dungeon', name: 'Plague Resistant',                desc: 'Survive a disease proc from a Befallen undead and still win the fight' },
 ];
 
+// ─── Class groups (derived from CLASSES archetype field in classes.js) ───────────
+
+const CASTER_CLASSES = Object.keys(CLASSES).filter(id => CLASSES[id].archetype === 'Caster');
+const HEALER_CLASSES = Object.keys(CLASSES).filter(id => CLASSES[id].archetype === 'Priest');
+const HYBRID_CLASSES = Object.keys(CLASSES).filter(id => CLASSES[id].archetype === 'Hybrid');
+
 // ─── Storage ─────────────────────────────────────────────────────────────────────
 
 const ACHIEVEMENT_SAVE_KEY  = 'foreverRPG_achievements';
