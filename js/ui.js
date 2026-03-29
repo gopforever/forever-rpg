@@ -1413,28 +1413,63 @@ function renderSpellsPanel() {
   const isSpellBookClass = spellBookClasses.includes(member.classId);
 
   if (!isSpellBookClass) {
-    // Melee / non-spell class: show class abilities as before
+    // Melee / non-spell class: show abilities book (mirrors spell book UI)
     const cls = CLASSES[member.classId];
+
+    // Character selector tabs
+    const charTabs = GameState.party.map((m, i) => {
+      if (!m) return '';
+      const c = CLASSES[m.classId];
+      return `<button class="abilities-char-tab${i === idx ? ' active' : ''}" data-char-idx="${i}" title="${m.name}">${c ? c.icon : '?'} ${m.name}</button>`;
+    }).join('');
+
     if (!cls || !cls.abilities || cls.abilities.length === 0) {
-      el.innerHTML = '<div class="no-spells">No abilities.</div>';
-      return;
+      el.innerHTML = `
+        <div class="abilities-char-tabs">${charTabs}</div>
+        <div class="abilities-book-header">📖 Abilities Book — ${member.name}</div>
+        <div class="spellbook-empty">No abilities.</div>
+      `;
+    } else {
+      const abilities = cls.abilities;
+      const abilityCount = `<div class="spellbook-slot-count">Abilities: ${abilities.length}</div>`;
+      const rows = abilities.map(ability => `
+        <div class="spell-row" data-ability="${ability.name}">
+          <div class="spell-info">
+            <div class="spell-name">${ability.name}${ability.manaCost === 0 ? ' <span class="ability-passive-badge">⭕ Passive</span>' : ''}</div>
+            <div class="spell-meta">${ability.manaCost > 0 ? ability.manaCost + ' MP' : ''}</div>
+          </div>
+        </div>
+      `).join('');
+
+      el.innerHTML = `
+        <div class="abilities-char-tabs">${charTabs}</div>
+        <div class="abilities-book-header">📖 Abilities Book — ${member.name}</div>
+        ${abilityCount}
+        ${rows}
+      `;
+
+      el.querySelectorAll('.spell-row').forEach((row, i) => {
+        const ability = abilities[i];
+        if (ability) {
+          attachTooltip(row, () => getAbilityTooltipHTML(ability));
+          row.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            _showSpellContextMenu(e, ability, true);
+          });
+        }
+      });
     }
-    el.innerHTML = cls.abilities.map(ability => `
-      <div class="spell-row" data-ability="${ability.name}">
-        <div class="spell-name">${ability.name}</div>
-        <div class="spell-cost">${ability.manaCost > 0 ? ability.manaCost + ' MP' : 'Passive'}</div>
-      </div>
-    `).join('');
-    el.querySelectorAll('.spell-row').forEach((row, i) => {
-      const ability = cls.abilities[i];
-      if (ability) {
-        attachTooltip(row, () => getAbilityTooltipHTML(ability));
-        row.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          _showSpellContextMenu(e, ability, false);
-        });
-      }
+
+    // Character selector tab clicks
+    el.querySelectorAll('.abilities-char-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        GameState.inspectedCharIndex = parseInt(tab.dataset.charIdx, 10);
+        renderSpellsPanel();
+        renderCharacterInspectPanel();
+        renderStatsPanel();
+        renderEquipmentPanel();
+      });
     });
     return;
   }
