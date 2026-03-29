@@ -3369,7 +3369,8 @@ function _renderLbPane(pane, containerEl) {
       skills:'Skills', special:'Special', vanity:'Vanity', dungeon:'Dungeon',
     };
     const unlockedCount = typeof getUnlockedCount === 'function' ? getUnlockedCount() : 0;
-    const totalCount    = typeof getTotalCount    === 'function' ? getTotalCount()    : 0;
+    const totalCount = typeof getTotalCount === 'function' ? getTotalCount() : 0;
+    const totalScore = typeof getTotalScore === 'function' ? getTotalScore() : 0;
 
     const catListHtml = categories.map((cat, i) => `
       <div class="ach-cat ${i === 0 ? 'active' : ''}" data-cat="${cat}">${catLabels[cat]}</div>
@@ -3382,7 +3383,7 @@ function _renderLbPane(pane, containerEl) {
           <div class="ach-cat-list">${catListHtml}</div>
         </div>
         <div class="ach-content-wrap">
-          <div class="ach-content-header">${unlockedCount} / ${totalCount} Achievements Unlocked</div>
+          <div class="ach-content-header">Total Score: ${totalScore} Points | ${unlockedCount} / ${totalCount} Achievements Unlocked</div>
           <div class="ach-content" id="ach-content-pane"></div>
         </div>
       </div>
@@ -3415,6 +3416,7 @@ function _renderLbPane(pane, containerEl) {
               ${progressBar}
             </div>
             <div class="ach-date">${dateStr}</div>
+            <div class="ach-points">${ach.points || 0} pts</div>
           </div>
         `;
       }).join('') || '<div class="city-empty">No achievements in this category.</div>';
