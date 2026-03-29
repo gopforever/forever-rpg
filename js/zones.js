@@ -480,6 +480,196 @@ const ZONES = {
     respawnTime: 22000,
   },
 
+  befallen: {
+    id: 'befallen',
+    name: 'Befallen',
+    shortName: 'BEF',
+    levelRange: [7, 26],
+    xpModifier: 1.2,
+    isDungeon: true,
+    isSafeZone: false,
+    description: 'A crumbling tower of stone and shadow, Befallen was once a fortress of light. Now it is a stronghold of undead, necromancers, and shadow knights. Wide level variance makes this dungeon treacherous from top to bottom.',
+    flavorLines: [
+      'Cold air rushes up from below, carrying the sweet stench of rot and old death.',
+      'Somewhere in the dark, a necromancer whispers incantations to the walls.',
+      'Shadow knight patrols march in lockstep through halls lit only by cold witchfire.',
+      'A wave of dread washes over you as you step deeper into Befallen\'s crumbling corridors.',
+      'The stones themselves seem to weep. Old bloodstains mark the walls like dark art.',
+    ],
+    enemies: [
+      'giant_rat', 'plague_rat', 'decaying_skeleton', 'skeleton', 'dread_bone_skeleton',
+      'putrid_skeleton', 'large_skeleton', 'greater_skeleton', 'lesser_mummy', 'ice_bone_skeleton',
+      'ghoul', 'will_o_wisp_bef', 'necromancer_apprentice', 'neophyte', 'acolyte',
+      'theurgist', 'a_shadowknight', 'a_shadowknight_elite',
+      'boondin_babbinsbort', 'skeleton_lrodd', 'an_elf_skeleton', 'priest_amiaz',
+      'the_thaumaturgist', 'commander_windstream', 'gynok_moltor',
+    ],
+    commonEnemies: [
+      'giant_rat', 'plague_rat', 'decaying_skeleton', 'skeleton', 'dread_bone_skeleton',
+      'putrid_skeleton', 'large_skeleton', 'greater_skeleton', 'lesser_mummy', 'ice_bone_skeleton',
+      'ghoul', 'will_o_wisp_bef', 'necromancer_apprentice', 'neophyte', 'acolyte',
+      'theurgist', 'a_shadowknight', 'a_shadowknight_elite',
+    ],
+    rareEnemies: [
+      'boondin_babbinsbort', 'skeleton_lrodd', 'an_elf_skeleton', 'priest_amiaz',
+      'the_thaumaturgist', 'commander_windstream', 'gynok_moltor',
+    ],
+    rareSpawnChance: 0.08,
+    ambientColor: '#0d0a1a',
+    respawnTime: 22000,
+    currentFloor: 1,
+    floors: [
+      {
+        floor: 1,
+        name: 'The Forsaken Entry',
+        levelRange: [7, 10],
+        commonEnemies: ['giant_rat', 'plague_rat', 'decaying_skeleton', 'skeleton'],
+        miniBoss: 'boondin_babbinsbort',
+        isFinalFloor: false,
+      },
+      {
+        floor: 2,
+        name: 'The Haunted Halls',
+        levelRange: [10, 14],
+        commonEnemies: ['skeleton', 'dread_bone_skeleton', 'putrid_skeleton', 'a_shadowknight'],
+        miniBoss: 'skeleton_lrodd',
+        isFinalFloor: false,
+      },
+      {
+        floor: 3,
+        name: 'The Rotting Depths',
+        levelRange: [13, 17],
+        commonEnemies: ['large_skeleton', 'ghoul', 'lesser_mummy', 'neophyte'],
+        miniBoss: 'an_elf_skeleton',
+        isFinalFloor: false,
+      },
+      {
+        floor: 4,
+        name: 'The Crypt of Shadows',
+        levelRange: [16, 20],
+        commonEnemies: ['greater_skeleton', 'ice_bone_skeleton', 'acolyte', 'necromancer_apprentice'],
+        miniBoss: 'priest_amiaz',
+        isFinalFloor: false,
+      },
+      {
+        floor: 5,
+        name: 'The Sanctum of Marnek',
+        levelRange: [19, 23],
+        commonEnemies: ['will_o_wisp_bef', 'theurgist', 'a_shadowknight_elite', 'greater_skeleton'],
+        miniBoss: 'the_thaumaturgist',
+        isFinalFloor: false,
+      },
+      {
+        floor: 6,
+        name: 'The Dark Throne',
+        levelRange: [23, 26],
+        commonEnemies: ['a_shadowknight_elite', 'necromancer_apprentice'],
+        miniBoss: null,
+        isFinalFloor: true,
+        finalBoss: 'gynok_moltor',
+      },
+    ],
+    minimapSVG: `<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg" style="border-radius:4px;">
+  <defs>
+    <linearGradient id="befFloor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0d2a"/>
+      <stop offset="100%" stop-color="#0a0612"/>
+    </linearGradient>
+    <linearGradient id="befTorch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a40cc" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#3a1066" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="befDeep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e0818"/>
+      <stop offset="100%" stop-color="#060310"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark stone background -->
+  <rect width="280" height="200" fill="#080510"/>
+
+  <!-- Stone texture lines -->
+  <line x1="0" y1="40" x2="280" y2="40" stroke="#14102a" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="80" x2="280" y2="80" stroke="#14102a" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="120" x2="280" y2="120" stroke="#14102a" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="160" x2="280" y2="160" stroke="#14102a" stroke-width="1" opacity="0.6"/>
+
+  <!-- Entry Hall (top) -->
+  <rect x="80" y="10" width="120" height="35" rx="3" fill="url(#befFloor)" stroke="#2a1a4a" stroke-width="1"/>
+  <rect x="105" y="8" width="70" height="14" rx="2" fill="#000000" opacity="0.55"/>
+  <text x="140" y="18" text-anchor="middle" font-family="serif" font-size="7" fill="#9a70cc">Entry Hall</text>
+
+  <!-- Central corridor -->
+  <rect x="125" y="45" width="30" height="50" rx="2" fill="url(#befFloor)" stroke="#2a1a4a" stroke-width="1"/>
+
+  <!-- Left wing -->
+  <rect x="20" y="55" width="110" height="30" rx="3" fill="url(#befFloor)" stroke="#2a1a4a" stroke-width="1"/>
+
+  <!-- Right wing -->
+  <rect x="150" y="55" width="110" height="30" rx="3" fill="url(#befFloor)" stroke="#2a1a4a" stroke-width="1"/>
+
+  <!-- Crypt chamber (middle) -->
+  <rect x="60" y="95" width="160" height="40" rx="4" fill="url(#befFloor)" stroke="#3a1a5a" stroke-width="1.5"/>
+  <rect x="90" y="98" width="50" height="13" rx="2" fill="#000000" opacity="0.55"/>
+  <text x="115" y="108" text-anchor="middle" font-family="serif" font-size="7" fill="#b080e0">Crypt</text>
+
+  <!-- Descending staircase marker -->
+  <rect x="130" y="140" width="20" height="24" rx="2" fill="#12082a" stroke="#4a2a7a" stroke-width="1"/>
+  <line x1="134" y1="144" x2="146" y2="144" stroke="#6a40aa" stroke-width="1"/>
+  <line x1="134" y1="149" x2="146" y2="149" stroke="#6a40aa" stroke-width="1"/>
+  <line x1="134" y1="154" x2="146" y2="154" stroke="#6a40aa" stroke-width="1"/>
+  <line x1="134" y1="159" x2="146" y2="159" stroke="#6a40aa" stroke-width="1"/>
+  <text x="140" y="172" text-anchor="middle" font-family="serif" font-size="5.5" fill="#9060cc">▼ Down</text>
+
+  <!-- Dark Throne chamber (bottom) -->
+  <rect x="50" y="168" width="180" height="28" rx="4" fill="url(#befDeep)" stroke="#5a1a8a" stroke-width="2"/>
+  <rect x="100" y="170" width="80" height="13" rx="2" fill="#000000" opacity="0.6"/>
+  <text x="140" y="180" text-anchor="middle" font-family="serif" font-size="7" fill="#cc50aa">Dark Throne</text>
+
+  <!-- Eerie purple torch glows -->
+  <ellipse cx="55" cy="68" rx="10" ry="6" fill="url(#befTorch)" opacity="0.7"/>
+  <ellipse cx="225" cy="68" rx="10" ry="6" fill="url(#befTorch)" opacity="0.7"/>
+  <ellipse cx="100" cy="110" rx="8" ry="5" fill="url(#befTorch)" opacity="0.6"/>
+  <ellipse cx="180" cy="110" rx="8" ry="5" fill="url(#befTorch)" opacity="0.6"/>
+  <!-- Torch icons (blue-purple witchfire) -->
+  <rect x="53" y="61" width="3" height="5" fill="#5a1a8a" rx="1"/>
+  <circle cx="54.5" cy="60" r="2" fill="#9050cc" opacity="0.9"/>
+  <rect x="223" y="61" width="3" height="5" fill="#5a1a8a" rx="1"/>
+  <circle cx="224.5" cy="60" r="2" fill="#9050cc" opacity="0.9"/>
+  <rect x="98" y="103" width="3" height="5" fill="#5a1a8a" rx="1"/>
+  <circle cx="99.5" cy="102" r="2" fill="#7030aa" opacity="0.9"/>
+  <rect x="178" y="103" width="3" height="5" fill="#5a1a8a" rx="1"/>
+  <circle cx="179.5" cy="102" r="2" fill="#7030aa" opacity="0.9"/>
+
+  <!-- Skull danger markers -->
+  <text x="38" y="115" text-anchor="middle" font-family="serif" font-size="10" fill="#8a4aaa" opacity="0.75">☠</text>
+  <text x="242" y="115" text-anchor="middle" font-family="serif" font-size="10" fill="#8a4aaa" opacity="0.75">☠</text>
+  <text x="140" y="196" text-anchor="middle" font-family="serif" font-size="10" fill="#cc4088" opacity="0.8">☠</text>
+
+  <!-- Zone exit arrow -->
+  <rect x="2" y="14" width="26" height="14" fill="#0e0818" stroke="#2a1a4a" stroke-width="1" rx="2"/>
+  <text x="15" y="24" text-anchor="middle" font-family="serif" font-size="5.5" fill="#c4962a">◄ Exit</text>
+
+  <!-- "You Are Here" gold star -->
+  <circle cx="140" cy="27" r="7" fill="#000000" opacity="0.5"/>
+  <text x="140" y="31" text-anchor="middle" font-family="serif" font-size="12" fill="#ffd700">✦</text>
+  <circle cx="140" cy="27" r="10" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+
+  <!-- Zone border frame -->
+  <rect width="280" height="200" fill="none" stroke="#3a1a5a" stroke-width="2" rx="3"/>
+</svg>`,
+    connections: ['commons_of_befallen'],
+    groups: [
+      { members: ['decaying_skeleton', 'skeleton'], weight: 4 },
+      { members: ['skeleton', 'putrid_skeleton'], weight: 3 },
+      { members: ['ghoul', 'lesser_mummy'], weight: 2 },
+      { members: ['a_shadowknight', 'necromancer_apprentice'], weight: 2 },
+      { members: ['neophyte', 'acolyte'], weight: 3 },
+    ],
+    groupSpawnChance: 0.35,
+    unlockCondition: 'blackburrow_cleared',
+  },
+
   everfrost_peaks: {
     id: 'everfrost_peaks',
     name: 'Everfrost Peaks',

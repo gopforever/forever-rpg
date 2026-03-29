@@ -39,6 +39,7 @@ const ACHIEVEMENTS = [
   { id: 'zone_commonlands',     category: 'keys',        name: 'The Commonlands',       desc: 'Visit Commonlands' },
   { id: 'zone_plane_of_fear',   category: 'keys',        name: 'Into the Plane of Fear', desc: 'Visit the Plane of Fear' },
   { id: 'zone_lake_of_ill_omen',category: 'keys',        name: 'Ill Omens',             desc: 'Visit the Lake of Ill Omen' },
+  { id: 'zone_befallen',        category: 'keys',        name: 'Into Befallen',         desc: 'Visit Befallen' },
   { id: 'all_zones',            category: 'keys',        name: 'World Traveler',        desc: 'Visit all zones' },
 
   // Level (Kill counts)
@@ -98,6 +99,31 @@ const ACHIEVEMENTS = [
   { id: 'bb_poisoned_survivor', category: 'dungeon', name: 'Built Different',                desc: 'Survive a poison proc from a gnoll shaman and still win the fight' },
   { id: 'bb_train_survivor',    category: 'dungeon', name: 'Caught a Train',                 desc: 'Win a fight against 4 or more Blackburrow enemies at once' },
   { id: 'bb_tranixx_loot',      category: 'dungeon', name: 'Trophies from the Dark',         desc: 'Loot a named item from Tranixx Darkpaw' },
+
+  // Dungeon — Befallen
+  { id: 'bef_enter',             category: 'dungeon', name: 'Where Light Has Forgotten',       desc: 'Enter Befallen for the first time' },
+  { id: 'bef_floor2',            category: 'dungeon', name: 'Deeper Into Darkness',            desc: 'Reach Floor 2 of Befallen — The Haunted Halls' },
+  { id: 'bef_floor3',            category: 'dungeon', name: 'The Rot Sets In',                 desc: 'Reach Floor 3 of Befallen — The Rotting Depths' },
+  { id: 'bef_floor4',            category: 'dungeon', name: 'Shadow Sworn',                    desc: 'Reach Floor 4 of Befallen — The Crypt of Shadows' },
+  { id: 'bef_floor5',            category: 'dungeon', name: 'The Sanctum Awaits',              desc: 'Reach Floor 5 of Befallen — The Sanctum of Marnek' },
+  { id: 'bef_floor6',            category: 'dungeon', name: 'Audience With Darkness',          desc: 'Reach Floor 6 of Befallen — The Dark Throne' },
+  { id: 'bef_clear',             category: 'dungeon', name: 'Befallen Conquered',              desc: 'Defeat Gynok Moltor and purge Befallen' },
+  { id: 'bef_boondin',           category: 'dungeon', name: 'Uninvited Guest',                 desc: 'Slay Boondin Babbinsbort in Befallen' },
+  { id: 'bef_lrodd',             category: 'dungeon', name: 'Bones of the Past',               desc: 'Slay Skeleton Lrodd' },
+  { id: 'bef_elf_skeleton',      category: 'dungeon', name: 'Fallen Elf',                      desc: 'Slay An Elf Skeleton' },
+  { id: 'bef_windstream',        category: 'dungeon', name: 'The Commander Falls',             desc: 'Slay Commander Windstream' },
+  { id: 'bef_amiaz',             category: 'dungeon', name: 'Heretic No More',                 desc: 'Slay Priest Amiaz' },
+  { id: 'bef_thaumaturgist',     category: 'dungeon', name: 'Silenced the Thaumaturgy',        desc: 'Slay The Thaumaturgist' },
+  { id: 'bef_gynok',             category: 'dungeon', name: "The Traitor's End",               desc: 'Slay Gynok Moltor, the fallen paladin who betrayed the light' },
+  { id: 'bef_no_deaths',         category: 'dungeon', name: 'Untouchable in the Dark',         desc: 'Clear Befallen without a single party death' },
+  { id: 'bef_solo',              category: 'dungeon', name: 'Into Darkness Alone',             desc: 'Clear all 6 floors of Befallen solo (party of 1)' },
+  { id: 'bef_speed_clear',       category: 'dungeon', name: 'Racing the Reaper',               desc: 'Clear Befallen in under 15 minutes', threshold: 900 },
+  { id: 'bef_undead_slayer',     category: 'dungeon', name: 'Bane of the Undead',              desc: 'Kill 150 undead enemies inside Befallen', threshold: 150 },
+  { id: 'bef_all_named',         category: 'dungeon', name: 'No Survivors',                    desc: 'Kill every named NPC in Befallen in a single run', threshold: 7 },
+  { id: 'bef_cursed_loot',       category: 'dungeon', name: 'Touched by Marnek',               desc: 'Loot the Dagger of Marnek from Gynok Moltor' },
+  { id: 'bef_bone_claymore',     category: 'dungeon', name: 'The Bone Blade',                  desc: 'Loot the Bone Bladed Claymore from Gynok Moltor' },
+  { id: 'bef_train_survivor',    category: 'dungeon', name: 'Shadow Train',                    desc: 'Win a fight against 4 or more Befallen enemies at once' },
+  { id: 'bef_disease_survivor',  category: 'dungeon', name: 'Plague Resistant',                desc: 'Survive a disease proc from a Befallen undead and still win the fight' },
 ];
 
 // ─── Storage ─────────────────────────────────────────────────────────────────────
@@ -235,6 +261,7 @@ function recordWorldFirst(eventKey, who, detail) {
 const ZONE_ACH_MAP = {
   qeynos_hills:     'zone_qeynos_hills',
   blackburrow:      'zone_blackburrow',
+  befallen:         'zone_befallen',
   everfrost_peaks:  'zone_everfrost',
   west_karana:      'zone_west_karana',
   highpass_hold:    'zone_highpass',
@@ -386,6 +413,12 @@ function checkAchievements(event, data) {
         unlockAchievement('bb_enter');
         checkAchievements('dungeon_floor', { dungeonId: 'blackburrow', floor: 1 });
       }
+
+      // Befallen entry
+      if (zoneId === 'befallen') {
+        unlockAchievement('bef_enter');
+        checkAchievements('dungeon_floor', { dungeonId: 'befallen', floor: 1 });
+      }
       break;
     }
 
@@ -491,6 +524,13 @@ function checkAchievements(event, data) {
         if (floor >= 3) unlockAchievement('bb_floor3');
         if (floor >= 4) unlockAchievement('bb_floor4');
         if (floor >= 5) unlockAchievement('bb_floor5');
+      } else if (dungeonId === 'befallen') {
+        if (floor >= 1) unlockAchievement('bef_enter');
+        if (floor >= 2) unlockAchievement('bef_floor2');
+        if (floor >= 3) unlockAchievement('bef_floor3');
+        if (floor >= 4) unlockAchievement('bef_floor4');
+        if (floor >= 5) unlockAchievement('bef_floor5');
+        if (floor >= 6) unlockAchievement('bef_floor6');
       }
       break;
     }
@@ -511,6 +551,24 @@ function checkAchievements(event, data) {
           if (typeof recordWorldFirst === 'function' && party && party.length) {
             const playerName = party[0].name || 'Someone';
             recordWorldFirst('first_tranixx_darkpaw', playerName, `${playerName} was first to slay Tranixx Darkpaw in Blackburrow!`);
+          }
+        }
+      } else if (dungeonId === 'befallen') {
+        if (bossId === 'boondin_babbinsbort')  unlockAchievement('bef_boondin');
+        if (bossId === 'skeleton_lrodd')        unlockAchievement('bef_lrodd');
+        if (bossId === 'an_elf_skeleton')       unlockAchievement('bef_elf_skeleton');
+        if (bossId === 'commander_windstream')  unlockAchievement('bef_windstream');
+        if (bossId === 'priest_amiaz')          unlockAchievement('bef_amiaz');
+        if (bossId === 'the_thaumaturgist')     unlockAchievement('bef_thaumaturgist');
+        if (bossId === 'gynok_moltor') {
+          unlockAchievement('bef_gynok');
+          unlockAchievement('bef_clear');
+          if (noDeath) unlockAchievement('bef_no_deaths');
+          if (party && party.length === 1) unlockAchievement('bef_solo');
+          if (timeSeconds !== undefined) updateAchievementProgress('bef_speed_clear', timeSeconds);
+          if (typeof recordWorldFirst === 'function' && party && party.length) {
+            const playerName = party[0].name || 'Someone';
+            recordWorldFirst('first_gynok_moltor', playerName, `${playerName} was first to slay Gynok Moltor in Befallen!`);
           }
         }
       }
@@ -535,6 +593,9 @@ function checkAchievements(event, data) {
         if (item && item.rarity === 'named' && (itemId === 'darkpaw_hide_cloak' || itemId === 'darkpaw_fang_necklace')) {
           unlockAchievement('bb_tranixx_loot');
         }
+      } else if (dungeonId === 'befallen') {
+        if (itemId === 'dagger_of_marnek')     unlockAchievement('bef_cursed_loot');
+        if (itemId === 'bone_bladed_claymore') unlockAchievement('bef_bone_claymore');
       }
       break;
     }
@@ -559,6 +620,34 @@ function checkAchievements(event, data) {
         }
         if (enemy && enemy.statusProcs && enemy.statusProcs.some(p => p.type === 'poison') && party && party.every(m => m.hp > 0)) {
           unlockAchievement('bb_poisoned_survivor');
+        }
+      } else if (dungeonId === 'befallen') {
+        const befUndeadIds = [
+          'skeleton', 'dread_bone_skeleton', 'putrid_skeleton', 'decaying_skeleton',
+          'large_skeleton', 'greater_skeleton', 'lesser_mummy', 'ice_bone_skeleton',
+          'ghoul', 'skeleton_lrodd', 'an_elf_skeleton', 'gynok_moltor',
+        ];
+        if (befUndeadIds.includes(enemyId)) {
+          if (typeof GameState !== 'undefined') {
+            GameState.bef_undeadKills = (GameState.bef_undeadKills || 0) + 1;
+            updateAchievementProgress('bef_undead_slayer', GameState.bef_undeadKills);
+          }
+        }
+        if ((enemyCount || 0) >= 4) {
+          unlockAchievement('bef_train_survivor');
+        }
+        if (enemy && enemy.statusProcs && enemy.statusProcs.some(p => p.type === 'disease') && enemy.isUndead && party && party.every(m => m.hp > 0)) {
+          unlockAchievement('bef_disease_survivor');
+        }
+        const befNamedIds = [
+          'boondin_babbinsbort', 'skeleton_lrodd', 'an_elf_skeleton',
+          'commander_windstream', 'priest_amiaz', 'the_thaumaturgist', 'gynok_moltor',
+        ];
+        if (befNamedIds.includes(enemyId)) {
+          if (typeof GameState !== 'undefined') {
+            GameState.bef_namedKills = (GameState.bef_namedKills || 0) + 1;
+            updateAchievementProgress('bef_all_named', GameState.bef_namedKills);
+          }
         }
       }
       break;
